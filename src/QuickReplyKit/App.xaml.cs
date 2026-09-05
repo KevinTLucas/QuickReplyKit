@@ -1,8 +1,10 @@
 using System.IO;
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Storage;
+using QuickReplyKit.Interop;
 using QuickReplyKit.Services;
 using QuickReplyKit.ViewModels;
 using Drawing = System.Drawing;
@@ -19,14 +21,24 @@ public partial class App : Application
     private EventWaitHandle? _showEvent;
     private Forms.NotifyIcon? _tray;
     private LauncherWindow? _launcher;
+    private GlobalHotkey? _hotkey;
 
     private AppConfig _config = new();
     private LibraryService? _library;
     private LauncherViewModel? _vm;
+    private readonly ForegroundTargetTracker _target = new();
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Hidden E2E gate: run the paste self-test and exit before touching tray/single-instance.
+        if (e.Args.Any(a => a.Equals("--selftest-paste", StringComparison.OrdinalIgnoreCase)))
+        {
+            int code = SelfTest.Run();
+            Shutdown(code);
+            return;
+        }
 
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool isFirst);
         _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
@@ -47,7 +59,7 @@ public partial class App : Application
 
         _library = new LibraryService(_config.LibraryPath,
             seedSourceDir: Path.Combine(AppContext.BaseDirectory, "DefaultLibrary"));
-        _vm = new LauncherViewModel(_library, new ClipboardInsertService(), _config);
+        _vm = new LauncherViewModel(_library, new InsertService(_target), _config);
 
         // The watcher fires on a thread-pool thread; marshal the refresh to the UI thread.
         _library.Updated += () => Dispatcher.BeginInvoke(new Action(_vm.OnLibraryUpdated));
@@ -57,12 +69,24 @@ public partial class App : Application
         _launcher = new LauncherWindow(_vm, _config);
         ApplySizeOverride(_launcher, ArgValue(e.Args, "--size"));
 
+        InitHotkey();
+
         // Background waiter: when any future instance signals, show the launcher on the UI thread.
         var t = new Thread(ShowEventLoop) { IsBackground = true, Name = "ShowEventWaiter" };
         t.Start();
 
         if (e.Args.Any(a => a.Equals("--show", StringComparison.OrdinalIgnoreCase)))
             ShowLauncher();
+    }
+
+    private void InitHotkey()
+    {
+        _hotkey = new GlobalHotkey();
+        _hotkey.Pressed += ShowLauncher;   // fires on the UI thread
+        if (!_hotkey.Rebind(_config.HotkeyGesture))
+            _tray?.ShowBalloonTip(5000, "QuickReplyKit",
+                $"Couldn't register the hotkey “{_config.HotkeyGesture}” (it may be in use). " +
+                "The app is running; open it from the tray.", Forms.ToolTipIcon.Warning);
     }
 
     private void ShowEventLoop()
@@ -74,7 +98,22 @@ public partial class App : Application
         }
     }
 
-    private void ShowLauncher() => _launcher?.ShowLauncher();
+    private void ShowLauncher()
+    {
+        CaptureForegroundTarget();
+        _launcher?.ShowLauncher();
+    }
+
+    /// <summary>
+    /// Remember the window to paste into: the foreground window at the moment the launcher is
+    /// summoned (hotkey, tray, or --show), as long as it isn't our own launcher.
+    /// </summary>
+    private void CaptureForegroundTarget()
+    {
+        nint fg = ForegroundWindow.Get();
+        nint mine = _launcher is null ? 0 : new WindowInteropHelper(_launcher).Handle;
+        if (fg != 0 && fg != mine) _target.Target = fg;
+    }
 
     private void InitTray()
     {
@@ -133,6 +172,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _hotkey?.Dispose();
         if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
         _library?.Dispose();
         _mutex?.Dispose();
