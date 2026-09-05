@@ -14,6 +14,9 @@ publish/
 !docs/**/*.png
 TestResults/
 
+## Agent worktrees / session data
+.claude/
+
 ## OS
 Thumbs.db
 Desktop.ini
