@@ -76,6 +76,38 @@ public sealed class LauncherViewModel : ViewModelBase
 
     public bool HasValidSelection => _selectedResult?.IsValid == true;
 
+    /// <summary>The response backing the current selection (valid or not), or null.</summary>
+    public ResponseItem? SelectedItem => _selectedResult?.Item;
+
+    /// <summary>Absolute library root, for the editor and file-management ops.</summary>
+    public string LibraryRoot => _config.LibraryPath;
+
+    /// <summary>Category folder to pre-select in the editor: the current nav category, else "".</summary>
+    public string CurrentCategory =>
+        _selectedNav?.Scope == NavScope.Category ? _selectedNav.CategoryPath : "";
+
+    /// <summary>Every existing category folder path (sorted), for the editor's category picker.</summary>
+    public IReadOnlyList<string> CategoryPaths()
+    {
+        var paths = new List<string>();
+        void Walk(CategoryNode n)
+        {
+            if (!string.IsNullOrEmpty(n.RelativePath)) paths.Add(n.RelativePath);
+            foreach (var c in n.Children) Walk(c);
+        }
+        Walk(_library.Snapshot.Root);
+        paths.Sort(StringComparer.OrdinalIgnoreCase);
+        return paths;
+    }
+
+    /// <summary>Select the row for a given library-relative path after a refresh, if it exists.</summary>
+    public void SelectByRelativePath(string? relativePath)
+    {
+        if (string.IsNullOrEmpty(relativePath)) return;
+        var match = Results.FirstOrDefault(r => r.Item.RelativePath == relativePath);
+        if (match != null) SelectedResult = match;
+    }
+
     private bool _isEmptyState;
     public bool IsEmptyState { get => _isEmptyState; private set => Set(ref _isEmptyState, value); }
 
