@@ -54,6 +54,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0" x:Name="NavToggle" Content="☰" Style="{StaticResource IconButton}"
                         ToolTip="Show/hide the navigation pane" Click="NavToggle_Click"/>
@@ -64,7 +66,12 @@
                          VerticalContentAlignment="Center"
                          Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
                          PreviewKeyDown="SearchBox_PreviewKeyDown"/>
-                <Button Grid.Column="3" x:Name="SettingsButton" Content="⚙" Style="{StaticResource IconButton}"
+                <Button Grid.Column="3" x:Name="NewButton" Content="＋" Style="{StaticResource IconButton}"
+                        Foreground="{StaticResource Accent}" FontSize="18"
+                        ToolTip="New response" Click="NewButton_Click"/>
+                <Button Grid.Column="4" x:Name="NewFromClipboardButton" Content="📋" Style="{StaticResource IconButton}"
+                        ToolTip="New response from clipboard" Click="NewFromClipboardButton_Click"/>
+                <Button Grid.Column="5" x:Name="SettingsButton" Content="⚙" Style="{StaticResource IconButton}"
                         ToolTip="Open the response library folder (settings coming later)"
                         Click="SettingsButton_Click"/>
             </Grid>
@@ -139,7 +146,22 @@
                              VirtualizingStackPanel.VirtualizationMode="Recycling"
                              ScrollViewer.CanContentScroll="True"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             MouseDoubleClick="ResultsList_MouseDoubleClick">
+                             MouseDoubleClick="ResultsList_MouseDoubleClick"
+                             PreviewMouseRightButtonDown="ResultsList_PreviewMouseRightButtonDown">
+                        <ListBox.ContextMenu>
+                            <ContextMenu x:Name="ResultsContextMenu" Opened="ResultsContextMenu_Opened">
+                                <MenuItem x:Name="MenuEdit" Header="Edit…" Click="MenuEdit_Click"/>
+                                <MenuItem x:Name="MenuDuplicate" Header="Duplicate" Click="MenuDuplicate_Click"/>
+                                <MenuItem x:Name="MenuRename" Header="Rename…" Click="MenuRename_Click"/>
+                                <MenuItem x:Name="MenuMove" Header="Move to…" Click="MenuMove_Click"/>
+                                <Separator/>
+                                <MenuItem x:Name="MenuCopy" Header="Copy" Click="MenuCopy_Click"/>
+                                <MenuItem x:Name="MenuOpenFolder" Header="Open containing folder"
+                                          Click="MenuOpenFolder_Click"/>
+                                <Separator/>
+                                <MenuItem x:Name="MenuDelete" Header="Delete…" Click="MenuDelete_Click"/>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ResponseRowVm}">
                                 <Grid Margin="2,3">
