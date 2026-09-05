@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "app": "Teams",
+  "tags": ["meeting", "link", "join", "troubleshoot"],
+  "html": "<p>Hello,</p><p>Sorry the meeting link isn't working. A couple of quick things to try:</p><ul><li>Open the link in your browser and choose <i>Continue on this browser</i>.</li><li>Make sure you are signed in with your <b>district account</b>, not a personal one.</li><li>If it still fails, close Teams completely and reopen it, then click the link again.</li></ul><p>If none of that helps, send me the exact error message and I'll dig in.</p>",
+  "favorite": false,
+  "created": "2026-09-05T12:00:00Z",
+  "modified": "2026-09-05T12:00:00Z"
+}

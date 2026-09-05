@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "app": "IXL",
+  "tags": ["licensing", "expired", "renewal"],
+  "html": "<p>Hello,</p><p>It looks like the IXL license for your campus <b>expired</b>. Renewal is handled at the district level.</p><p>Next steps:</p><ol><li>Confirm the campus and subject area needing renewal.</li><li>Have an administrator submit a renewal request.</li><li>Allow 3–5 business days for processing.</li></ol><p>I will follow up as soon as access is restored.</p>",
+  "favorite": false,
+  "created": "2026-09-05T12:00:00Z",
+  "modified": "2026-09-05T12:00:00Z"
+}

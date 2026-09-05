@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "app": "IXL",
+  "tags": ["licensing", "campus", "access", "no license"],
+  "html": "<p>Hi there,</p><p>Thanks for reaching out. Unfortunately, <b>your campus does not currently have an active IXL license</b>, so student and teacher accounts cannot be provisioned at this time.</p><p>If you believe this is an error, please contact your campus administrator to confirm licensing, and they can submit a request to the district technology team.</p><p>Helpful links:</p><ul><li><a href=\"https://www.ixl.com/\">IXL sign-in</a></li></ul><p>Let me know if there is anything else I can help with!</p>",
+  "favorite": true,
+  "created": "2026-09-05T12:00:00Z",
+  "modified": "2026-09-05T12:00:00Z"
+}

@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/QuickReplyKit.Core/QuickReplyKit.Core.csproj" />
+    <Project Path="src/QuickReplyKit.Tests/QuickReplyKit.Tests.csproj" />
+    <Project Path="src/QuickReplyKit/QuickReplyKit.csproj" />
+  </Folder>
+</Solution>

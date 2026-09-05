@@ -1,0 +1,16 @@
+# Normalize text line endings; this is a Windows .NET repo.
+* text=auto
+
+*.cs      text diff=csharp
+*.xaml    text
+*.csproj  text
+*.slnx    text
+*.json    text
+*.md      text
+*.ps1     text
+
+# Binaries
+*.ico     binary
+*.png     binary
+*.dll     binary
+*.exe     binary

@@ -1,0 +1,104 @@
+using System.IO;
+using QuickReplyKit.Core;
+using QuickReplyKit.Core.Storage;
+
+namespace QuickReplyKit.Tests;
+
+public class LibraryServiceTests
+{
+    private static LibraryService NewService(TempDir dir) =>
+        new(dir.Of("lib"), seedSourceDir: null, recentPath: dir.Of("recent.json"), watch: false);
+
+    [Fact]
+    public void Search_DelegatesToRankedSearch_ExcludingInvalid()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "Password Reset.json"), html: "<p>reset your password</p>");
+        TestFiles.WriteResponse(dir.Of("lib", "Ticket.json"), html: "<p>please reset your pass now</p>");
+        File.WriteAllText(dir.Of("lib", "Broken.json"), "{ not json");
+
+        using var svc = NewService(dir);
+        var results = svc.Search("pass");
+
+        // Name-prefix ("Password") ranks above body match ("Ticket"); broken file excluded.
+        Assert.Equal(new[] { "Password Reset", "Ticket" }, results.Select(r => r.Name));
+    }
+
+    [Fact]
+    public void ToggleFavorite_PersistsToDisk_AndReflectsInFavorites()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"), favorite: false);
+
+        using var svc = NewService(dir);
+        var item = svc.Snapshot.AllResponses.Single();
+        Assert.False(item.Favorite);
+
+        svc.ToggleFavorite(item);
+
+        Assert.True(item.Favorite);                                   // reflected in memory
+        Assert.Contains(svc.Favorites(), r => r.Name == "A");        // reflected in Favorites()
+
+        // Persisted: a fresh service reading the same folder sees it favorited.
+        using var reopened = NewService(dir);
+        Assert.True(reopened.Snapshot.AllResponses.Single().Favorite);
+        Assert.Contains(reopened.Favorites(), r => r.Name == "A");
+
+        svc.ToggleFavorite(item);
+        Assert.False(item.Favorite);
+        Assert.DoesNotContain(svc.Favorites(), r => r.Name == "A");
+    }
+
+    [Fact]
+    public void Recent_ReturnsMostRecentFirst_AndDeduplicates()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+        TestFiles.WriteResponse(dir.Of("lib", "B.json"));
+
+        using var svc = NewService(dir);
+        var a = svc.Snapshot.AllResponses.Single(r => r.Name == "A");
+        var b = svc.Snapshot.AllResponses.Single(r => r.Name == "B");
+
+        svc.MarkUsed(a);
+        svc.MarkUsed(b);
+        Assert.Equal(new[] { "B", "A" }, svc.Recent().Select(r => r.Name));
+
+        svc.MarkUsed(a);   // re-use moves A to the front, no duplicate
+        Assert.Equal(new[] { "A", "B" }, svc.Recent().Select(r => r.Name));
+    }
+
+    [Fact]
+    public void Recent_PersistsAcrossReopen_AndSkipsMissingItems()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+        TestFiles.WriteResponse(dir.Of("lib", "Gone.json"));
+
+        using (var svc = NewService(dir))
+        {
+            svc.MarkUsed(svc.Snapshot.AllResponses.Single(r => r.Name == "Gone"));
+            svc.MarkUsed(svc.Snapshot.AllResponses.Single(r => r.Name == "A"));
+        }
+
+        File.Delete(dir.Of("lib", "Gone.json"));
+
+        using var reopened = NewService(dir);
+        // "Gone" is remembered in recent.json but no longer in the library → skipped.
+        Assert.Equal(new[] { "A" }, reopened.Recent().Select(r => r.Name));
+    }
+
+    [Fact]
+    public void Reload_PicksUpNewFiles()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+        using var svc = NewService(dir);
+        Assert.Single(svc.Snapshot.AllResponses);
+
+        TestFiles.WriteResponse(dir.Of("lib", "Sub", "B.json"));
+        svc.Reload();
+
+        Assert.Equal(2, svc.Snapshot.AllResponses.Count);
+    }
+}

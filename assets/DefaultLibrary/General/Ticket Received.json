@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "app": "",
+  "tags": ["greeting", "acknowledge", "ticket", "received"],
+  "html": "<p>Hi,</p><p>Thanks for contacting the support team — I've received your request and I'm looking into it now. I'll follow up shortly with an update.</p><p>Best,</p>",
+  "favorite": false,
+  "created": "2026-09-05T12:00:00Z",
+  "modified": "2026-09-05T12:00:00Z"
+}

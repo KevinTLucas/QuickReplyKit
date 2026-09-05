@@ -1,0 +1,19 @@
+## .NET / build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+artifacts/
+publish/
+
+## Test / capture artifacts
+*.png
+!docs/**/*.png
+TestResults/
+
+## OS
+Thumbs.db
+Desktop.ini

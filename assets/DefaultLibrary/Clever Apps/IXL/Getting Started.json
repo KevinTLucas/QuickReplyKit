@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "app": "IXL",
+  "tags": ["onboarding", "getting started", "login"],
+  "html": "<p>Welcome to IXL!</p><p>To get started, sign in through <a href=\"https://clever.com/\">Clever</a> using your district credentials — no separate IXL password is required.</p><p>If a subject is missing from your dashboard, let us know which one and we will check your campus licensing.</p>",
+  "favorite": false,
+  "created": "2026-09-05T12:00:00Z",
+  "modified": "2026-09-05T12:00:00Z"
+}
