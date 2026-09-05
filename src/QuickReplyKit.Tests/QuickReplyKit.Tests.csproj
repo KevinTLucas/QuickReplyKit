@@ -21,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QuickReplyKit.Core\QuickReplyKit.Core.csproj" />
+    <!-- Reference the WPF app so the launcher view-models can be unit-tested headlessly. -->
+    <ProjectReference Include="..\QuickReplyKit\QuickReplyKit.csproj" />
   </ItemGroup>
 
 </Project>

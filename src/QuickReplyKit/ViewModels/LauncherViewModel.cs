@@ -41,6 +41,7 @@ public sealed class LauncherViewModel : ViewModelBase
         CopyCommand = new RelayCommand(_ => CopySelected(), _ => HasValidSelection);
 
         BuildNav();
+        SelectNav(NavRoots.First(n => n.Scope == NavScope.All));   // default landing view
         RefreshResults();
     }
 
@@ -109,12 +110,20 @@ public sealed class LauncherViewModel : ViewModelBase
 
     public void OnLibraryUpdated()
     {
+        var selResultPath = _selectedResult?.Item.RelativePath;
         var scope = _selectedNav?.Scope;
         var path = _selectedNav?.CategoryPath;
         BuildNav();
-        var restored = FindNav(scope, path);
-        if (restored != null) { _selectedNav = restored; restored.IsSelected = true; OnPropertyChanged(nameof(SelectedNav)); }
+        SelectNav(FindNav(scope, path) ?? NavRoots.First(n => n.Scope == NavScope.All));
         RefreshResults();
+
+        // Preserve the result selection across a live refresh where the item still exists;
+        // RefreshResults has otherwise reset it to the first row.
+        if (!string.IsNullOrEmpty(selResultPath))
+        {
+            var match = Results.FirstOrDefault(r => r.Item.RelativePath == selResultPath);
+            if (match != null) SelectedResult = match;
+        }
     }
 
     // --- Internals ----------------------------------------------------------
@@ -259,9 +268,15 @@ public sealed class LauncherViewModel : ViewModelBase
 
         foreach (var child in _library.Snapshot.Root.Children)
             NavRoots.Add(BuildCategory(child));
+    }
 
-        _selectedNav = all;      // default landing view; setter side effects not needed here
-        all.IsSelected = true;
+    /// <summary>Selects one nav node, clearing any stale selection flags so exactly one is marked.</summary>
+    private void SelectNav(NavNodeVm node)
+    {
+        foreach (var n in Flatten(NavRoots))
+            if (n.IsSelected && n != node) n.IsSelected = false;
+        _selectedNav = node;
+        node.IsSelected = true;
         OnPropertyChanged(nameof(SelectedNav));
     }
 

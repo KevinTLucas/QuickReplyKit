@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Storage;
 
@@ -8,6 +9,26 @@ public class LibraryServiceTests
 {
     private static LibraryService NewService(TempDir dir) =>
         new(dir.Of("lib"), seedSourceDir: null, recentPath: dir.Of("recent.json"), watch: false);
+
+    [Fact]
+    public void Updated_Fires_AndRebuildsSnapshot_WhenAFileIsAdded()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+
+        using var svc = new LibraryService(dir.Of("lib"), seedSourceDir: null,
+            recentPath: dir.Of("recent.json"), watch: true);
+        Assert.Single(svc.Snapshot.AllResponses);
+
+        var fired = new ManualResetEventSlim();
+        svc.Updated += () => fired.Set();
+
+        TestFiles.WriteResponse(dir.Of("lib", "B.json"));
+
+        Assert.True(fired.Wait(5000), "LibraryService.Updated never fired for a new file");
+        // The snapshot is rebuilt before Updated is raised.
+        Assert.Contains(svc.Snapshot.AllResponses, r => r.Name == "B");
+    }
 
     [Fact]
     public void Search_DelegatesToRankedSearch_ExcludingInvalid()
