@@ -140,4 +140,41 @@ public class HtmlToFlowDocumentTests
             Assert.Contains("Hi there, welcome", Text(doc));
         });
     }
+
+    [Fact]
+    public void NestedLists_ProduceAListWithinAListItem()
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert("<ul><li>outer<ul><li>inner</li></ul></li></ul>");
+            var outer = doc.Blocks.OfType<List>().Single();
+            var outerItem = outer.ListItems.Single();
+            var inner = outerItem.Blocks.OfType<List>().Single();
+            Assert.Single(inner.ListItems);
+            Assert.Contains("outer", Text(doc));
+            Assert.Contains("inner", Text(doc));
+        });
+    }
+
+    [Fact]
+    public void Link_WithoutHref_RendersTextWithNoNavigateUri()
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert("<p>see <a>plain</a> here</p>");
+            var link = doc.Blocks.OfType<Paragraph>().Single().Inlines.OfType<Hyperlink>().Single();
+            Assert.Null(link.NavigateUri);                     // not clickable, but text survives
+            Assert.Equal("plain", new TextRange(link.ContentStart, link.ContentEnd).Text);
+        });
+    }
+
+    [Fact]
+    public void UnknownTags_AreIgnored_ButInnerTextIsKept()
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert("<div><span>hello</span> <mark>world</mark></div>");
+            Assert.Contains("hello world", Text(doc));
+        });
+    }
 }
