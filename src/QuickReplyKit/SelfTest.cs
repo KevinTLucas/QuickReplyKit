@@ -34,6 +34,63 @@ internal static class SelfTest
     [DllImport("user32.dll")] private static extern nint SendMessage(nint hWnd, int msg, nint wParam, nint lParam);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hWnd, out uint pid);
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MSG { public nint hwnd; public uint message; public nint wParam; public nint lParam; public uint time; public int ptX; public int ptY; }
+    [DllImport("user32.dll")] private static extern bool PeekMessage(out MSG msg, nint hWnd, uint min, uint max, uint remove);
+    [DllImport("user32.dll")] private static extern bool TranslateMessage(ref MSG msg);
+    [DllImport("user32.dll")] private static extern nint DispatchMessage(ref MSG msg);
+    private const uint PM_REMOVE = 0x0001;
+
+    /// <summary>
+    /// <c>--selftest-foreground</c>: prove <see cref="ForegroundMonitor"/> records the last real
+    /// foreground window (the fix for paste targeting the wrong window on non-hotkey launches).
+    /// Installs the monitor on this STA thread, focuses a fresh Notepad, pumps messages so the
+    /// OUTOFCONTEXT WinEvent is delivered, and checks the tracker captured Notepad's process.
+    /// Prints one line: <c>FOREGROUND_TRACK=&lt;ok|fail&gt;</c>.
+    /// </summary>
+    public static int RunForeground()
+    {
+        AttachConsole(ATTACH_PARENT_PROCESS);
+        bool ok = false;
+        Process? launched = null;
+        nint target = 0;
+        try
+        {
+            // Install the monitor FIRST, so the foreground *change* when Notepad appears is caught.
+            var tracker = new ForegroundTargetTracker();
+            using var monitor = new ForegroundMonitor(tracker);
+
+            var before = FindNotepadWindows();
+            launched = Process.Start(new ProcessStartInfo(@"C:\Windows\System32\notepad.exe") { UseShellExecute = true });
+
+            var sw = Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < 6000 && !ok)
+            {
+                while (PeekMessage(out MSG m, 0, 0, 0, PM_REMOVE)) { TranslateMessage(ref m); DispatchMessage(ref m); }
+
+                if (target == 0) target = WaitForNewNotepad(before, timeoutMs: 50);
+                if (target != 0)
+                {
+                    // If the launch's foreground event was missed, force one the pre-installed hook will see.
+                    if (tracker.Target == 0) ForegroundWindow.Restore(target);
+                    if (tracker.Target != 0)
+                    {
+                        GetWindowThreadProcessId(target, out uint notepadPid);
+                        GetWindowThreadProcessId(tracker.Target, out uint gotPid);
+                        ok = notepadPid != 0 && gotPid == notepadPid;
+                    }
+                }
+                Thread.Sleep(30);
+            }
+        }
+        catch (Exception ex) { Console.Error.WriteLine("[selftest-fg] " + ex); }
+        finally { KillNotepad(target, launched); }
+
+        Console.WriteLine($"FOREGROUND_TRACK={(ok ? "ok" : "fail")}");
+        Console.Out.Flush();
+        return ok ? 0 : 1;
+    }
+
     public static int Run()
     {
         AttachConsole(ATTACH_PARENT_PROCESS);
