@@ -77,6 +77,7 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   active work, known bugs, what needs QA, next actions.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — **the full phase plan (0–7)**: done vs. remaining, and how to
   pick up each remaining phase (spec, branch, validation gate, QA).
+- [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — the **original requirements** (source of truth).
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — design & storage contract & paste sequence.
 - `docs/PHASE2-LAUNCHER.md` · `PHASE3-PASTE.md` · `PHASE4-EDITOR.md` · `PHASE5-IMPORT-EXPORT.md` ·
   `PHASE6-SETTINGS-WINDOW.md` · `PHASE7-POLISH-PACKAGING.md` — per-phase specs / work orders.
