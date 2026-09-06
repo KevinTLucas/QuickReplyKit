@@ -5,9 +5,14 @@
 > and [`ROADMAP.md`](ROADMAP.md) for the full phase plan (0–7).
 
 - **Last updated:** 2026-09-06
-- **Status: ✅ MVP COMPLETE.** All phases 0–7 implemented, independently QA'd, and merged to `main`.
-- **`main` tip:** `d0713a2` — Merge phase-7b (all phases integrated).
-- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **297 passing** · all four E2E self-tests
+- **Status: ✅ MVP COMPLETE + V2 in progress** (see [`V2-PLAN.md`](V2-PLAN.md)). Done in V2: **Phase R**
+  (lenient parsing + watcher guard) and **Phase 8** (full-UI light/dark theming) — both merged to `main`.
+  In flight: **Phase 9** (template engine). Then Phase 10 (editor) → Phase 11+ (continuous polish).
+- **`main` tip:** `782d1eb` — Merge phase-8-darkmode. **`dotnet test` 319 passing**, build clean, `PASTE=ok`.
+- **Known minor:** the editable rename/category `ComboBox` closed field keeps native light chrome in dark
+  mode (text stays readable) — a full ControlTemplate rewrite was judged over-engineering; revisit if wanted.
+- **(historical) MVP:** All phases 0–7 implemented, independently QA'd, and merged to `main`.
+- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **319 passing** · all four E2E self-tests
   deterministic: `--selftest-paste` → `PASTE=ok CLIPBOARD_RESTORED=ok`, `--selftest-paste-rich` →
   `RICHPASTE=ok`, `--selftest-paste-ui` → `UIPASTE=ok`, `--selftest-foreground` → `FOREGROUND_TRACK=ok`.
 - **Portable exe: verified.** `dotnet publish` produces a self-contained single-file `QuickReplyKit.exe`
