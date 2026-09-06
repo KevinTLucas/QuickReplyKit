@@ -49,6 +49,26 @@ or import their own). Notes: the first launch self-extracts native libraries to 
 seconds, once), and Windows SmartScreen may prompt for an unsigned exe (**More info → Run anyway**, or
 code-sign the exe for smoother distribution).
 
+## Runtime requirements & dependencies (works on a clean PC with nothing installed)
+
+The portable build is **self-contained**: the entire .NET runtime, WPF, and all native runtime libraries
+are **bundled inside `QuickReplyKit.exe`** and extracted to a per-user temp folder on first run. A target
+PC needs **only Windows** — no .NET, no Visual C++ Redistributable, no other packages.
+
+**Requirement:** 64-bit **Windows 10 (1607+) or Windows 11**. (x64. Not for ARM/32-bit or older Windows.)
+
+**Bundled inside the exe (you do NOT install these):** the full .NET 10 runtime + WPF (~250 framework
+assemblies) and the native runtime — `coreclr.dll`, `clrjit.dll`, `hostfxr/hostpolicy.dll`,
+**`vcruntime140_cor3.dll`** (its own C++ runtime — so no separate VC++ Redistributable is required),
+`PresentationNative_cor3.dll`, `wpfgfx_cor3.dll`, `D3DCompiler_47_cor3.dll`, `System.IO.Compression.Native.dll`.
+
+**External DLLs used (all are standard Windows system libraries, present on every Windows 10/11):**
+`user32.dll`, `kernel32.dll`, `gdi32.dll` (windowing/input/graphics), `dwmapi.dll` (dark title bar),
+`shell32/ole32` (Explorer + shell), plus WPF's OS-provided DirectX/DirectWrite. No third-party or
+redistributable DLLs are required.
+
+So: copy the one exe to any supported Windows PC and it runs — no prerequisites to install.
+
 ## Managing responses
 
 From the launcher you can, via the `+` / clipboard buttons and the right-click menu on a response:
