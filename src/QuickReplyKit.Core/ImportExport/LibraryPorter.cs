@@ -61,6 +61,7 @@ public static class LibraryPorter
         var result = new ImportResult();
         bool isZip = Path.GetExtension(sourcePath).Equals(".zip", StringComparison.OrdinalIgnoreCase);
         string tempDir = Path.Combine(Path.GetTempPath(), "QRK-Import", Guid.NewGuid().ToString("N"));
+        string rootFull = Path.GetFullPath(libraryRoot);
 
         try
         {
@@ -75,7 +76,15 @@ public static class LibraryPorter
                 }
 
                 string relTarget = string.IsNullOrEmpty(targetCategory) ? rel : targetCategory + "/" + rel;
-                string dest = Path.Combine(libraryRoot, relTarget.Replace('/', Path.DirectorySeparatorChar));
+                string dest = Path.GetFullPath(Path.Combine(rootFull, relTarget.Replace('/', Path.DirectorySeparatorChar)));
+
+                // Never let a crafted entry (e.g. "..\..\evil.json" or a rooted path) escape the library.
+                if (!IsInside(rootFull, dest))
+                {
+                    result.SkippedInvalid++;
+                    result.Messages.Add($"Skipped unsafe path: {rel}");
+                    continue;
+                }
 
                 if (File.Exists(dest))
                 {
@@ -129,6 +138,15 @@ public static class LibraryPorter
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destZip))!);
         if (File.Exists(destZip)) File.Delete(destZip);
         ZipFile.CreateFromDirectory(sourceDir, destZip, CompressionLevel.Optimal, includeBaseDirectory: false);
+    }
+
+    /// <summary>True if <paramref name="fullPath"/> is <paramref name="rootFull"/> or sits under it.</summary>
+    private static bool IsInside(string rootFull, string fullPath)
+    {
+        string rel = Path.GetRelativePath(rootFull, fullPath);
+        return !Path.IsPathRooted(rel)
+            && rel != ".."
+            && !rel.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
     }
 
     private static string NextFree(string dest)
