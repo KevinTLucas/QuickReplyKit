@@ -118,7 +118,7 @@ public class LauncherViewModelTests
     // --- Scope vs global search --------------------------------------------
 
     [Fact]
-    public void EmptyQuery_AllScope_ShowsEveryValidResponseByName()
+    public void EmptyQuery_AllScope_ShowsValidByName_ThenInvalid()
     {
         Sta(() =>
         {
@@ -127,8 +127,40 @@ public class LauncherViewModelTests
             using var svc = NewService(dir);
             var vm = NewVm(svc, new FakeInsertService());   // lands on All
 
-            Assert.Equal(new[] { "Alpha", "Beta", "Delta", "Gamma" },
-                vm.Results.Select(r => r.Name).ToArray());   // invalid "Broken" excluded from All
+            // Valid responses by name first, then invalid ones (surfaced so they can be fixed).
+            Assert.Equal(new[] { "Alpha", "Beta", "Delta", "Gamma", "Broken" },
+                vm.Results.Select(r => r.Name).ToArray());
+        });
+    }
+
+    [Fact]
+    public void AllScope_SurfacesRootInvalidFile_ButExcludesItFromPaste()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Good.json"));
+            File.WriteAllText(dir.Of("lib", "RootBroken.json"), "{ not json");   // invalid at library ROOT
+            using var svc = NewService(dir);
+            var insert = new FakeInsertService();
+            var vm = NewVm(svc, insert);   // lands on All
+
+            // The root-level invalid file now appears in "All Responses" (BACKLOG item).
+            var broken = vm.Results.FirstOrDefault(r => r.Name == "RootBroken");
+            Assert.NotNull(broken);
+            Assert.False(broken!.IsValid);
+            Assert.True(broken.ShowStatusGlyph);               // ⚠ marker
+
+            // …but it is not paste-able: selecting it disables all three insert actions.
+            vm.SelectedResult = broken;
+            Assert.False(vm.HasValidSelection);
+            Assert.False(vm.PasteCommand.CanExecute(null));
+            Assert.False(vm.PastePlainCommand.CanExecute(null));
+            Assert.False(vm.CopyCommand.CanExecute(null));
+
+            vm.TriggerDefaultInsert();
+            vm.TriggerPlainInsert();
+            Assert.Empty(insert.Calls);                        // nothing inserted
         });
     }
 

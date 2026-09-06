@@ -183,6 +183,16 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ResponseRowVm}">
                                 <Grid Margin="2,3">
+                                    <Grid.Style>
+                                        <!-- Invalid rows are muted (but the ⚠ stays legible). -->
+                                        <Style TargetType="Grid">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsValid}" Value="False">
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
