@@ -1,4 +1,5 @@
 using System.IO;
+using QuickReplyKit.Core.Library;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 
@@ -92,5 +93,157 @@ public class ResponseFileTests
         Assert.True(item.IsValid);
         Assert.NotEqual(default, item.Created);
         Assert.NotEqual(default, item.Modified);
+    }
+
+    // ---- Lenient per-field parsing (Phase R) ----
+
+    [Fact]
+    public void Load_TagsAsSingleString_BecomesOneTag()
+    {
+        using var t = new TempDir();
+        string p = t.Of("StrTags.json");
+        File.WriteAllText(p, "{\"schema\":1,\"html\":\"<p>x</p>\",\"tags\":\"solo\"}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.Equal(new[] { "solo" }, item.Tags);
+    }
+
+    [Fact]
+    public void Load_TagsWithWrongTypedElements_SkipsThemKeepsStrings()
+    {
+        using var t = new TempDir();
+        string p = t.Of("MixedTags.json");
+        File.WriteAllText(p, "{\"schema\":1,\"html\":\"<p>x</p>\",\"tags\":[\"a\",5,null,{\"x\":1},\"b\"]}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.Equal(new[] { "a", "b" }, item.Tags);
+    }
+
+    [Fact]
+    public void Load_TagsAsWrongContainer_YieldsEmpty()
+    {
+        using var t = new TempDir();
+        string p = t.Of("ObjTags.json");
+        File.WriteAllText(p, "{\"schema\":1,\"html\":\"<p>x</p>\",\"tags\":{\"nope\":true}}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.Empty(item.Tags);
+    }
+
+    [Theory]
+    [InlineData("\"true\"")]  // favorite as a string, not a bool
+    [InlineData("\"nonsense\"")]
+    [InlineData("1")]          // favorite as a number
+    public void Load_FavoriteWrongType_FallsBackToFalse(string favoriteJson)
+    {
+        using var t = new TempDir();
+        string p = t.Of("Fav.json");
+        File.WriteAllText(p, $"{{\"schema\":1,\"html\":\"<p>x</p>\",\"favorite\":{favoriteJson}}}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.False(item.Favorite);
+    }
+
+    [Fact]
+    public void Load_AppWrongType_FallsBackToEmpty()
+    {
+        using var t = new TempDir();
+        string p = t.Of("App.json");
+        File.WriteAllText(p, "{\"schema\":1,\"html\":\"<p>x</p>\",\"app\":123}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.Equal("", item.App);
+    }
+
+    [Fact]
+    public void Load_UnparseableDates_FallBackToFileTimes()
+    {
+        using var t = new TempDir();
+        string p = t.Of("BadDates.json");
+        File.WriteAllText(p, "{\"schema\":1,\"html\":\"<p>x</p>\",\"created\":\"not-a-date\",\"modified\":42}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.NotEqual(default, item.Created);
+        Assert.NotEqual(default, item.Modified);
+    }
+
+    [Fact]
+    public void Load_TrailingCommaAndComments_StillParses()
+    {
+        using var t = new TempDir();
+        string p = t.Of("Lenient.json");
+        File.WriteAllText(p,
+            "{\n" +
+            "  // a hand-added note\n" +
+            "  \"schema\": 1,\n" +
+            "  \"html\": \"<p>hi</p>\",\n" +
+            "  \"tags\": [\"x\", \"y\",],\n" +   // trailing comma inside array
+            "}\n");                                // trailing comma inside object
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.Equal("<p>hi</p>", item.Html);
+        Assert.Equal(new[] { "x", "y" }, item.Tags);
+    }
+
+    [Fact]
+    public void Load_OneWrongTypedField_KeepsResponseValid_WithGoodHtml()
+    {
+        using var t = new TempDir();
+        string p = t.Of("OneTypo.json");
+        // Everything but html is the wrong type; html is good → the response survives.
+        File.WriteAllText(p,
+            "{\"schema\":1,\"html\":\"<p>keep me</p>\",\"app\":true,\"tags\":\"onetag\"," +
+            "\"favorite\":\"yes\",\"created\":\"garbage\",\"modified\":[]}");
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.True(item.IsValid, item.Error);
+        Assert.Equal("<p>keep me</p>", item.Html);
+        Assert.Equal("", item.App);
+        Assert.Equal(new[] { "onetag" }, item.Tags);
+        Assert.False(item.Favorite);
+    }
+
+    [Fact]
+    public void Load_NoUsableHtml_IsInvalid_EvenWithSchema()
+    {
+        using var t = new TempDir();
+        string p = t.Of("NoHtml.json");
+        File.WriteAllText(p, "{\"schema\":1,\"html\":123}"); // html present but not a string
+
+        var item = ResponseFile.Load(p, t.Path);
+
+        Assert.False(item.IsValid);
+        Assert.NotNull(item.Error);
+    }
+
+    [Fact]
+    public void Scan_BrokenFile_DoesNotBlockValidSibling()
+    {
+        using var t = new TempDir();
+        File.WriteAllText(t.Of("broken.json"), "{ not json at all ");
+        File.WriteAllText(t.Of("also-broken.json"), "{\"schema\":1}"); // no html
+        TestFiles.WriteResponse(t.Of("good.json"), html: "<p>fine</p>", tags: new[] { "ok" });
+
+        var snap = LibraryScanner.Scan(t.Path);
+
+        var good = Assert.Single(snap.ValidResponses);
+        Assert.Equal("good", good.Name);
+        Assert.Contains(snap.AllResponses, r => r.Name == "broken" && !r.IsValid);
+        Assert.Contains(snap.AllResponses, r => r.Name == "also-broken" && !r.IsValid);
     }
 }

@@ -23,7 +23,17 @@ public sealed class LibraryWatcher : IDisposable
     {
         _root = libraryRoot;
         _debounce = new Timer(debounceMs) { AutoReset = false };
-        _debounce.Elapsed += (_, _) => Changed?.Invoke();
+        // Fire under the lock so a callback that slipped through cannot deliver Changed after
+        // Dispose: either it runs first (Dispose then waits on the lock), or Dispose wins, sets
+        // _disposed, and this returns without invoking.
+        _debounce.Elapsed += (_, _) =>
+        {
+            lock (_gate)
+            {
+                if (_disposed) return;
+                Changed?.Invoke();
+            }
+        };
         Start();
     }
 
@@ -85,12 +95,15 @@ public sealed class LibraryWatcher : IDisposable
 
     public void Dispose()
     {
+        FileSystemWatcher? watcher;
         lock (_gate)
         {
             if (_disposed) return;
             _disposed = true;
+            _debounce.Dispose();   // inside the lock: no debounced Changed can fire after this
+            watcher = _watcher;
+            _watcher = null;
         }
-        try { _watcher?.Dispose(); } catch { /* ignore */ }
-        _debounce.Dispose();
+        try { watcher?.Dispose(); } catch { /* ignore */ }
     }
 }

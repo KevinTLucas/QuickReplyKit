@@ -1,10 +1,23 @@
 using System.IO;
+using QuickReplyKit.Core.Library;
 using QuickReplyKit.Core.Storage;
 
 namespace QuickReplyKit.Tests;
 
 public class DefaultLibraryTests
 {
+    [Fact]
+    public void EntireSeededLibrary_LoadsAllValid_AfterLenientParsing()
+    {
+        string libraryRoot = TestFiles.RepoAsset("assets/DefaultLibrary");
+
+        var snap = LibraryScanner.Scan(libraryRoot);
+
+        Assert.NotEmpty(snap.AllResponses);
+        // No regression: every seeded file still parses valid under the lenient reader.
+        Assert.All(snap.AllResponses, r => Assert.True(r.IsValid, $"{r.RelativePath}: {r.Error}"));
+    }
+
     [Fact]
     public void SeededFile_NoCampusLicense_ParsesValid()
     {

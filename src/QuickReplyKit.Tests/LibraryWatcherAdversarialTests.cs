@@ -101,4 +101,31 @@ public class LibraryWatcherAdversarialTests
         Thread.Sleep(500);
         Assert.Equal(0, events);
     }
+
+    [Fact]
+    public void BurstThenDispose_DeliversNoChangedAfterDispose()
+    {
+        using var t = new TempDir();
+
+        // Repeat: land writes to arm the debounce timer, then Dispose while it is pending, and
+        // assert nothing fires afterward. A long debounce keeps the timer in-flight across Dispose.
+        for (int round = 0; round < 20; round++)
+        {
+            int postDispose = 0;
+            var disposed = false;
+            var w = new LibraryWatcher(t.Path, debounceMs: 400);
+            // Volatile read of `disposed` is unnecessary under the lock the watcher takes to fire:
+            // if this runs at all after Dispose, it is a defect.
+            w.Changed += () => { if (Volatile.Read(ref disposed)) Interlocked.Increment(ref postDispose); };
+
+            for (int i = 0; i < 15; i++)
+                WriteJson(t.Of($"r{round}_{i}.json"));
+
+            Volatile.Write(ref disposed, true);
+            w.Dispose();
+
+            Thread.Sleep(700); // well past the 400ms debounce
+            Assert.Equal(0, postDispose);
+        }
+    }
 }
