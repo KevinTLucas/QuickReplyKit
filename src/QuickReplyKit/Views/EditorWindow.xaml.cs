@@ -73,6 +73,19 @@ public partial class EditorWindow : Window
         Body.Focus();
     }
 
+    private void InsertVar_Click(object sender, RoutedEventArgs e)
+    {
+        if (InsertVarButton.ContextMenu is { } m) { m.PlacementTarget = InsertVarButton; m.IsOpen = true; }
+    }
+
+    private void InsertVarItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem mi || mi.Header is not string token) return;
+        Body.Selection.Text = token;                 // replace any selection, else insert at the caret
+        Body.CaretPosition = Body.Selection.End;     // leave the caret just after the inserted token
+        Body.Focus();
+    }
+
     private void Link_Click(object sender, RoutedEventArgs e)
     {
         var sel = Body.Selection;

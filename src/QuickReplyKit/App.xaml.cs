@@ -68,9 +68,12 @@ public partial class App : Application
 
         _config = AppConfig.Load();
 
-        // Debug/QA overrides (used by tools/shoot.ps1): --library <path>, --size WxH.
+        // Debug/QA overrides (used by tools/shoot.ps1): --library <path>, --size WxH, --theme Light|Dark|System.
         string? libOverride = ArgValue(e.Args, "--library");
         if (!string.IsNullOrEmpty(libOverride)) _config.LibraryPath = libOverride;
+
+        string? themeOverride = ArgValue(e.Args, "--theme");
+        if (Enum.TryParse<AppTheme>(themeOverride, ignoreCase: true, out var themePref)) _config.Theme = themePref;
 
         ThemeManager.Apply(_config.Theme);
 

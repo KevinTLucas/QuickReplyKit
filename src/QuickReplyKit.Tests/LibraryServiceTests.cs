@@ -141,6 +141,20 @@ public class LibraryServiceTests
     }
 
     [Fact]
+    public void FindByName_IsCaseInsensitive_AndSkipsInvalid()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "Sub", "Welcome.json"), html: "<p>hi</p>");
+        File.WriteAllText(dir.Of("lib", "Broken.json"), "{ not json");
+        using var svc = NewService(dir);
+
+        Assert.Equal("Welcome", svc.FindByName("welcome")?.Name);   // case-insensitive, any folder
+        Assert.Equal("<p>hi</p>", svc.FindByName("WELCOME")?.Html);
+        Assert.Null(svc.FindByName("Broken"));                       // invalid files never match
+        Assert.Null(svc.FindByName("Nope"));                         // unknown name → null
+    }
+
+    [Fact]
     public void Reload_PicksUpNewFiles()
     {
         using var dir = new TempDir();

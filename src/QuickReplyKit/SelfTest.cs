@@ -189,11 +189,13 @@ internal static class SelfTest
         try
         {
             string pasted = "QRK_UIPASTE_" + Guid.NewGuid().ToString("N");
+            // Include a {{day}} token so this also proves template resolution reaches the paste path.
+            string day = DateTimeOffset.Now.ToString("dddd");
 
             tempRoot = Path.Combine(Path.GetTempPath(), "QRK_UITest_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempRoot);
             File.WriteAllText(Path.Combine(tempRoot, "UI Test.json"),
-                "{\"schema\":1,\"html\":\"<p>" + pasted + "</p>\"}");
+                "{\"schema\":1,\"html\":\"<p>" + pasted + " {{day}}</p>\"}");
             string recentPath = Path.Combine(tempRoot, "recent.json");
 
             var before = FindNotepadWindows();
@@ -214,7 +216,10 @@ internal static class SelfTest
                 if (vm.HasValidSelection) vm.TriggerDefaultInsert();   // the Enter / Paste command
 
                 Thread.Sleep(400);
-                ok = ReadNotepadText(target).Contains(pasted, StringComparison.Ordinal);
+                string got = ReadNotepadText(target);
+                // Both the marker and the RESOLVED {{day}} token must land (proves resolve-at-insert).
+                ok = got.Contains(pasted, StringComparison.Ordinal)
+                     && got.Contains(day, StringComparison.Ordinal);
             }
         }
         catch (Exception ex) { Console.Error.WriteLine("[selftest-ui] " + ex); }
