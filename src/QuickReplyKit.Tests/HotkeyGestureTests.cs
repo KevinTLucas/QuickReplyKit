@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using QuickReplyKit.Interop;
 
 namespace QuickReplyKit.Tests;
@@ -114,5 +115,66 @@ public class HotkeyGestureTests
     {
         Assert.False(HotkeyGesture.TryParse(gesture, out var g));
         Assert.Equal(default, g);
+    }
+}
+
+/// <summary>
+/// Tests for <see cref="HotkeyGesture.Format"/> — the capture-control formatter that turns a
+/// pressed WPF combo back into a gesture string. Its output must round-trip through
+/// <see cref="HotkeyGesture.TryParse"/> to the same modifiers + virtual key.
+/// </summary>
+public class HotkeyGestureFormatTests
+{
+    private const uint Ctrl = HotkeyGesture.MOD_CONTROL;
+    private const uint Alt = HotkeyGesture.MOD_ALT;
+    private const uint Shift = HotkeyGesture.MOD_SHIFT;
+    private const uint Win = HotkeyGesture.MOD_WIN;
+
+    [Fact]
+    public void Formats_Canonical_CtrlAltD()
+    {
+        Assert.Equal("Ctrl+Alt+D", HotkeyGesture.Format(ModifierKeys.Control | ModifierKeys.Alt, Key.D));
+    }
+
+    [Fact]
+    public void ModifierOrder_IsCanonical_CtrlAltShiftWin()
+    {
+        var s = HotkeyGesture.Format(
+            ModifierKeys.Windows | ModifierKeys.Shift | ModifierKeys.Alt | ModifierKeys.Control, Key.A);
+        Assert.Equal("Ctrl+Alt+Shift+Win+A", s);
+    }
+
+    [Theory]
+    [InlineData(ModifierKeys.Control | ModifierKeys.Alt, Key.D, Ctrl | Alt, (uint)'D')]
+    [InlineData(ModifierKeys.Alt | ModifierKeys.Shift, Key.Q, Alt | Shift, (uint)'Q')]
+    [InlineData(ModifierKeys.Control, Key.F12, Ctrl, 0x7Bu)]
+    [InlineData(ModifierKeys.Windows, Key.D1, Win, (uint)'1')]
+    [InlineData(ModifierKeys.Control, Key.NumPad5, Ctrl, (uint)'5')]
+    [InlineData(ModifierKeys.Control | ModifierKeys.Shift, Key.Space, Ctrl | Shift, 0x20u)]
+    [InlineData(ModifierKeys.Alt, Key.Return, Alt, 0x0Du)]
+    [InlineData(ModifierKeys.Control, Key.Prior, Ctrl, 0x21u)]
+    [InlineData(ModifierKeys.Control, Key.Next, Ctrl, 0x22u)]
+    [InlineData(ModifierKeys.Control, Key.Delete, Ctrl, 0x2Eu)]
+    [InlineData(ModifierKeys.None, Key.F9, 0u, 0x78u)]
+    public void RoundTrips_Through_TryParse(ModifierKeys mods, Key key, uint expectMods, uint expectVk)
+    {
+        string? gesture = HotkeyGesture.Format(mods, key);
+        Assert.NotNull(gesture);
+        Assert.True(HotkeyGesture.TryParse(gesture, out var g));
+        Assert.Equal(expectMods, g.Modifiers);
+        Assert.Equal(expectVk, g.VirtualKey);
+    }
+
+    [Theory]
+    [InlineData(Key.LeftCtrl)]
+    [InlineData(Key.RightCtrl)]
+    [InlineData(Key.LeftAlt)]
+    [InlineData(Key.LeftShift)]
+    [InlineData(Key.LWin)]
+    [InlineData(Key.System)]         // Alt held with no real key yet
+    [InlineData(Key.OemQuestion)]    // punctuation: unmapped, keep waiting
+    public void ReturnsNull_ForBareModifiers_And_UnmappableKeys(Key key)
+    {
+        Assert.Null(HotkeyGesture.Format(ModifierKeys.Control, key));
     }
 }

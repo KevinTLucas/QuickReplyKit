@@ -1,3 +1,5 @@
+using System.Windows.Input;
+
 namespace QuickReplyKit.Interop;
 
 /// <summary>
@@ -46,6 +48,50 @@ public readonly record struct HotkeyGesture(uint Modifiers, uint VirtualKey)
         gesture = new HotkeyGesture(mods, vk.Value);
         return true;
     }
+
+    /// <summary>
+    /// Format a captured combo (WPF modifiers + main key) into a gesture string that
+    /// <see cref="TryParse"/> accepts, e.g. "Ctrl+Alt+D". Returns null when <paramref name="key"/>
+    /// isn't a usable main key (a bare modifier, or an unmappable key) so a capture control can
+    /// keep waiting for a real combo. Modifier order matches the parser's canonical form.
+    /// </summary>
+    public static string? Format(ModifierKeys modifiers, Key key)
+    {
+        if (KeyToken(key) is not { } main) return null;
+
+        var parts = new List<string>(5);
+        if ((modifiers & ModifierKeys.Control) != 0) parts.Add("Ctrl");
+        if ((modifiers & ModifierKeys.Alt) != 0) parts.Add("Alt");
+        if ((modifiers & ModifierKeys.Shift) != 0) parts.Add("Shift");
+        if ((modifiers & ModifierKeys.Windows) != 0) parts.Add("Win");
+        parts.Add(main);
+        return string.Join("+", parts);
+    }
+
+    /// <summary>Reverse of <see cref="TryKey"/>: a WPF <see cref="Key"/> to its gesture token, or null.</summary>
+    private static string? KeyToken(Key key) => key switch
+    {
+        >= Key.A and <= Key.Z => key.ToString(),                              // "A".."Z"
+        >= Key.D0 and <= Key.D9 => ((char)('0' + (key - Key.D0))).ToString(),
+        >= Key.NumPad0 and <= Key.NumPad9 => ((char)('0' + (key - Key.NumPad0))).ToString(),
+        >= Key.F1 and <= Key.F24 => "F" + (key - Key.F1 + 1),
+        Key.Space => "Space",
+        Key.Return => "Enter",
+        Key.Tab => "Tab",
+        Key.Escape => "Esc",
+        Key.Back => "Backspace",
+        Key.Insert => "Insert",
+        Key.Delete => "Delete",
+        Key.Home => "Home",
+        Key.End => "End",
+        Key.Prior => "PageUp",
+        Key.Next => "PageDown",
+        Key.Left => "Left",
+        Key.Up => "Up",
+        Key.Right => "Right",
+        Key.Down => "Down",
+        _ => null,
+    };
 
     private static bool TryKey(string token, out uint vk)
     {

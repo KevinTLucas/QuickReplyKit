@@ -15,10 +15,10 @@ namespace QuickReplyKit.Core;
 /// </summary>
 public sealed class LibraryService : IDisposable
 {
-    private readonly string _root;
+    private string _root;
     private readonly string? _recentPath;   // null → the global %APPDATA% recent file
     private readonly RecentStore _recent;
-    private readonly LibraryWatcher? _watcher;
+    private LibraryWatcher? _watcher;
     private readonly object _gate = new();
     private bool _disposed;
 
@@ -57,6 +57,26 @@ public sealed class LibraryService : IDisposable
 
     /// <summary>Rescans the library root into a fresh <see cref="Snapshot"/>.</summary>
     public void Reload() => Snapshot = LibraryScanner.Scan(_root);
+
+    /// <summary>
+    /// Point the library at a new root: rescan it and (if watching) re-attach the watcher there.
+    /// No-op after <see cref="Dispose"/>. Callers refresh their view via <see cref="Snapshot"/>.
+    /// </summary>
+    public void Repoint(string newRoot)
+    {
+        lock (_gate) { if (_disposed) return; }
+        if (string.Equals(_root, newRoot, StringComparison.OrdinalIgnoreCase)) { Reload(); return; }
+
+        _root = newRoot;
+        Reload();
+        if (_watcher != null)
+        {
+            _watcher.Changed -= OnLibraryChanged;
+            _watcher.Dispose();
+            _watcher = new LibraryWatcher(_root);
+            _watcher.Changed += OnLibraryChanged;
+        }
+    }
 
     /// <summary>Global, ranked search over the whole library (delegates to <see cref="ResponseSearch"/>).</summary>
     public IReadOnlyList<ResponseItem> Search(string query) =>

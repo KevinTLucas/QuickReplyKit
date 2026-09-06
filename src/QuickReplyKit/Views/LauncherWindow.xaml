@@ -87,8 +87,7 @@
                     </Button.ContextMenu>
                 </Button>
                 <Button Grid.Column="6" x:Name="SettingsButton" Content="⚙" Style="{StaticResource IconButton}"
-                        ToolTip="Open the response library folder (settings coming later)"
-                        Click="SettingsButton_Click"/>
+                        ToolTip="Settings" Click="SettingsButton_Click"/>
             </Grid>
         </Border>
 
