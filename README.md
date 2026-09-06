@@ -35,13 +35,19 @@ dotnet run --project src/QuickReplyKit -- --show
 
 ```bash
 dotnet publish src/QuickReplyKit -c Release -r win-x64 --self-contained true \
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none
 ```
 
 Output is a single **`QuickReplyKit.exe`** (~67 MB, self-contained — no .NET install needed on the
-target machine) with a `DefaultLibrary` folder beside it (the example content copied on first run).
-Copy both to any Windows PC and run the exe. Trimming is intentionally not enabled (WPF is not
-trim-safe).
+target machine), plus an optional `DefaultLibrary` folder beside it. Trimming is intentionally not
+enabled (WPF is not trim-safe); `-p:DebugType=none` keeps the folder clean (no `.pdb`).
+
+**To distribute: give end users just `QuickReplyKit.exe`.** It runs on its own — copy that one file to
+any Windows 10/11 PC and run it. The `DefaultLibrary` folder is optional: include it to seed a few
+example responses on first run; omit it and the app simply starts with an empty library (users create
+or import their own). Notes: the first launch self-extracts native libraries to a temp folder (a few
+seconds, once), and Windows SmartScreen may prompt for an unsigned exe (**More info → Run anyway**, or
+code-sign the exe for smoother distribution).
 
 ## Managing responses
 
