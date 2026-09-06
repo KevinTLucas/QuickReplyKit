@@ -72,6 +72,8 @@ public partial class App : Application
         string? libOverride = ArgValue(e.Args, "--library");
         if (!string.IsNullOrEmpty(libOverride)) _config.LibraryPath = libOverride;
 
+        ThemeManager.Apply(_config.Theme);
+
         _library = new LibraryService(_config.LibraryPath,
             seedSourceDir: Path.Combine(AppContext.BaseDirectory, "DefaultLibrary"));
         _vm = new LauncherViewModel(_library, new InsertService(_target), _config);

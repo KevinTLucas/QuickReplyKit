@@ -239,10 +239,10 @@ public sealed class LauncherViewModel : ViewModelBase
             FontSize = 13,
         };
         doc.Blocks.Add(new Paragraph(new Bold(new Run(item.Name + ".json"))));
-        doc.Blocks.Add(new Paragraph(new Run(item.Error ?? "This file could not be read."))
-        {
-            Foreground = System.Windows.Media.Brushes.Firebrick,
-        });
+        var error = new Paragraph(new Run(item.Error ?? "This file could not be read."));
+        if (System.Windows.Application.Current?.TryFindResource("Error") is System.Windows.Media.Brush brush)
+            error.Foreground = brush;
+        doc.Blocks.Add(error);
         return doc;
     }
 

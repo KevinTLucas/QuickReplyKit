@@ -24,6 +24,8 @@ public partial class SettingsWindow : Window
 
     private string _gesture;      // captured hotkey (edited in place by the capture box)
     private string _libraryPath;  // chosen library folder (may differ from _config until Save)
+    private bool _saved;          // set on Save so Close doesn't revert the (persisted) theme
+    private bool _loaded;         // gates live theme preview until the radios are initialised
 
     public SettingsWindow(AppConfig config, GlobalHotkey hotkey, LibraryService library, Action onLibraryChanged)
     {
@@ -40,8 +42,25 @@ public partial class SettingsWindow : Window
         LibraryPathBox.Text = _libraryPath;
         PasteRich.IsChecked = config.DefaultPasteMode == PasteMode.RichText;
         PastePlain.IsChecked = config.DefaultPasteMode == PasteMode.PlainText;
+        ThemeSystem.IsChecked = config.Theme == AppTheme.System;
+        ThemeLight.IsChecked = config.Theme == AppTheme.Light;
+        ThemeDark.IsChecked = config.Theme == AppTheme.Dark;
         RememberWindowCheck.IsChecked = config.RememberWindow;
         StartupCheck.IsChecked = StartupRegistration.IsEnabled();
+        _loaded = true;
+
+        // Revert a live-previewed theme if the dialog is dismissed without saving.
+        Closed += (_, _) => { if (!_saved) ThemeManager.Apply(_config.Theme); };
+    }
+
+    private AppTheme SelectedTheme() =>
+        ThemeLight.IsChecked == true ? AppTheme.Light :
+        ThemeDark.IsChecked == true ? AppTheme.Dark : AppTheme.System;
+
+    // Live preview: apply the picked theme immediately (persisted only on Save).
+    private void Theme_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loaded) ThemeManager.Apply(SelectedTheme());
     }
 
     // --- Hotkey capture -----------------------------------------------------
@@ -110,6 +129,7 @@ public partial class SettingsWindow : Window
 
         _config.HotkeyGesture = _gesture;
         _config.DefaultPasteMode = PastePlain.IsChecked == true ? PasteMode.PlainText : PasteMode.RichText;
+        _config.Theme = SelectedTheme();
         _config.RememberWindow = RememberWindowCheck.IsChecked == true;
 
         bool libraryChanged = !string.Equals(_libraryPath, _config.LibraryPath, StringComparison.OrdinalIgnoreCase);
@@ -124,6 +144,7 @@ public partial class SettingsWindow : Window
             _onLibraryChanged();
         }
 
+        _saved = true;
         DialogResult = true;
     }
 

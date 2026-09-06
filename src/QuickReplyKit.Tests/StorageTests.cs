@@ -57,6 +57,37 @@ public class AppConfigTests
         var loaded = AppConfig.Load(path);
         Assert.Equal("Ctrl+Alt+D", loaded.HotkeyGesture);
     }
+
+    [Fact]
+    public void Theme_DefaultsToSystem()
+    {
+        using var t = new TempDir();
+        Assert.Equal(AppTheme.System, AppConfig.Load(t.Of("nope.json")).Theme);
+    }
+
+    [Fact]
+    public void Theme_RoundTrips_AsReadableString()
+    {
+        using var t = new TempDir();
+        string path = t.Of("config.json");
+        new AppConfig { Theme = AppTheme.Dark }.Save(path);
+
+        Assert.Equal(AppTheme.Dark, AppConfig.Load(path).Theme);
+        Assert.Contains("Dark", File.ReadAllText(path));   // enum stored by name, not number
+    }
+}
+
+public class ThemeResolverTests
+{
+    [Theory]
+    [InlineData(AppTheme.Light, true, AppTheme.Light)]
+    [InlineData(AppTheme.Light, false, AppTheme.Light)]
+    [InlineData(AppTheme.Dark, true, AppTheme.Dark)]
+    [InlineData(AppTheme.Dark, false, AppTheme.Dark)]
+    [InlineData(AppTheme.System, true, AppTheme.Light)]   // System follows the OS flag
+    [InlineData(AppTheme.System, false, AppTheme.Dark)]
+    public void Effective_ResolvesPreferenceAndSystemFlag(AppTheme pref, bool systemLight, AppTheme expected)
+        => Assert.Equal(expected, ThemeResolver.Effective(pref, systemLight));
 }
 
 public class RecentStoreTests
