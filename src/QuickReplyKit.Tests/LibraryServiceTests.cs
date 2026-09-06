@@ -72,8 +72,9 @@ public class LibraryServiceTests
         using var svc = NewService(dir);
         var results = svc.Search("pass");
 
-        // Name-prefix ("Password") ranks above body match ("Ticket"); broken file excluded.
-        Assert.Equal(new[] { "Password Reset", "Ticket" }, results.Select(r => r.Name));
+        // Name-prefix ("Password") ranks above body match ("Ticket"); broken file (name has no
+        // "pass") is not matched. Search now returns SearchHits, so read the item off each hit.
+        Assert.Equal(new[] { "Password Reset", "Ticket" }, results.Select(r => r.Item.Name));
     }
 
     [Fact]

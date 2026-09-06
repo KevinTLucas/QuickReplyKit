@@ -203,6 +203,93 @@ public class LauncherViewModelTests
     }
 
     [Fact]
+    public void Search_MatchesInvalidByName_ButKeepsItNonPasteable()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);                                 // Cat1/Broken.json is invalid
+            using var svc = NewService(dir);
+            var insert = new FakeInsertService();
+            var vm = NewVm(svc, insert);
+
+            vm.Query = "broken";                           // M4: findable by name
+
+            var broken = vm.Results.FirstOrDefault(r => r.Name == "Broken");
+            Assert.NotNull(broken);
+            Assert.False(broken!.IsValid);
+            Assert.True(broken.ShowStatusGlyph);
+
+            // …but still not pasteable (VM guard unchanged).
+            vm.SelectedResult = broken;
+            Assert.False(vm.HasValidSelection);
+            Assert.False(vm.PasteCommand.CanExecute(null));
+            vm.TriggerDefaultInsert();
+            vm.TriggerPlainInsert();
+            Assert.Empty(insert.Calls);
+        });
+    }
+
+    [Fact]
+    public void Search_WithSelectedCategory_RanksInScopeHitsFirst()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);                                 // Alpha(root), Cat1/Beta, Cat1/Sub/Gamma, Cat2/Delta
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1");
+            vm.Query = "a";                                // matches all four names; scope reorders
+
+            var names = vm.Results.Select(r => r.Name).ToArray();
+            // Cat1 items (Beta, Gamma) come first even though Alpha is a name-prefix match.
+            Assert.Equal(new[] { "Beta", "Gamma" }, names.Take(2).ToArray());
+            Assert.Contains("Alpha", names);               // still globally present
+            Assert.Contains("Delta", names);
+        });
+    }
+
+    [Fact]
+    public void Search_NameHit_ProducesHighlightSegments()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Password Reset.json"));
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.Query = "reset";
+            var row = vm.Results.Single();
+
+            Assert.Contains(row.NameSegments, s => s.Hit);                        // a highlighted run
+            Assert.Equal("Password Reset", string.Concat(row.NameSegments.Select(s => s.Text)));
+            Assert.Contains(row.NameSegments, s => s.Hit && s.Text == "Reset");   // the matched run
+        });
+    }
+
+    [Fact]
+    public void Search_BodyOnlyHit_ShowsSnippet_AndNoNameHighlight()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Onboarding.json"),
+                html: "<p>Remember to reset the account first.</p>");
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.Query = "reset";
+            var row = vm.Results.Single();
+
+            Assert.DoesNotContain(row.NameSegments, s => s.Hit);      // name has no "reset"
+            Assert.Contains("reset", row.Subtitle, StringComparison.OrdinalIgnoreCase);   // snippet shown
+        });
+    }
+
+    [Fact]
     public void EmptyingQuery_RestoresSelectedNavScope()
     {
         Sta(() =>
