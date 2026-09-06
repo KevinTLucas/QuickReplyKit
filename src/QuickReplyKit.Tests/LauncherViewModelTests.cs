@@ -425,6 +425,30 @@ public class LauncherViewModelTests
     }
 
     [Fact]
+    public void Copy_ShowsCopiedHint_ButPasteAndPlainDoNot()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            Assert.False(vm.HasCopiedHint);                        // nothing yet
+            Assert.Equal("", vm.CopiedHint);
+
+            // Paste / Plain never raise the hint (they hide the launcher instead).
+            vm.TriggerDefaultInsert();
+            vm.TriggerPlainInsert();
+            Assert.False(vm.HasCopiedHint);
+
+            vm.CopyCommand.Execute(null);
+            Assert.True(vm.HasCopiedHint);                         // Copy flashes a confirmation
+            Assert.Equal("Copied ✓", vm.CopiedHint);
+        });
+    }
+
+    [Fact]
     public void InvalidSelection_InsertsNothing_AndCommandsDisabled()
     {
         Sta(() =>
