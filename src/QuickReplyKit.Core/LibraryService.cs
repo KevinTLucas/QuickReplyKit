@@ -78,6 +78,11 @@ public sealed class LibraryService : IDisposable
         }
     }
 
+    /// <summary>First valid response whose name matches (case-insensitive), or null. Backs template includes.</summary>
+    public ResponseItem? FindByName(string name) =>
+        Snapshot.ValidResponses.FirstOrDefault(
+            r => string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Global, ranked search over the whole library (delegates to <see cref="ResponseSearch"/>).</summary>
     public IReadOnlyList<ResponseItem> Search(string query) =>
         ResponseSearch.Search(Snapshot.AllResponses, query);

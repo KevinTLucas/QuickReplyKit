@@ -5,6 +5,7 @@ using System.Windows.Input;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
+using QuickReplyKit.Core.Templates;
 using QuickReplyKit.Core.Text;
 using QuickReplyKit.Services;
 
@@ -19,6 +20,7 @@ public sealed class LauncherViewModel : ViewModelBase
     private readonly LibraryService _library;
     private readonly IInsertService _insert;
     private readonly AppConfig _config;
+    private readonly Func<DateTimeOffset> _now;
 
     public ObservableCollection<NavNodeVm> NavRoots { get; } = new();
     public ObservableCollection<ResponseRowVm> Results { get; } = new();
@@ -30,11 +32,13 @@ public sealed class LauncherViewModel : ViewModelBase
     public RelayCommand PastePlainCommand { get; }
     public RelayCommand CopyCommand { get; }
 
-    public LauncherViewModel(LibraryService library, IInsertService insert, AppConfig config)
+    public LauncherViewModel(LibraryService library, IInsertService insert, AppConfig config,
+        Func<DateTimeOffset>? now = null)
     {
         _library = library;
         _insert = insert;
         _config = config;
+        _now = now ?? (static () => DateTimeOffset.Now);
 
         PasteCommand = new RelayCommand(_ => DefaultInsert(), _ => HasValidSelection);
         PastePlainCommand = new RelayCommand(_ => PlainInsert(), _ => HasValidSelection);
@@ -123,6 +127,10 @@ public sealed class LauncherViewModel : ViewModelBase
     public string PreviewMeta { get => _previewMeta; private set { if (Set(ref _previewMeta, value)) OnPropertyChanged(nameof(HasPreviewMeta)); } }
 
     public bool HasPreviewMeta => !string.IsNullOrEmpty(_previewMeta);
+
+    private bool _selectionHasVariables;
+    /// <summary>True when the selected response contains <c>{{…}}</c> tokens resolved on insert.</summary>
+    public bool SelectionHasVariables { get => _selectionHasVariables; private set => Set(ref _selectionHasVariables, value); }
 
     // --- Keyboard entry points (called from the window) ---------------------
 
@@ -214,9 +222,15 @@ public sealed class LauncherViewModel : ViewModelBase
     private void UpdatePreview()
     {
         var item = _selectedResult?.Item;
-        if (item == null) { PreviewDocument = new FlowDocument(); PreviewMeta = ""; }
-        else if (!item.IsValid) { PreviewDocument = ErrorDocument(item); PreviewMeta = "This file could not be read."; }
-        else { PreviewDocument = HtmlToFlowDocument.Convert(item.Html); PreviewMeta = BuildMeta(item); }
+        if (item == null) { PreviewDocument = new FlowDocument(); PreviewMeta = ""; SelectionHasVariables = false; }
+        else if (!item.IsValid) { PreviewDocument = ErrorDocument(item); PreviewMeta = "This file could not be read."; SelectionHasVariables = false; }
+        else
+        {
+            // Render the resolved result so the user sees the final text (greeting filled, includes expanded).
+            PreviewDocument = HtmlToFlowDocument.Convert(Resolve(item.Html));
+            PreviewMeta = BuildMeta(item);
+            SelectionHasVariables = TemplateEngine.ContainsTokens(item.Html);
+        }
 
         OnPropertyChanged(nameof(HasValidSelection));
         CommandManager.InvalidateRequerySuggested();
@@ -269,8 +283,9 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        if (_config.DefaultPasteMode == PasteMode.PlainText) _insert.InsertPlain(item);
-        else _insert.InsertRich(item);
+        var resolved = ResolvedCopy(item);
+        if (_config.DefaultPasteMode == PasteMode.PlainText) _insert.InsertPlain(resolved);
+        else _insert.InsertRich(resolved);
         _library.MarkUsed(item);
         RequestHide?.Invoke();
     }
@@ -279,7 +294,7 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        _insert.InsertPlain(item);
+        _insert.InsertPlain(ResolvedCopy(item));
         _library.MarkUsed(item);
         RequestHide?.Invoke();
     }
@@ -288,13 +303,43 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        _insert.Copy(item);
+        _insert.Copy(ResolvedCopy(item));
         _library.MarkUsed(item);
         // Copy leaves the launcher open so the user can keep browsing.
     }
 
     private ResponseItem? ValidSelectedItem() =>
         _selectedResult?.IsValid == true ? _selectedResult.Item : null;
+
+    /// <summary>Resolve <c>{{…}}</c> tokens in the stored HTML against the current library and clock.</summary>
+    private string Resolve(string html) =>
+        TemplateEngine.Resolve(html, n => _library.FindByName(n)?.Html, _now());
+
+    /// <summary>
+    /// A copy of <paramref name="item"/> with its template tokens resolved into HTML — never mutating
+    /// the stored item. PlainText re-derives from the resolved HTML via <see cref="HtmlText"/>. Returns
+    /// the original when there was nothing to resolve.
+    /// </summary>
+    private ResponseItem ResolvedCopy(ResponseItem item)
+    {
+        string html = Resolve(item.Html);
+        if (html == item.Html) return item;
+        return new ResponseItem
+        {
+            Name = item.Name,
+            RelativePath = item.RelativePath,
+            FullPath = item.FullPath,
+            CategoryPath = item.CategoryPath,
+            App = item.App,
+            Tags = item.Tags,
+            Html = html,
+            Favorite = item.Favorite,
+            Created = item.Created,
+            Modified = item.Modified,
+            IsValid = item.IsValid,
+            Error = item.Error,
+        };
+    }
 
     private void BuildNav()
     {

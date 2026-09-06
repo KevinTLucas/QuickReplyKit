@@ -496,6 +496,92 @@ public class LauncherViewModelTests
         });
     }
 
+    // --- Template resolution (Phase 9) --------------------------------------
+
+    /// <summary>9am fixed clock → {{greeting}} = "Good morning".</summary>
+    private static readonly Func<DateTimeOffset> MorningClock =
+        () => new DateTimeOffset(2026, 1, 1, 9, 0, 0, TimeSpan.Zero);
+
+    private static string DocText(System.Windows.Documents.FlowDocument doc) =>
+        new System.Windows.Documents.TextRange(doc.ContentStart, doc.ContentEnd).Text;
+
+    [Fact]
+    public void Insert_ResolvesVariablesAndIncludes_BeforeReachingInsertService()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Greeter.json"),
+                html: "<p>{{greeting}}, see {{Welcome}}</p>");
+            TestFiles.WriteResponse(dir.Of("lib", "Welcome.json"), html: "<p>the welcome text</p>");
+            using var svc = NewService(dir);
+            var insert = new FakeInsertService();
+            var vm = new LauncherViewModel(svc, insert, new AppConfig { DefaultPasteMode = PasteMode.RichText }, MorningClock);
+
+            vm.SelectedResult = vm.Results.Single(r => r.Name == "Greeter");
+            vm.TriggerDefaultInsert();
+
+            var call = Assert.Single(insert.Calls);
+            Assert.Equal("rich", call.Mode);
+            // {{greeting}} filled in, {{Welcome}} include expanded, no tokens left.
+            Assert.Contains("Good morning", call.Item.Html);
+            Assert.Contains("the welcome text", call.Item.Html);
+            Assert.DoesNotContain("{{", call.Item.Html);
+            // Plain text re-derived from the resolved HTML via HtmlText.ToPlainText.
+            Assert.Contains("Good morning", call.Item.PlainText);
+            Assert.Contains("the welcome text", call.Item.PlainText);
+            // The stored item is never mutated.
+            Assert.Equal("<p>{{greeting}}, see {{Welcome}}</p>",
+                svc.Snapshot.AllResponses.Single(r => r.Name == "Greeter").Html);
+        });
+    }
+
+    [Fact]
+    public void PlainInsert_And_Copy_AlsoResolveTokens()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "A.json"), html: "<p>Today is {{day}}</p>");
+            using var svc = NewService(dir);
+            var insert = new FakeInsertService();
+            var vm = new LauncherViewModel(svc, insert, new AppConfig(), MorningClock);  // 2026-01-01 = Thursday
+
+            vm.SelectedResult = vm.Results.Single();
+            vm.TriggerPlainInsert();
+            vm.CopyCommand.Execute(null);
+
+            Assert.Equal(2, insert.Calls.Count);
+            Assert.All(insert.Calls, c => Assert.Contains("Thursday", c.Item.PlainText));
+            Assert.All(insert.Calls, c => Assert.DoesNotContain("{{", c.Item.Html));
+        });
+    }
+
+    [Fact]
+    public void Preview_RendersResolvedText_AndSetsVariablesHint()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Greeter.json"),
+                html: "<p>{{greeting}}! {{Welcome}}</p>");
+            TestFiles.WriteResponse(dir.Of("lib", "Welcome.json"), html: "<p>Thanks for writing.</p>");
+            TestFiles.WriteResponse(dir.Of("lib", "Plain.json"), html: "<p>No tokens here.</p>");
+            using var svc = NewService(dir);
+            var vm = new LauncherViewModel(svc, new FakeInsertService(), new AppConfig(), MorningClock);
+
+            vm.SelectedResult = vm.Results.Single(r => r.Name == "Greeter");
+            Assert.True(vm.SelectionHasVariables);                       // hint shows
+            var text = DocText(vm.PreviewDocument);
+            Assert.Contains("Good morning", text);                      // resolved in the preview
+            Assert.Contains("Thanks for writing.", text);               // include expanded
+            Assert.DoesNotContain("{{", text);
+
+            vm.SelectedResult = vm.Results.Single(r => r.Name == "Plain");
+            Assert.False(vm.SelectionHasVariables);                     // no hint without tokens
+        });
+    }
+
     [Fact]
     public void Construction_SelectsExactlyOneNavNode()
     {

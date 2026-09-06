@@ -120,6 +120,25 @@
                         ToolTip="Insert or edit a link" Click="Link_Click"/>
                 <Button x:Name="ClearButton" Style="{StaticResource ToolButton}" Content="Clear ✗"
                         ToolTip="Remove formatting from the selection" Click="ClearFormatting_Click"/>
+                <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
+                <Button x:Name="InsertVarButton" Style="{StaticResource ToolButton}" Content="{}{{ }} ▾"
+                        ToolTip="Insert a variable at the caret. Tip: type {{Response Name}} to include another response's text."
+                        Click="InsertVar_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="{}{{greeting}}" Click="InsertVarItem_Click"
+                                      ToolTip="Good morning / afternoon / evening"/>
+                            <MenuItem Header="{}{{date}}" Click="InsertVarItem_Click"
+                                      ToolTip="Today's date (short)"/>
+                            <MenuItem Header="{}{{time}}" Click="InsertVarItem_Click"
+                                      ToolTip="Current time (short)"/>
+                            <MenuItem Header="{}{{day}}" Click="InsertVarItem_Click"
+                                      ToolTip="Day of week"/>
+                            <MenuItem Header="{}{{date:yyyy-MM-dd}}" Click="InsertVarItem_Click"
+                                      ToolTip="Date in a custom .NET format"/>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
             </StackPanel>
         </Border>
 
