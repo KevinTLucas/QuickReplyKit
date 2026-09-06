@@ -37,6 +37,11 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
+
+        <!-- Nav category right-click menu (suppressed for the fixed Favorites/Recent/All nodes) -->
+        <ContextMenu x:Key="NavContextMenu" Opened="NavContextMenu_Opened">
+            <MenuItem Header="Export folder…" Click="MenuExportFolder_Click"/>
+        </ContextMenu>
     </Window.Resources>
 
     <Grid Margin="12">
@@ -56,6 +61,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0" x:Name="NavToggle" Content="☰" Style="{StaticResource IconButton}"
                         ToolTip="Show/hide the navigation pane" Click="NavToggle_Click"/>
@@ -71,7 +77,16 @@
                         ToolTip="New response" Click="NewButton_Click"/>
                 <Button Grid.Column="4" x:Name="NewFromClipboardButton" Content="📋" Style="{StaticResource IconButton}"
                         ToolTip="New response from clipboard" Click="NewFromClipboardButton_Click"/>
-                <Button Grid.Column="5" x:Name="SettingsButton" Content="⚙" Style="{StaticResource IconButton}"
+                <Button Grid.Column="5" x:Name="OverflowButton" Content="⋯" Style="{StaticResource IconButton}"
+                        FontSize="18" ToolTip="Import / export" Click="OverflowButton_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Import…" Click="MenuImport_Click"/>
+                            <MenuItem Header="Export library…" Click="MenuExportLibrary_Click"/>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+                <Button Grid.Column="6" x:Name="SettingsButton" Content="⚙" Style="{StaticResource IconButton}"
                         ToolTip="Open the response library folder (settings coming later)"
                         Click="SettingsButton_Click"/>
             </Grid>
@@ -109,6 +124,7 @@
                 <TreeView x:Name="NavTree" BorderThickness="0" Background="Transparent"
                           ItemsSource="{Binding NavRoots}"
                           SelectedItemChanged="NavTree_SelectedItemChanged"
+                          PreviewMouseRightButtonDown="NavTree_PreviewMouseRightButtonDown"
                           VirtualizingStackPanel.IsVirtualizing="True"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <TreeView.Resources>
@@ -125,6 +141,7 @@
                             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                             <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                             <Setter Property="Padding" Value="2,3"/>
+                            <Setter Property="ContextMenu" Value="{StaticResource NavContextMenu}"/>
                         </Style>
                     </TreeView.ItemContainerStyle>
                 </TreeView>
@@ -156,6 +173,8 @@
                                 <MenuItem x:Name="MenuMove" Header="Move to…" Click="MenuMove_Click"/>
                                 <Separator/>
                                 <MenuItem x:Name="MenuCopy" Header="Copy" Click="MenuCopy_Click"/>
+                                <MenuItem x:Name="MenuExportResponse" Header="Export response…"
+                                          Click="MenuExportResponse_Click"/>
                                 <MenuItem x:Name="MenuOpenFolder" Header="Open containing folder"
                                           Click="MenuOpenFolder_Click"/>
                                 <Separator/>

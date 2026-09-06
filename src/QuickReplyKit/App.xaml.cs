@@ -134,6 +134,9 @@ public partial class App : Application
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Open QuickReplyKit", null, (_, _) => Dispatcher.Invoke(ShowLauncher));
         menu.Items.Add("Open Response Library", null, (_, _) => OpenLibraryFolder());
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add("Import…", null, (_, _) => Dispatcher.Invoke(() => { ShowLauncher(); _launcher?.ImportFlow(); }));
+        menu.Items.Add("Export library…", null, (_, _) => Dispatcher.Invoke(() => { ShowLauncher(); _launcher?.ExportLibraryFlow(); }));
         menu.Items.Add("Settings", null, (_, _) => Dispatcher.Invoke(OpenSettings));
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(() => Shutdown(0)));
