@@ -79,7 +79,12 @@ public static class HtmlToFlowDocument
             {
                 case "p":
                     ClosePara();
-                    if (!closing) EnsurePara();
+                    if (!closing)
+                    {
+                        EnsurePara();
+                        var al = AlignFromStyle(Attr(tag, "style"));
+                        if (al != null) para!.TextAlignment = al.Value;
+                    }
                     break;
                 case "br":
                     EnsurePara();
@@ -95,6 +100,16 @@ public static class HtmlToFlowDocument
                     break;
                 case "u":
                     if (closing) PopSpan(); else PushSpan(new Underline());
+                    break;
+                case "s":
+                case "strike":
+                case "del":
+                    if (closing) PopSpan();
+                    else PushSpan(new Span { TextDecorations = TextDecorations.Strikethrough });
+                    break;
+                case "span":
+                    if (closing) PopSpan();
+                    else PushSpan(SpanFromStyle(Attr(tag, "style")));
                     break;
                 case "a":
                     if (closing) { PopSpan(); break; }
@@ -156,6 +171,74 @@ public static class HtmlToFlowDocument
         try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); }
         catch { /* ignore navigation failures */ }
         e.Handled = true;
+    }
+
+    // <span style="color:…; background-color:…; font-size:…px"> → a Span carrying those local
+    // properties. Unknown/unparseable declarations are ignored (best effort, never throws).
+    private static Span SpanFromStyle(string? style)
+    {
+        var span = new Span();
+        if (string.IsNullOrEmpty(style)) return span;
+        foreach (var decl in style.Split(';'))
+        {
+            int c = decl.IndexOf(':');
+            if (c < 0) continue;
+            string key = decl[..c].Trim().ToLowerInvariant();
+            string val = decl[(c + 1)..].Trim();
+            switch (key)
+            {
+                case "color": if (TryBrush(val, out var f)) span.Foreground = f; break;
+                case "background-color": if (TryBrush(val, out var b)) span.Background = b; break;
+                case "font-size": if (TryFontSize(val, out double sz)) span.FontSize = sz; break;
+            }
+        }
+        return span;
+    }
+
+    private static TextAlignment? AlignFromStyle(string? style)
+    {
+        if (string.IsNullOrEmpty(style)) return null;
+        foreach (var decl in style.Split(';'))
+        {
+            int c = decl.IndexOf(':');
+            if (c < 0) continue;
+            if (decl[..c].Trim().Equals("text-align", StringComparison.OrdinalIgnoreCase))
+            {
+                return decl[(c + 1)..].Trim().ToLowerInvariant() switch
+                {
+                    "center" => TextAlignment.Center,
+                    "right" => TextAlignment.Right,
+                    "justify" => TextAlignment.Justify,
+                    "left" => TextAlignment.Left,
+                    _ => null,
+                };
+            }
+        }
+        return null;
+    }
+
+    private static bool TryBrush(string css, out SolidColorBrush brush)
+    {
+        try
+        {
+            if (ColorConverter.ConvertFromString(css) is Color color)
+            {
+                brush = new SolidColorBrush(color);
+                brush.Freeze();
+                return true;
+            }
+        }
+        catch { /* not a colour we understand: skip */ }
+        brush = null!;
+        return false;
+    }
+
+    private static bool TryFontSize(string css, out double size)
+    {
+        css = css.Trim();
+        if (css.EndsWith("px", StringComparison.OrdinalIgnoreCase)) css = css[..^2].Trim();
+        return double.TryParse(css, System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out size) && size > 0;
     }
 
     private static string? Attr(string tag, string name)

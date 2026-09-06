@@ -40,6 +40,18 @@ public class FlowDocumentToHtmlTests
     [InlineData("<ul><li>outer<ul><li>inner</li></ul></li></ul>")]
     [InlineData("<p>see <a href=\"https://ixl.com/\">IXL</a></p>")]
     [InlineData("<p>see <a>plain</a> here</p>")]
+    // Widened subset (Phase 10a): strike, colour, highlight, font-size, alignment.
+    [InlineData("<p>a <s>struck</s> b</p>")]
+    [InlineData("<p><span style=\"color:#E11D48\">red</span></p>")]
+    [InlineData("<p><span style=\"background-color:#FEF08A\">hi</span></p>")]
+    [InlineData("<p><span style=\"font-size:11px\">small</span></p>")]
+    [InlineData("<p><span style=\"font-size:18px\">large</span></p>")]
+    [InlineData("<p><span style=\"font-size:24px\">heading</span></p>")]
+    [InlineData("<p><span style=\"color:#2563EB; background-color:#FEF08A; font-size:18px\">all</span></p>")]
+    [InlineData("<p style=\"text-align:center\">centred</p>")]
+    [InlineData("<p style=\"text-align:right\">right</p>")]
+    [InlineData("<p style=\"text-align:justify\">just</p>")]
+    [InlineData("<p>a <s><span style=\"color:#16A34A\">green struck</span></s> b</p>")]
     public void RoundTrip_Subset_IsStable(string html)
     {
         Sta(() =>
@@ -63,19 +75,20 @@ public class FlowDocumentToHtmlTests
     }
 
     [Fact]
-    public void Convert_DropsColorsFontsAndSizes()
+    public void Convert_DropsFontFamilyAndRunWeight_KeepsColorAndSize()
     {
         Sta(() =>
         {
             var run = new Run("hi")
             {
-                Foreground = Brushes.Red,
-                FontSize = 40,
-                FontFamily = new FontFamily("Comic Sans MS"),
-                FontWeight = FontWeights.Bold,   // a Run property, not a <Bold> element — dropped
+                Foreground = Brushes.Red,        // kept (Phase 10a): -> color:#FF0000
+                FontSize = 40,                   // kept (Phase 10a): -> font-size:40px
+                FontFamily = new FontFamily("Comic Sans MS"),  // outside the subset: dropped
+                FontWeight = FontWeights.Bold,   // a Run property, not a <Bold> element: dropped
             };
             var doc = new FlowDocument(new Paragraph(run));
-            Assert.Equal("<p>hi</p>", FlowDocumentToHtml.Convert(doc));
+            Assert.Equal("<p><span style=\"color:#FF0000; font-size:40px\">hi</span></p>",
+                FlowDocumentToHtml.Convert(doc));
         });
     }
 
@@ -83,5 +96,72 @@ public class FlowDocumentToHtmlTests
     public void Convert_Null_ReturnsEmpty()
     {
         Assert.Equal("", FlowDocumentToHtml.Convert(null));
+    }
+
+    // --- Widened subset: emit new formatting set locally on the FlowDocument (as the editor does) ---
+
+    [Fact]
+    public void Convert_EmitsColorHighlightAndSize_FromLocalRunProperties()
+    {
+        Sta(() =>
+        {
+            var run = new Run("x") { Foreground = Brushes.Red, Background = Brushes.Yellow, FontSize = 18 };
+            var doc = new FlowDocument(new Paragraph(run));
+            Assert.Equal("<p><span style=\"color:#FF0000; background-color:#FFFF00; font-size:18px\">x</span></p>",
+                FlowDocumentToHtml.Convert(doc));
+        });
+    }
+
+    [Fact]
+    public void Convert_NormalSize_EmitsNoFontSpan()
+    {
+        Sta(() =>
+        {
+            var run = new Run("x") { FontSize = FlowDocumentToHtml.NormalFontSize };
+            var doc = new FlowDocument(new Paragraph(run));
+            Assert.Equal("<p>x</p>", FlowDocumentToHtml.Convert(doc));
+        });
+    }
+
+    [Fact]
+    public void Convert_TransparentHighlight_IsDropped()
+    {
+        Sta(() =>
+        {
+            var run = new Run("x") { Background = Brushes.Transparent };
+            var doc = new FlowDocument(new Paragraph(run));
+            Assert.Equal("<p>x</p>", FlowDocumentToHtml.Convert(doc));
+        });
+    }
+
+    [Fact]
+    public void Convert_EmitsStrikethrough()
+    {
+        Sta(() =>
+        {
+            var span = new Span(new Run("gone")) { TextDecorations = TextDecorations.Strikethrough };
+            var doc = new FlowDocument(new Paragraph(span));
+            Assert.Equal("<p><s>gone</s></p>", FlowDocumentToHtml.Convert(doc));
+        });
+    }
+
+    [Fact]
+    public void Convert_EmitsAlignment()
+    {
+        Sta(() =>
+        {
+            var doc = new FlowDocument(new Paragraph(new Run("mid")) { TextAlignment = TextAlignment.Center });
+            Assert.Equal("<p style=\"text-align:center\">mid</p>", FlowDocumentToHtml.Convert(doc));
+        });
+    }
+
+    // Back-compat: an old-subset-only response (only the original tags) round-trips byte-for-byte.
+    [Theory]
+    [InlineData("<p>Hi <b>there</b>, <i>welcome</i> to <u>IXL</u>.</p>")]
+    [InlineData("<p>Steps:</p><ol><li>First</li><li>Second</li></ol><p>See <a href=\"https://ixl.com/\">IXL</a></p>")]
+    [InlineData("<ul><li>outer<ul><li>inner</li></ul></li></ul>")]
+    public void OldSubsetOnly_RoundTripsUnchanged(string html)
+    {
+        Sta(() => Assert.Equal(html, FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(html))));
     }
 }

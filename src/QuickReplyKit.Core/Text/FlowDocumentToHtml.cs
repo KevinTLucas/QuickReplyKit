@@ -1,18 +1,24 @@
+using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace QuickReplyKit.Core.Text;
 
 /// <summary>
-/// Serializes an editor <see cref="FlowDocument"/> back to the stored rich-text HTML subset
-/// (p, br, b, i, u, ul/ol/li, a) — nothing else. Colors, fonts and sizes are dropped on
-/// purpose so stored HTML stays clean, portable and diffable. The output is a stable
-/// round-trip with <see cref="HtmlToFlowDocument"/>: convert -> load -> convert is idempotent
-/// for the subset.
+/// Serializes an editor <see cref="FlowDocument"/> back to the stored rich-text HTML subset:
+/// the original b/i/u, p, br, ul/ol/li, a — plus the widened set: strikethrough (&lt;s&gt;),
+/// text colour / highlight / font-size (inline <c>style</c> spans), and paragraph alignment
+/// (<c>&lt;p style="text-align:…"&gt;</c>). Only <b>locally set</b> properties are emitted, so
+/// stored HTML stays clean and diffable and the output is a stable round-trip with
+/// <see cref="HtmlToFlowDocument"/>: convert -&gt; load -&gt; convert is idempotent for the subset.
 /// </summary>
 public static class FlowDocumentToHtml
 {
+    /// <summary>Font size treated as "normal" — a run at this size emits no font-size span.</summary>
+    internal const double NormalFontSize = 14;
+
     public static string Convert(FlowDocument? doc)
     {
         var sb = new StringBuilder();
@@ -27,7 +33,8 @@ public static class FlowDocumentToHtml
             switch (block)
             {
                 case Paragraph p:
-                    sb.Append("<p>");
+                    string? align = AlignOf(p);
+                    sb.Append(align == null ? "<p>" : $"<p style=\"text-align:{align}\">");
                     WriteInlines(sb, p.Inlines);
                     sb.Append("</p>");
                     break;
@@ -76,44 +83,101 @@ public static class FlowDocumentToHtml
 
     private static void WriteInlines(StringBuilder sb, InlineCollection inlines)
     {
-        foreach (var inline in inlines)
+        foreach (var inline in inlines) WriteInline(sb, inline);
+    }
+
+    private static void WriteInline(StringBuilder sb, Inline inline)
+    {
+        switch (inline)
         {
-            switch (inline)
-            {
-                case Run run:
-                    Escape(sb, run.Text);
-                    break;
-                case LineBreak:
-                    sb.Append("<br>");
-                    break;
-                case Bold b:
-                    sb.Append("<b>"); WriteInlines(sb, b.Inlines); sb.Append("</b>");
-                    break;
-                case Italic it:
-                    sb.Append("<i>"); WriteInlines(sb, it.Inlines); sb.Append("</i>");
-                    break;
-                case Underline u:
-                    sb.Append("<u>"); WriteInlines(sb, u.Inlines); sb.Append("</u>");
-                    break;
-                case Hyperlink a:
-                    sb.Append("<a");
-                    if (a.NavigateUri != null)
-                    {
-                        sb.Append(" href=\"");
-                        EscapeAttr(sb, a.NavigateUri.ToString());
-                        sb.Append('"');
-                    }
-                    sb.Append('>');
-                    WriteInlines(sb, a.Inlines);
-                    sb.Append("</a>");
-                    break;
-                case Span span:   // generic span (e.g. plain Span): unwrap, keep children
-                    WriteInlines(sb, span.Inlines);
-                    break;
-                // anything else (InlineUIContainer, Figure, …) is outside the subset: drop it
-            }
+            case Run run:
+                OpenWrap(sb, run, out string closeRun);
+                Escape(sb, run.Text);
+                sb.Append(closeRun);
+                break;
+            case LineBreak:
+                sb.Append("<br>");
+                break;
+            case Bold b:
+                WrapElement(sb, b, "b", b.Inlines);
+                break;
+            case Italic it:
+                WrapElement(sb, it, "i", it.Inlines);
+                break;
+            case Underline u:
+                WrapElement(sb, u, "u", u.Inlines);
+                break;
+            case Hyperlink a:
+                OpenWrap(sb, a, out string closeA);
+                sb.Append("<a");
+                if (a.NavigateUri != null)
+                {
+                    sb.Append(" href=\"");
+                    EscapeAttr(sb, a.NavigateUri.ToString());
+                    sb.Append('"');
+                }
+                sb.Append('>');
+                WriteInlines(sb, a.Inlines);
+                sb.Append("</a>");
+                sb.Append(closeA);
+                break;
+            case Span span:   // generic span (colour / highlight / size / strike): keep its styling
+                OpenWrap(sb, span, out string closeS);
+                WriteInlines(sb, span.Inlines);
+                sb.Append(closeS);
+                break;
+            // anything else (InlineUIContainer, Figure, …) is outside the subset: drop it
         }
     }
+
+    // Emit the <s> (strikethrough) and <span style="…"> (colour/highlight/size) wrappers that a
+    // given inline's locally-set properties call for, and hand back the matching close string.
+    private static void OpenWrap(StringBuilder sb, Inline el, out string close)
+    {
+        var closer = new StringBuilder();
+        if (HasStrike(el)) { sb.Append("<s>"); closer.Insert(0, "</s>"); }
+        string? style = StyleOf(el);
+        if (style != null) { sb.Append("<span style=\"").Append(style).Append("\">"); closer.Insert(0, "</span>"); }
+        close = closer.ToString();
+    }
+
+    private static void WrapElement(StringBuilder sb, Inline el, string tag, InlineCollection children)
+    {
+        OpenWrap(sb, el, out string close);
+        sb.Append('<').Append(tag).Append('>');
+        WriteInlines(sb, children);
+        sb.Append("</").Append(tag).Append('>');
+        sb.Append(close);
+    }
+
+    private static bool HasStrike(Inline el) =>
+        el.ReadLocalValue(Inline.TextDecorationsProperty) is TextDecorationCollection td &&
+        td.Any(d => d.Location == TextDecorationLocation.Strikethrough);
+
+    private static string? StyleOf(Inline el)
+    {
+        var parts = new List<string>(3);
+        if (el.ReadLocalValue(TextElement.ForegroundProperty) is SolidColorBrush fg)
+            parts.Add("color:" + Hex(fg.Color));
+        if (el.ReadLocalValue(TextElement.BackgroundProperty) is SolidColorBrush bg && bg.Color.A != 0)
+            parts.Add("background-color:" + Hex(bg.Color));
+        if (el.ReadLocalValue(TextElement.FontSizeProperty) is double sz && Math.Abs(sz - NormalFontSize) > 0.01)
+            parts.Add("font-size:" + sz.ToString("0.###", CultureInfo.InvariantCulture) + "px");
+        return parts.Count == 0 ? null : string.Join("; ", parts);
+    }
+
+    private static string? AlignOf(Paragraph p) =>
+        p.ReadLocalValue(Block.TextAlignmentProperty) is TextAlignment a
+            ? a switch
+            {
+                TextAlignment.Center => "center",
+                TextAlignment.Right => "right",
+                TextAlignment.Justify => "justify",
+                _ => null,   // Left is the default: emit nothing
+            }
+            : null;
+
+    private static string Hex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
 
     private static void Escape(StringBuilder sb, string text)
     {

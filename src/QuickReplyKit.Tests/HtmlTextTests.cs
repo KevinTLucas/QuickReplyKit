@@ -62,4 +62,28 @@ public class HtmlTextTests
         Assert.Equal("", HtmlText.ToPlainText(null));
         Assert.Equal("", HtmlText.ToPlainText(""));
     }
+
+    // Widened subset (Phase 10a): the new formatting is stripped, text kept.
+    [Fact]
+    public void Strikethrough_IsStripped_TextKept()
+    {
+        Assert.Equal("keep gone here", HtmlText.ToPlainText("<p>keep <s>gone</s> here</p>"));
+    }
+
+    [Fact]
+    public void StyledSpans_AreStripped_TextKept()
+    {
+        Assert.Equal("red big hi",
+            HtmlText.ToPlainText(
+                "<p><span style=\"color:#E11D48\">red</span> " +
+                "<span style=\"font-size:24px\">big</span> " +
+                "<span style=\"background-color:#FEF08A\">hi</span></p>"));
+    }
+
+    [Fact]
+    public void AlignedParagraph_StripsStyle_KeepsTextAndNewlines()
+    {
+        Assert.Equal("centred\nright",
+            HtmlText.ToPlainText("<p style=\"text-align:center\">centred</p><p style=\"text-align:right\">right</p>"));
+    }
 }
