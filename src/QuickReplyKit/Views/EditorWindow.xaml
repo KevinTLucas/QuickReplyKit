@@ -96,13 +96,29 @@
         <!-- Formatting toolbar -->
         <Border Grid.Row="2" Background="{DynamicResource CardBg}" CornerRadius="8,8,0,0"
                 BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,1,1,0" Padding="8,6">
-            <StackPanel Orientation="Horizontal">
+            <Border.Resources>
+                <!-- Swatch: a small square whose fill IS the literal content colour it applies.
+                     These are absolute (stored) colours, not theme chrome, so they are hardcoded. -->
+                <Style x:Key="Swatch" TargetType="Button">
+                    <Setter Property="Width" Value="20"/>
+                    <Setter Property="Height" Value="20"/>
+                    <Setter Property="Margin" Value="2"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </Style>
+            </Border.Resources>
+            <WrapPanel Orientation="Horizontal">
                 <Button Style="{StaticResource ToolButton}" FontWeight="Bold" Content="B"
                         ToolTip="Bold (Ctrl+B)"
                         Command="EditingCommands.ToggleBold" CommandTarget="{Binding ElementName=Body}"/>
                 <Button Style="{StaticResource ToolButton}" FontStyle="Italic" Content="I"
                         ToolTip="Italic (Ctrl+I)"
-                        Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=Body}"/>
+                        Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=Body}">
+                    <Button.Resources>
+                        <Style TargetType="TextBlock"><Setter Property="FontStyle" Value="Italic"/></Style>
+                    </Button.Resources>
+                </Button>
                 <Button Style="{StaticResource ToolButton}" Content="U"
                         ToolTip="Underline (Ctrl+U)"
                         Command="EditingCommands.ToggleUnderline" CommandTarget="{Binding ElementName=Body}">
@@ -110,6 +126,35 @@
                         <Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Underline"/></Style>
                     </Button.Resources>
                 </Button>
+                <Button x:Name="StrikeButton" Style="{StaticResource ToolButton}" Content="S"
+                        ToolTip="Strikethrough" Click="Strike_Click">
+                    <Button.Resources>
+                        <Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Strikethrough"/></Style>
+                    </Button.Resources>
+                </Button>
+                <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
+                <Button x:Name="SizeButton" Style="{StaticResource ToolButton}" Content="Size ▾"
+                        ToolTip="Text size" Click="Size_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Small" Tag="11" Click="SizeItem_Click"/>
+                            <MenuItem Header="Normal" Tag="14" Click="SizeItem_Click"/>
+                            <MenuItem Header="Large" Tag="18" Click="SizeItem_Click"/>
+                            <MenuItem Header="Heading" Tag="24" Click="SizeItem_Click"/>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+                <Button x:Name="TextColorButton" Style="{StaticResource ToolButton}" Content="A ▾"
+                        ToolTip="Text colour" Click="TextColor_Click"/>
+                <Button x:Name="HighlightButton" Style="{StaticResource ToolButton}" Content="🖍 ▾"
+                        ToolTip="Highlight" Click="Highlight_Click"/>
+                <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
+                <Button Style="{StaticResource ToolButton}" Content="⯇" ToolTip="Align left"
+                        Command="EditingCommands.AlignLeft" CommandTarget="{Binding ElementName=Body}"/>
+                <Button Style="{StaticResource ToolButton}" Content="≡" ToolTip="Align centre"
+                        Command="EditingCommands.AlignCenter" CommandTarget="{Binding ElementName=Body}"/>
+                <Button Style="{StaticResource ToolButton}" Content="⯈" ToolTip="Align right"
+                        Command="EditingCommands.AlignRight" CommandTarget="{Binding ElementName=Body}"/>
                 <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
                 <Button Style="{StaticResource ToolButton}" Content="• List" ToolTip="Bullet list"
                         Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=Body}"/>
@@ -139,7 +184,47 @@
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
-            </StackPanel>
+
+                <!-- Text-colour palette (absolute content colours). -->
+                <Popup x:Name="TextColorPopup" StaysOpen="False" AllowsTransparency="True"
+                       Placement="Bottom" PlacementTarget="{Binding ElementName=TextColorButton}">
+                    <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
+                            BorderThickness="1" CornerRadius="6" Padding="6">
+                        <WrapPanel Width="140" Orientation="Horizontal">
+                            <Button Style="{StaticResource Swatch}" Background="#111111" Tag="#111111" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#6B7280" Tag="#6B7280" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#DC2626" Tag="#DC2626" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#EA580C" Tag="#EA580C" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#16A34A" Tag="#16A34A" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#0891B2" Tag="#0891B2" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#2563EB" Tag="#2563EB" Click="TextSwatch_Click"/>
+                            <Button Style="{StaticResource Swatch}" Background="#7C3AED" Tag="#7C3AED" Click="TextSwatch_Click"/>
+                        </WrapPanel>
+                    </Border>
+                </Popup>
+
+                <!-- Highlight palette (+ None to clear). -->
+                <Popup x:Name="HighlightPopup" StaysOpen="False" AllowsTransparency="True"
+                       Placement="Bottom" PlacementTarget="{Binding ElementName=HighlightButton}">
+                    <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
+                            BorderThickness="1" CornerRadius="6" Padding="6">
+                        <StackPanel Width="140">
+                            <WrapPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource Swatch}" Background="#FEF08A" Tag="#FEF08A" Click="HighlightSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#BBF7D0" Tag="#BBF7D0" Click="HighlightSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#BFDBFE" Tag="#BFDBFE" Click="HighlightSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#FBCFE8" Tag="#FBCFE8" Click="HighlightSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#FED7AA" Tag="#FED7AA" Click="HighlightSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#E9D5FF" Tag="#E9D5FF" Click="HighlightSwatch_Click"/>
+                            </WrapPanel>
+                            <Button Content="None" HorizontalAlignment="Left" Margin="2,4,0,0"
+                                    Padding="8,2" Cursor="Hand" Tag="none" Click="HighlightSwatch_Click"
+                                    Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextPrimary}"
+                                    BorderBrush="{DynamicResource CardBorder}"/>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+            </WrapPanel>
         </Border>
 
         <!-- Body -->

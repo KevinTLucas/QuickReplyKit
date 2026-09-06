@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 using Microsoft.VisualBasic.FileIO;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
@@ -69,8 +70,60 @@ public partial class EditorWindow : Window
 
     private void ClearFormatting_Click(object sender, RoutedEventArgs e)
     {
-        Body.Selection.ClearAllProperties();
+        Body.Selection.ClearAllProperties();   // clears colour/highlight/size/decorations too
         Body.Focus();
+    }
+
+    private void Strike_Click(object sender, RoutedEventArgs e)
+    {
+        var cur = Body.Selection.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection;
+        bool on = cur != null && cur.Any(d => d.Location == TextDecorationLocation.Strikethrough);
+        Body.Selection.ApplyPropertyValue(Inline.TextDecorationsProperty,
+            on ? new TextDecorationCollection() : TextDecorations.Strikethrough);
+        Body.Focus();
+    }
+
+    private void Size_Click(object sender, RoutedEventArgs e)
+    {
+        if (SizeButton.ContextMenu is { } m) { m.PlacementTarget = SizeButton; m.IsOpen = true; }
+    }
+
+    private void SizeItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string tag } && double.TryParse(tag, out double size))
+        {
+            Body.Selection.ApplyPropertyValue(TextElement.FontSizeProperty, size);
+            Body.Focus();
+        }
+    }
+
+    private void TextColor_Click(object sender, RoutedEventArgs e) => TextColorPopup.IsOpen = true;
+
+    private void Highlight_Click(object sender, RoutedEventArgs e) => HighlightPopup.IsOpen = true;
+
+    private void TextSwatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string hex })
+            Body.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brush(hex));
+        TextColorPopup.IsOpen = false;
+        Body.Focus();
+    }
+
+    private void HighlightSwatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string tag })
+            Body.Selection.ApplyPropertyValue(TextElement.BackgroundProperty,
+                tag == "none" ? System.Windows.Media.Brushes.Transparent : Brush(tag));
+        HighlightPopup.IsOpen = false;
+        Body.Focus();
+    }
+
+    private static SolidColorBrush Brush(string hex)
+    {
+        var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex)!;
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
     }
 
     private void InsertVar_Click(object sender, RoutedEventArgs e)

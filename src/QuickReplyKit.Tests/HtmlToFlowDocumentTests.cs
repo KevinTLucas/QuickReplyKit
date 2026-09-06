@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Media;
 using QuickReplyKit.Core.Text;
 
 namespace QuickReplyKit.Tests;
@@ -175,6 +176,59 @@ public class HtmlToFlowDocumentTests
         {
             var doc = HtmlToFlowDocument.Convert("<div><span>hello</span> <mark>world</mark></div>");
             Assert.Contains("hello world", Text(doc));
+        });
+    }
+
+    // --- Widened subset (Phase 10a) ---
+
+    [Fact]
+    public void Strikethrough_ProducesStruckSpan()
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert("<p><s>gone</s></p>");
+            var span = doc.Blocks.OfType<Paragraph>().Single().Inlines.OfType<Span>().Single();
+            Assert.Contains(span.TextDecorations, d => d.Location == TextDecorationLocation.Strikethrough);
+        });
+    }
+
+    [Fact]
+    public void SpanStyle_AppliesColorHighlightAndSize()
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert(
+                "<p><span style=\"color:#2563EB; background-color:#FEF08A; font-size:18px\">x</span></p>");
+            var span = doc.Blocks.OfType<Paragraph>().Single().Inlines.OfType<Span>().Single();
+            Assert.Equal(Color.FromRgb(0x25, 0x63, 0xEB), ((SolidColorBrush)span.Foreground).Color);
+            Assert.Equal(Color.FromRgb(0xFE, 0xF0, 0x8A), ((SolidColorBrush)span.Background).Color);
+            Assert.Equal(18, span.FontSize);
+        });
+    }
+
+    [Fact]
+    public void ParagraphAlignment_IsApplied()
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert("<p style=\"text-align:center\">mid</p><p style=\"text-align:right\">r</p>");
+            var paras = doc.Blocks.OfType<Paragraph>().ToList();
+            Assert.Equal(TextAlignment.Center, paras[0].TextAlignment);
+            Assert.Equal(TextAlignment.Right, paras[1].TextAlignment);
+        });
+    }
+
+    [Theory]
+    [InlineData("<p><span style=\"font-size:oops\">x</span></p>")]
+    [InlineData("<p><span style=\"color:notacolor\">x</span></p>")]
+    [InlineData("<p><span style=\"garbage\">x</span></p>")]
+    [InlineData("<p style=\"text-align:sideways\">x</p>")]
+    public void MalformedNewStyles_DoNotThrow_KeepText(string html)
+    {
+        Sta(() =>
+        {
+            var doc = HtmlToFlowDocument.Convert(html);
+            Assert.Contains("x", Text(doc));
         });
     }
 }
