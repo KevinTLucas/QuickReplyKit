@@ -175,15 +175,24 @@ public sealed class LauncherViewModel : ViewModelBase
 
     private void RefreshResults()
     {
-        IReadOnlyList<ResponseItem> items = string.IsNullOrWhiteSpace(Query)
-            ? ScopeItems(_selectedNav)
-            : _library.Search(Query);
-
         Results.Clear();
-        foreach (var it in items) Results.Add(new ResponseRowVm(it, OnToggleFavorite));
+        int count;
+        if (string.IsNullOrWhiteSpace(Query))
+        {
+            var items = ScopeItems(_selectedNav);
+            foreach (var it in items) Results.Add(new ResponseRowVm(it, OnToggleFavorite));
+            count = items.Count;
+        }
+        else
+        {
+            // Global search, but rank hits inside the selected category (if any) first.
+            var hits = _library.Search(Query, CurrentCategory);
+            foreach (var h in hits) Results.Add(new ResponseRowVm(h.Item, OnToggleFavorite, h.NameSpans, h.Snippet));
+            count = hits.Count;
+        }
 
         SelectedResult = Results.FirstOrDefault();
-        UpdateEmptyState(items.Count);
+        UpdateEmptyState(count);
     }
 
     private IReadOnlyList<ResponseItem> ScopeItems(NavNodeVm? nav)

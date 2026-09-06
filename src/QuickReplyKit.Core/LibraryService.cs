@@ -107,9 +107,12 @@ public sealed class LibraryService : IDisposable
         Snapshot.ValidResponses.FirstOrDefault(
             r => string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Global, ranked search over the whole library (delegates to <see cref="ResponseSearch"/>).</summary>
-    public IReadOnlyList<ResponseItem> Search(string query) =>
-        ResponseSearch.Search(Snapshot.AllResponses, query);
+    /// <summary>
+    /// Global, ranked search over the whole library (delegates to <see cref="ResponseSearch"/>).
+    /// <paramref name="scope"/> is the currently selected category path (or ""); in-scope hits rank first.
+    /// </summary>
+    public IReadOnlyList<SearchHit> Search(string query, string scope = "") =>
+        ResponseSearch.Rank(Snapshot.AllResponses, query, scope);
 
     /// <summary>All favorited valid responses, by name.</summary>
     public IReadOnlyList<ResponseItem> Favorites() =>

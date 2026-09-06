@@ -301,10 +301,16 @@ public class SearchAdversarialTests
     }
 
     [Fact]
-    public void InvalidItems_NeverAppear_EvenOnStrongMatch()
+    public void InvalidItems_MatchByName_ButRankBelowValid()
     {
+        // M4: a broken file must be findable by name so it can be fixed — but it ranks after
+        // every valid hit and stays non-pasteable in the UI.
         var invalid = new ResponseItem { Name = "Reset", IsValid = false };
-        Assert.Empty(ResponseSearch.Search(new[] { invalid }, "reset"));
+        var valid = Item("Reset Guide");
+
+        var results = ResponseSearch.Search(new[] { invalid, valid }, "reset");
+
+        Assert.Equal(new[] { "Reset Guide", "Reset" }, results.Select(r => r.Name));
     }
 }
 
