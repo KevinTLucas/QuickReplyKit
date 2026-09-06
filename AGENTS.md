@@ -3,6 +3,13 @@
 This project is documented so **any** AI agent or developer can pick it up cold, with no prior context, and
 know exactly what it is, how it's built, and its current state. The doc set is intentionally small.
 
+> ## ⚠️ NON-NEGOTIABLE: keep the handoff docs current on EVERY change
+> Update the docs as part of the same change that touches code — **a change is not done until code, tests, and docs are
+> consistent.** At minimum update [`docs/STATUS.md`](docs/STATUS.md) (state, `main` tip, test count, open work / known
+> bugs); move finished items out of [`docs/BACKLOG.md`](docs/BACKLOG.md) and log new bugs into both. See `CLAUDE.md` →
+> "HANDOFF DISCIPLINE" for the doc-set table and the Definition of Done. This discipline is what preserves continuity
+> across sessions and AIs — do not skip it, even for small changes.
+
 **Read in this order:**
 1. [`CLAUDE.md`](CLAUDE.md) — operating manual: stack, build/test/run/self-test commands, conventions, git
    workflow, how we work (branch per change + **ponytail** + **independent QA by a separate subagent**), and the

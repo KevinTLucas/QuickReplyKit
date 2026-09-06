@@ -5,10 +5,13 @@
 > **Update this file on every meaningful change** — it's part of the Definition of Done (see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `beab8dd` (+ this docs cleanup) · **`dotnet test` = 403 passing** · `dotnet build` clean (0 warnings).
-- **Status: ✅ COMPLETE.** MVP + all V2 features + the end-user continuous-improvement pass are done and merged.
-  The app is polished, reliable, launchable, and portable. **No open work.** Further work would be new feature
-  requests — see [`BACKLOG.md`](BACKLOG.md) (future ideas) and start only when the user asks.
+- **`main` tip:** `3ccdc66` · **`dotnet test` = 403 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
+- **App: ✅ feature-complete & merged** — MVP + all V2 features + the end-user continuous-improvement pass are done.
+  Polished, launchable, and portable.
+- **Open work: NOT NONE.** There are **2 known bugs** (incl. a HIGH-priority crash — see "Known issues" below) and a
+  **prioritized backlog of ~14 queued items** in [`BACKLOG.md`](BACKLOG.md) (bugs + new features), all **queued, not
+  started** (parked until the user says build). Start with the **BACKLOG top items** (right-click crash #6, dark-mode
+  combobox #1) if picking up work.
 
 ## What it is / what it does
 A lightweight Windows response launcher for support teams: global hotkey (**Ctrl+Alt+D**) → search/browse a

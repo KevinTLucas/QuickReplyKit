@@ -2,8 +2,27 @@
 
 > **New session or new AI? Read this file, then [`docs/STATUS.md`](docs/STATUS.md).**
 > `CLAUDE.md` tells you **how** to work on this repo. `docs/STATUS.md` tells you **where we are
-> right now** (current phase, in-progress work, known bugs, what to do next). Between the two you
-> can pick up cold with zero prior context.
+> right now** (current state, known bugs, what to do next). Between the two you can pick up cold with zero prior context.
+
+## ⚠️ HANDOFF DISCIPLINE — always keep the docs current (non-negotiable)
+
+**Every agent that changes anything in this repo MUST update the handoff docs as part of the same change.**
+Continuity across sessions/AIs depends on it — a change is **not done** until code, tests, and docs are consistent.
+Do not defer this, do not skip it, even for "small" changes.
+
+**The canonical doc set (this is all of them — keep them accurate, prune anything stale):**
+
+| Doc | What it holds | Update it when… |
+|---|---|---|
+| [`docs/STATUS.md`](docs/STATUS.md) | **Current state**: `main` tip, test count, what's done, **open work / known bugs**, how to verify | **every meaningful change** (always) |
+| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Queued bugs + requested features + future ideas | you add/finish/reprioritize a backlog item |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Design, contracts, and the **code map** (where things live) | design/structure/contract changes |
+| [`README.md`](README.md) | User-facing guide + how to build/distribute | behaviour, commands, or features change |
+| [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) | Original requirements (source of truth) | (rarely — historical; don't rewrite) |
+| [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) | How to work + read-order for agents | conventions/workflow/doc-set change |
+
+If you finish a backlog item, move it out of BACKLOG.md and record it in STATUS.md. If you find a new bug, add it to
+BACKLOG.md **and** the STATUS.md "known issues" list. The full step-by-step is the **Definition of Done** below.
 
 ## What this is
 QuickReplyKit is a lightweight **Windows desktop "response launcher"** for support teams: press a
