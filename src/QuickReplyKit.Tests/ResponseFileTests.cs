@@ -82,8 +82,11 @@ public class ResponseFileTests
     }
 
     [Fact]
-    public void Load_MissingTimestamps_FallsBackToFileTimes()
+    public void Load_MissingTimestamps_LeavesThemDefault_StillValid()
     {
+        // Created/Modified are never displayed or used for sort/filter, so when absent we don't pay a
+        // per-file syscall to synthesize them (they stay default). The response is still valid, and
+        // Save() will fill Created on the next write.
         using var t = new TempDir();
         string p = t.Of("NoTimes.json");
         File.WriteAllText(p, "{\"schema\":1,\"html\":\"<p>x</p>\"}");
@@ -91,8 +94,8 @@ public class ResponseFileTests
         var item = ResponseFile.Load(p, t.Path);
 
         Assert.True(item.IsValid);
-        Assert.NotEqual(default, item.Created);
-        Assert.NotEqual(default, item.Modified);
+        Assert.Equal(default, item.Created);
+        Assert.Equal(default, item.Modified);
     }
 
     // ---- Lenient per-field parsing (Phase R) ----
@@ -166,7 +169,7 @@ public class ResponseFileTests
     }
 
     [Fact]
-    public void Load_UnparseableDates_FallBackToFileTimes()
+    public void Load_UnparseableDates_LeaveThemDefault_StillValid()
     {
         using var t = new TempDir();
         string p = t.Of("BadDates.json");
@@ -174,9 +177,10 @@ public class ResponseFileTests
 
         var item = ResponseFile.Load(p, t.Path);
 
+        // An unparseable date is treated like an absent one: default, not a filesystem time.
         Assert.True(item.IsValid, item.Error);
-        Assert.NotEqual(default, item.Created);
-        Assert.NotEqual(default, item.Modified);
+        Assert.Equal(default, item.Created);
+        Assert.Equal(default, item.Modified);
     }
 
     [Fact]

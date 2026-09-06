@@ -155,6 +155,32 @@ public class LibraryServiceTests
     }
 
     [Fact]
+    public void DeferInitialScan_StartsEmptyAndLoading_ThenLoadInitialPopulatesAndFiresUpdated()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+        TestFiles.WriteResponse(dir.Of("lib", "Sub", "B.json"));
+
+        using var svc = new LibraryService(dir.Of("lib"), seedSourceDir: null,
+            recentPath: dir.Of("recent.json"), watch: false, deferInitialScan: true);
+
+        // Before the deferred scan runs: empty snapshot, IsLoading true (drives the "Loading…" UI).
+        Assert.True(svc.IsLoading);
+        Assert.Empty(svc.Snapshot.AllResponses);
+
+        var fired = new ManualResetEventSlim();
+        svc.Updated += () => fired.Set();
+
+        svc.LoadInitial();   // what App runs on a background Task at startup
+
+        Assert.True(fired.Wait(5000), "LoadInitial did not raise Updated");
+        Assert.False(svc.IsLoading);
+        Assert.Equal(2, svc.Snapshot.AllResponses.Count);
+        Assert.Contains(svc.Snapshot.AllResponses, r => r.Name == "A");
+        Assert.Contains(svc.Snapshot.AllResponses, r => r.Name == "B");
+    }
+
+    [Fact]
     public void Reload_PicksUpNewFiles()
     {
         using var dir = new TempDir();

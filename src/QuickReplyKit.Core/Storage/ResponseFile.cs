@@ -70,8 +70,12 @@ public static class ResponseFile
             item.App = AsString(obj["app"]) ?? "";
             item.Tags = ReadTags(obj["tags"]);
             item.Favorite = AsBool(obj["favorite"]) ?? false;
-            item.Created = AsDate(obj["created"]) ?? FileTime(fullPath, creation: true);
-            item.Modified = AsDate(obj["modified"]) ?? FileTime(fullPath, creation: false);
+            // Created/Modified are never displayed or used for sort/filter; when absent (the common
+            // shared/copied-file case) leave them default rather than paying a per-file syscall
+            // (File.GetCreation/LastWriteTimeUtc) — that was ~30% of a large-library scan. Save fills
+            // Created when it's still default, so the schema/output is unchanged.
+            item.Created = AsDate(obj["created"]) ?? default;
+            item.Modified = AsDate(obj["modified"]) ?? default;
             item.IsValid = true;
             return item;
         }
@@ -140,21 +144,9 @@ public static class ResponseFile
     {
         item.IsValid = false;
         item.Error = error;
-        item.Created = FileTime(item.FullPath, creation: true);
-        item.Modified = FileTime(item.FullPath, creation: false);
+        // Created/Modified stay default: they're never shown for invalid files either, and skipping
+        // the filesystem-time syscalls keeps every scan cheap.
         return item;
-    }
-
-    private static DateTimeOffset FileTime(string path, bool creation)
-    {
-        try
-        {
-            return creation ? File.GetCreationTimeUtc(path) : File.GetLastWriteTimeUtc(path);
-        }
-        catch
-        {
-            return DateTimeOffset.UtcNow;
-        }
     }
 
     private static string ToRelative(string root, string fullPath) =>

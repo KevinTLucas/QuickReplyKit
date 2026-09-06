@@ -39,6 +39,7 @@ public sealed class LauncherViewModel : ViewModelBase
         _insert = insert;
         _config = config;
         _now = now ?? (static () => DateTimeOffset.Now);
+        _loading = library.IsLoading;   // deferred initial scan still running → show "Loading…"
 
         PasteCommand = new RelayCommand(_ => DefaultInsert(), _ => HasValidSelection);
         PastePlainCommand = new RelayCommand(_ => PlainInsert(), _ => HasValidSelection);
@@ -112,6 +113,9 @@ public sealed class LauncherViewModel : ViewModelBase
         if (match != null) SelectedResult = match;
     }
 
+    /// <summary>True while the deferred initial library scan is still running (drives the "Loading…" empty state).</summary>
+    private bool _loading;
+
     private bool _isEmptyState;
     public bool IsEmptyState { get => _isEmptyState; private set => Set(ref _isEmptyState, value); }
 
@@ -150,6 +154,7 @@ public sealed class LauncherViewModel : ViewModelBase
 
     public void OnLibraryUpdated()
     {
+        _loading = false;   // the first scan (or any later refresh) has landed
         var selResultPath = _selectedResult?.Item.RelativePath;
         var scope = _selectedNav?.Scope;
         var path = _selectedNav?.CategoryPath;
@@ -265,7 +270,9 @@ public sealed class LauncherViewModel : ViewModelBase
         IsEmptyState = count == 0;
         if (count > 0) { EmptyStateText = ""; return; }
 
-        if (_library.Snapshot.AllResponses.Count == 0)
+        if (_loading)
+            EmptyStateText = "Loading library…";
+        else if (_library.Snapshot.AllResponses.Count == 0)
             EmptyStateText = "No responses yet.\nAdd a .json to your library, or open the library folder to get started.";
         else if (!string.IsNullOrWhiteSpace(Query))
             EmptyStateText = $"No responses match “{Query}”.";
