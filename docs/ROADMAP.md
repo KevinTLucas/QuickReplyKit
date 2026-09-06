@@ -4,6 +4,11 @@ The complete plan, every phase, done and remaining, with enough detail for a fre
 any remaining phase and work it. **For the current snapshot + the ordered next action, see
 [`STATUS.md`](STATUS.md).** For how to build/test/run and the conventions, see [`../CLAUDE.md`](../CLAUDE.md).
 
+> **STATUS BANNER (2026-09-06): ALL phases 0–7 AND all V2 features are DONE and merged to `main` (384 tests).**
+> The remaining `☐`/`⏳` markers on individual phases below are **historical context** (the per-phase specs are
+> kept for reference); every one has since shipped. The only OPEN work is the continuous-improvement backlog
+> (**CI-1 performance, CI-2 search, CI-3 polish**) tracked in [`STATUS.md`](STATUS.md) + [`UX-REVIEW.md`](UX-REVIEW.md).
+
 Legend: ✅ done & merged · ⏳ partially done · ☐ not started.
 Each remaining item lists: **Spec**, **Branch to create**, **Validation gate**, **QA** (a separate
 subagent must review before merge). Standard flow for every phase: branch off `main` → implement with
@@ -83,10 +88,12 @@ sweep, portable single-file `dotnet publish`, README + user docs, performance ch
 ---
 
 ## What's left, in one line
-**Finish Phase 7** (E2E self-tests, invalid-file surfacing, perf test, README, portable packaging +
-final regression). Phases 0–6 are done and on `main`.
+**Nothing in the phase plan** — phases 0–7 and all V2 features are shipped. Remaining work is the
+continuous-improvement **CI-1 (perf) → CI-2 (search) → CI-3 (polish)** backlog in [`STATUS.md`](STATUS.md)
+and [`UX-REVIEW.md`](UX-REVIEW.md), then stop when no obvious high-value improvement remains.
 
-## Beyond Phase 7 — V2 (in progress)
-Post-MVP enhancements (richer editor, edit-before-insert, dynamic variables, response includes, dark
-mode) are in [`BACKLOG.md`](BACKLOG.md). The phased plan to deliver them + a continuous end-user polish
-pass is in **[`V2-PLAN.md`](V2-PLAN.md)** (Phase R + Phases 8–11+).
+## Beyond Phase 7 — V2 ✅ (all merged)
+Delivered: **dark mode** (Phase 8), **template engine** — variables + response includes (Phase 9),
+**richer editor** + **edit-before-insert** (Phase 10), plus **Phase R** robustness. Plan/specs in
+**[`V2-PLAN.md`](V2-PLAN.md)**; longer-term ideas remain in [`BACKLOG.md`](BACKLOG.md). The end-user UX
+review and the current continuous-improvement backlog are in **[`UX-REVIEW.md`](UX-REVIEW.md)**.

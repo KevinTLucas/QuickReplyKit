@@ -1,62 +1,75 @@
 # QuickReplyKit — Project Status (living handoff)
 
-> **This is the single source of truth for "where we are."** Update it at the end of every work
-> session. Read [`../CLAUDE.md`](../CLAUDE.md) first for how to build/test/run and the conventions,
-> and [`ROADMAP.md`](ROADMAP.md) for the full phase plan (0–7).
+> **Single source of truth for "where we are." A new session or a different AI should be able to read
+> [`../CLAUDE.md`](../CLAUDE.md) + this file + [`ROADMAP.md`](ROADMAP.md) and continue with zero prior context.**
+> **Update this file at the end of every meaningful change** (it is part of the Definition of Done — see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **Status: ✅ MVP + all V2 features complete** (see [`V2-PLAN.md`](V2-PLAN.md)). Merged to `main`:
-  **Phase R** (lenient parsing + watcher guard), **Phase 8** (full-UI light/dark theming), **Phase 9**
-  (template engine: allow-listed `{{greeting}}/{{date}}/{{time}}/{{day}}/{{date:fmt}}` + response
-  includes `{{name}}` with cycle detection + a fan-out expansion budget — resolved at insert/preview/copy),
-  **Phase 10** (richer editor: size/heading, text color, highlight, alignment, strikethrough; + edit-before-insert
-  compose mode). All independently QA'd; one real defect fixed (include fan-out DoS).
-- **Now: Phase 11+ continuous improvement** — end-user-driven polish pass (see `V2-PLAN.md`).
-- **`main` tip:** `21f2c67`. **`dotnet test` 384 passing**, build clean, all four self-tests ok.
-- **Known minor:** (1) editable rename/category `ComboBox` closed field keeps native light chrome in dark
-  mode (text readable); (2) a highlight color with no explicit text color can be low-contrast in dark mode
-  (same as Word/Outlook). Both documented, non-blocking.
-- **(historical) MVP:** All phases 0–7 implemented, independently QA'd, and merged to `main`.
-- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **384 passing** · all four E2E self-tests
-  deterministic: `--selftest-paste` → `PASTE=ok CLIPBOARD_RESTORED=ok`, `--selftest-paste-rich` →
-  `RICHPASTE=ok`, `--selftest-paste-ui` → `UIPASTE=ok`, `--selftest-foreground` → `FOREGROUND_TRACK=ok`.
-- **Portable exe: verified.** `dotnet publish` produces a self-contained single-file `QuickReplyKit.exe`
-  (~67 MB) + `DefaultLibrary`; runs from a clean path, seeds the library, registers the hotkey, renders.
-- **Run:** `dotnet run --project src/QuickReplyKit -- --show` (or the portable exe). Global hotkey: **Ctrl+Alt+D**.
+- **`main` tip:** `71dc402` · **`dotnet test` = 384 passing**, `dotnet build` clean (0 warnings).
+- **Overall status: ✅ MVP + all V2 features complete and QA'd. Now in a continuous end-user polish pass**
+  (the CI-N backlog below). The app is fully usable, launchable, and portable today.
+- **Run:** `dotnet run --project src/QuickReplyKit -- --show` (also runs to tray). Global hotkey **Ctrl+Alt+D**.
+- **Self-tests (all pass):** `--selftest-paste` (PASTE=ok CLIPBOARD_RESTORED=ok), `--selftest-paste-rich`
+  (RICHPASTE=ok), `--selftest-paste-ui` (UIPASTE=ok), `--selftest-foreground` (FOREGROUND_TRACK=ok).
 
-## Awaiting user confirmation (2 human spot-checks — not engineering blockers)
-These are inherently un-automatable; everything they exercise is covered by self-tests at the mechanism level:
-1. **Live paste through the real UI**: focus a third-party app → **Ctrl+Alt+D** → pick a response →
-   Enter/Paste → text lands at the caret, focus returns, clipboard intact. (Auto-covered by `--selftest-paste-ui`.)
-2. **Clipboard-history absence**: confirm pasted content does NOT appear in the Win+V flyout.
-   (Auto-covered at the API level — the three exclusion formats are set and unit-verified.)
+---
 
-## Phase progress — all done
-| Phase | Scope | Status | Tests |
-|---|---|---|---|
-| 0 | Skeleton: single-instance, tray, icon, DPI manifest, `--show`, screenshot tooling | ✅ merged | — |
-| 1 | Core: model, scanner, live watcher, search, HTML→text, CF_HTML, settings/recent, seeding | ✅ merged + QA | 99 |
-| 2 | Launcher UI: 3-pane nav/results/preview, live search, keyboard nav, favorites, action bar | ✅ merged + QA | 142 |
-| 3 | Paste engine: hotkey, focus restore, clipboard-safe insert, history-exclusion, `ForegroundMonitor` | ✅ merged + QA | 224 |
-| 4 | Rich-text editor + response management (create/edit/duplicate/rename/move/delete, ctx menu) | ✅ merged (Core QA'd) | 236 |
-| 5 | Import/Export (Core + UI, conflict/summary; **zip path-traversal fixed**) | ✅ merged + QA | 266 |
-| 6 | Settings window, window memory + multi-monitor, tray Settings, launch-at-startup | ✅ merged + QA | 295 |
-| 7 | Polish, rich + live-UI paste E2E, invalid-file surfacing, perf test, README, portable packaging | ✅ merged + QA | 297 |
+## What is DONE (all merged to `main`)
+**MVP (phases 0–7):** launcher (3-pane nav/results/preview, live search, keyboard nav, favorites, recent),
+paste engine (global hotkey → focus-restore → clipboard-safe insert with history-exclusion; `ForegroundMonitor`
+tracks the true target window), rich-text editor + full response management (create/edit/duplicate/rename/move/
+delete-to-Recycle-Bin, new-from-clipboard, open-in-Explorer), import/export (conflict resolution, invalid-tolerant,
+zip path-traversal-safe), settings (hotkey/library-path/default-paste/launch-at-startup, persisted), tray,
+window memory + multi-monitor, portable single-file packaging, README.
+**V2 (all merged):**
+- **Phase R** — lenient per-field JSON parsing (one bad field no longer invalidates a response) + watcher post-dispose guard.
+- **Phase 8** — full-UI **light/dark theming** (System/Light/Dark, follows Windows; `Themes/Light.xaml`+`Dark.xaml`,
+  `Services/ThemeManager.cs`, `Core/Storage/ThemeResolver.cs`; Settings Appearance toggle).
+- **Phase 9** — **template engine** (`Core/Templates/TemplateEngine.cs`): allow-listed built-ins
+  `{{greeting}}/{{date}}/{{time}}/{{day}}/{{date:fmt}}` + **response includes** `{{Name}}` (cycle detection,
+  missing/`[cycle]`/`[includes: too many]` markers, `{{{{` escape). Resolved at insert/preview/copy. **No code execution.**
+- **Phase 10** — **richer editor** (font size/heading, text color, highlight, alignment, strikethrough; additive HTML
+  subset, old files still load) + **edit-before-insert** (right-click → "Edit & insert…" opens a resolved, editable
+  compose window; Insert pastes without saving a file).
 
-## Known gaps / notes (non-blocking)
-- **Phase 4 UI** never had a *dedicated* independent QA pass (its Core did; the final Phase-7 QA swept
-  the whole app and found no defects). Fine to leave; revisit if issues surface.
-- `--selftest-paste-rich` proves the clipboard carries a well-formed **CF_HTML** payload (what Outlook/
-  Word/browsers/Teams consume as rich); it does not render in a test control because Win11's Msftedit
-  RichEdit has no HTML importer. Real rich targets render it.
-- Deferred robustness items + the **V2 feature list** (richer editor, edit-before-insert, dynamic code
-  variables, response includes) are in [`BACKLOG.md`](BACKLOG.md). **V2 is not started** — do not begin
-  until the user asks.
-- Distribution folder includes `.pdb` files; add `<DebugType>embedded</DebugType>` under a Release
-  condition if a leaner folder is wanted.
+Full per-phase detail + pickup instructions: [`ROADMAP.md`](ROADMAP.md). V2 phase specs: [`V2-PLAN.md`](V2-PLAN.md).
 
-## How to resume / extend in a fresh session
-1. Read `CLAUDE.md`, then this file, then `ROADMAP.md`.
-2. `export PATH="/c/Program Files/dotnet:$PATH"; dotnet build QuickReplyKit.slnx && dotnet test QuickReplyKit.slnx` — confirm 297 green.
-3. New work = a branch off `main` (worktree), ponytail, validate, independent-QA subagent, merge `--no-ff`, update this file.
-4. For V2, see `BACKLOG.md` (only when the user requests it).
+---
+
+## 🔧 OPEN WORK — continuous-improvement backlog (what's LEFT)
+From the end-user UX review ([`UX-REVIEW.md`](UX-REVIEW.md) has full detail/rationale/measurements). Do in value order,
+each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff` when green → update this file.
+
+- **CI-1 · Performance (highest value; BUG-class).** Large-library startup blocks the UI ~19s (synchronous scan on the
+  UI thread). Fix: (a) **parallelize** `LibraryScanner.Scan` file loads (measured ~3.6× faster; I/O-bound via AV/OneDrive);
+  (b) **don't scan on the UI thread** — show the launcher immediately with a "Loading…" state, populate on a background
+  task (watcher already marshals updates); (c) **H1**: stop eagerly calling `File.GetCreationTimeUtc`+`GetLastWriteTimeUtc`
+  per file in `ResponseFile.Load` (~30% of scan; `Created`/`Modified` are never displayed/used). Also speeds `LibraryService.Reload()`.
+  Files: `Core/Library/LibraryScanner.cs`, `Core/Storage/ResponseFile.cs`, `Core/LibraryService.cs`, `App.xaml.cs`, VM loading state.
+- **CI-2 · Search quality.** **H2** highlight matched substring in the name + snippet when the hit is body-only;
+  **M1** lazy, dependency-free typo tolerance (edit-distance ≤1 / subsequence on name+tags, only when a token has 0 exact
+  matches); **M2** rank in-scope (selected-folder) hits first; **M4** let search match invalid files by name (still non-pasteable).
+  Files: `Core/Search/ResponseSearch.cs`, `ViewModels/LauncherViewModel.cs`, `ViewModels/ResponseRowVm.cs`, `Views/LauncherWindow.xaml`.
+- **CI-3 · Interaction polish.** **M3** "Copied ✓" feedback on Copy; **L3** `AutomationProperties.Name` on icon-only
+  buttons (screen-reader); **L5** guard `LibraryWatcher.Start`'s `Directory.CreateDirectory` so an offline OneDrive path
+  isn't recreated locally. (Optional: a tiny keyboard-shortcut hint.)
+- **Considered, NOT doing** (scope/low value): natural-sort, number-to-pick, dark-combobox chrome (cosmetic). See UX-REVIEW.
+
+**Stop condition for the loop:** when no obvious high-value improvement remains and the app feels complete/polished/reliable,
+run a final full regression (build + 4 self-tests + tests) and STOP.
+
+## Known issues / caveats (non-blocking)
+- **Large-library startup latency** — the CI-1 item above; the one real weakness today.
+- Editable rename/category **ComboBox** closed field keeps native light chrome in dark mode (text readable). Cosmetic.
+- A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook). Documented.
+- **Phase 4 UI** never had a *dedicated* independent QA (its Core did; the Phase-7 + combined QA swept it — no defects). Fine.
+- `--selftest-paste-rich` proves the clipboard carries valid **CF_HTML** (what Outlook/Word/browsers render), not an in-app
+  render (Win11 Msftedit has no HTML importer).
+- **2 human spot-checks** (un-automatable): live Ctrl+Alt+D paste into a 3rd-party app; confirm pasted text absent from Win+V history.
+- Deferred robustness + the **V2 idea list beyond what's built** live in [`BACKLOG.md`](BACKLOG.md).
+
+## How to resume in a fresh session
+1. Read `CLAUDE.md`, this file, then `ROADMAP.md` (and `UX-REVIEW.md` for the CI backlog detail).
+2. `export PATH="/c/Program Files/dotnet:$PATH"; dotnet build QuickReplyKit.slnx && dotnet test QuickReplyKit.slnx` → expect **384** green.
+3. Pick the top open **CI-N** item. Branch off `main` (worktree), implement with ponytail, validate, QA via a **separate**
+   subagent (build + tests + both-theme screenshots + the 4 self-tests + back-compat), merge `--no-ff`, delete branch, **update this file**.

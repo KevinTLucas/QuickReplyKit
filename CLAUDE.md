@@ -53,8 +53,11 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   speculative abstractions. Use the `ponytail` skill for writing and `ponytail-review` for review.
 - **MVVM-lite**, hand-rolled: `ViewModelBase : INotifyPropertyChanged` + `RelayCommand`. No framework.
 - **Storage schema is a contract** (see ARCHITECTURE.md): one `.json` per response, **filename = name**,
-  content is a restricted HTML subset (bold/italic/underline/ul/ol/li/link/paragraphs). Don't break it
-  — the seeded `assets/DefaultLibrary` and shared files must keep loading.
+  content is a restricted HTML subset — original (bold/italic/underline/ul/ol/li/link/paragraphs) **plus the
+  V2 additions** (strikethrough, font-size/heading, text color, highlight, paragraph alignment, all additive
+  via inline styles/simple tags). Content may contain **template tokens** `{{…}}` (built-in variables +
+  `{{Response Name}}` includes) resolved at insert/preview time by `Core/Templates/TemplateEngine.cs`.
+  Keep loading **back-compatible**: the seeded `assets/DefaultLibrary` and any older shared file must still load.
 - **DPI:** Per-Monitor-v2 via `app.manifest`. Keep it.
 
 ## How we work (process)
@@ -69,18 +72,29 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
   - Commit messages end with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.
-- **Keep the handoff current:** at the end of any meaningful work, **update `docs/STATUS.md`** (phase
-  status, what changed, known issues, next actions). This is what makes cold pickup possible.
+- **Definition of Done — the handoff MUST stay current (do this on every meaningful change):**
+  1. **Update [`docs/STATUS.md`](docs/STATUS.md)** — the current-state board: `main` tip + test count, what
+     changed, what's now DONE, the open work / next actions, and any new known issue. This is what makes
+     cold pickup by another AI possible; treat it as part of the change, not an afterthought.
+  2. If you finished or reprioritized a phase/backlog item, reflect it in [`docs/ROADMAP.md`](docs/ROADMAP.md)
+     and the relevant plan (`V2-PLAN.md`) / backlog (`BACKLOG.md`, `UX-REVIEW.md`).
+  3. If behaviour, commands, or features changed, update `README.md` (user-facing) and any affected spec/`ARCHITECTURE.md`.
+  4. New user-facing capability → add tests; keep `dotnet test` green. Never leave `main` un-green or docs stale.
+  A change isn't "done" until code + tests + these docs are all consistent.
 
-## Document map
+## Document map (keep this list complete as docs are added)
 - [`docs/STATUS.md`](docs/STATUS.md) — **START HERE for current state.** Living board: phase progress,
   active work, known bugs, what needs QA, next actions.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — **the full phase plan (0–7)**: done vs. remaining, and how to
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — **the full phase plan (0–7 + V2)**: done vs. remaining, and how to
   pick up each remaining phase (spec, branch, validation gate, QA).
 - [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — the **original requirements** (source of truth).
+- [`docs/V2-PLAN.md`](docs/V2-PLAN.md) — the **V2 delivery plan** (dark mode, templates, richer editor,
+  edit-before-insert) + the continuous-improvement approach. All V2 features are DONE (see STATUS).
+- [`docs/UX-REVIEW.md`](docs/UX-REVIEW.md) — **end-user UX review + the prioritized continuous-improvement
+  backlog (CI-1 perf, CI-2 search, CI-3 polish)** — this is the current "what's left" list.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — design & storage contract & paste sequence.
 - `docs/PHASE2-LAUNCHER.md` · `PHASE3-PASTE.md` · `PHASE4-EDITOR.md` · `PHASE5-IMPORT-EXPORT.md` ·
   `PHASE6-SETTINGS-WINDOW.md` · `PHASE7-POLISH-PACKAGING.md` — per-phase specs / work orders.
   (Phases 0–1 are described in `ARCHITECTURE.md`.)
-- [`docs/BACKLOG.md`](docs/BACKLOG.md) — deferred robustness/UX items.
-- `tools/` — screenshot + icon helpers.
+- [`docs/BACKLOG.md`](docs/BACKLOG.md) — deferred robustness items + longer-term V2 ideas.
+- `README.md` — user-facing docs. `tools/` — screenshot + icon helpers.

@@ -38,7 +38,7 @@ dotnet publish src/QuickReplyKit -c Release -r win-x64 --self-contained true \
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Output is a single **`QuickReplyKit.exe`** (~66 MB, self-contained — no .NET install needed on the
+Output is a single **`QuickReplyKit.exe`** (~67 MB, self-contained — no .NET install needed on the
 target machine) with a `DefaultLibrary` folder beside it (the example content copied on first run).
 Copy both to any Windows PC and run the exe. Trimming is intentionally not enabled (WPF is not
 trim-safe).
@@ -49,11 +49,27 @@ From the launcher you can, via the `+` / clipboard buttons and the right-click m
 
 - **New** — create a response and choose (or create) its folder in the hierarchy.
 - **New from clipboard** — turn whatever you just copied into a new response, opened in the editor.
-- **Edit** — a built-in rich-text editor (bold, italic, underline, bullet/numbered lists, links,
-  paragraphs) — no need to touch markup or files.
+- **Edit** — a built-in rich-text editor: bold, italic, underline, **strikethrough**, bullet/numbered
+  lists, links, paragraphs, plus **font size/heading, text color, highlight, and alignment** — no need
+  to touch markup or files.
+- **Edit & insert** — open the selected response (with variables already resolved) in the editor, tweak
+  the final message, and insert it — **without** saving a new response.
 - **Duplicate**, **Rename**, **Move to…** another folder.
 - **Copy** to the clipboard, **Open containing folder** in Explorer.
 - **Delete** — with confirmation (sent to the Recycle Bin).
+
+## Templates: variables & reusable sections
+
+Responses can contain `{{…}}` tokens that are filled in **when you insert** (and shown resolved in the preview):
+
+- **Built-in variables:** `{{greeting}}` (Good morning/afternoon/evening by time of day), `{{date}}`,
+  `{{time}}`, `{{day}}`, and `{{date:yyyy-MM-dd}}` (any .NET date format). Insert them from the editor's
+  **`{{ }}`** menu.
+- **Includes:** reference another response by name to reuse sections — e.g. a template of
+  `{{Welcome}}` / body / `{{Closing}}` keeps greetings and sign-offs consistent everywhere. Cycles and
+  missing references are shown as clear inline markers, never a hang.
+
+(Variables are a fixed, safe built-in set — no code is ever executed, so shared templates are safe to import.)
 
 ## Sharing responses
 
@@ -77,6 +93,7 @@ Open from the ⚙ button or the tray. You can set:
 - **Global hotkey** (default **Ctrl+Alt+D**).
 - **Library folder** location.
 - **Default paste behavior** (rich text or plain text).
+- **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
 
