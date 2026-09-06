@@ -83,5 +83,10 @@ sweep, portable single-file `dotnet publish`, README + user docs, performance ch
 ---
 
 ## What's left, in one line
-**Fix the paste target bug (top of STATUS.md) → Phase 5 UI → Phase 6 → Phase 7.** Everything through
-Phase 4 + the Core of Phase 5 is done and on `main` (236 tests, build clean).
+**Finish Phase 7** (E2E self-tests, invalid-file surfacing, perf test, README, portable packaging +
+final regression). Phases 0–6 are done and on `main`.
+
+## Beyond Phase 7 — V2
+A set of post-MVP enhancements (richer editor, edit-before-insert, dynamic code variables, response
+includes) is recorded in [`BACKLOG.md`](BACKLOG.md) under "V2 / Future enhancements". **Do not start
+V2 until Phase 7 is complete and the MVP is validated.**
