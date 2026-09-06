@@ -33,7 +33,8 @@ Design + code map: [`../ARCHITECTURE.md`](../ARCHITECTURE.md). User guide: [`../
   invalid-file surfacing (⚠), portable single-file packaging.
 
 ## Known caveats (non-blocking, documented on purpose)
-- Editable rename/category **ComboBox** closed field keeps native light chrome in dark mode (text readable). Cosmetic.
+- **BUG (queued, BACKLOG #1):** the New/Edit editor's **Category combobox** is unreadable in dark mode — white text on
+  a white field (closed), and low-contrast dark-on-dark items in the dropdown. Needs a themed ComboBox template.
 - A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook).
 - `--selftest-paste-rich` proves the clipboard carries valid **CF_HTML** (what Outlook/Word/browsers render), not an
   in-app render (Win11 Msftedit has no HTML importer).
