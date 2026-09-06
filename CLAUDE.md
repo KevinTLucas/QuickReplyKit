@@ -76,25 +76,18 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   1. **Update [`docs/STATUS.md`](docs/STATUS.md)** — the current-state board: `main` tip + test count, what
      changed, what's now DONE, the open work / next actions, and any new known issue. This is what makes
      cold pickup by another AI possible; treat it as part of the change, not an afterthought.
-  2. If you finished or reprioritized a phase/backlog item, reflect it in [`docs/ROADMAP.md`](docs/ROADMAP.md)
-     and the relevant plan (`V2-PLAN.md`) / backlog (`BACKLOG.md`, `UX-REVIEW.md`).
-  3. If behaviour, commands, or features changed, update `README.md` (user-facing) and any affected spec/`ARCHITECTURE.md`.
-  4. New user-facing capability → add tests; keep `dotnet test` green. Never leave `main` un-green or docs stale.
+  2. If behaviour, commands, features, or the design changed, update `README.md` (user-facing) and
+     [`ARCHITECTURE.md`](ARCHITECTURE.md). If it changes future scope, update [`docs/BACKLOG.md`](docs/BACKLOG.md).
+  3. New user-facing capability → add tests; keep `dotnet test` green. Never leave `main` un-green or docs stale.
   A change isn't "done" until code + tests + these docs are all consistent.
 
-## Document map (keep this list complete as docs are added)
-- [`docs/STATUS.md`](docs/STATUS.md) — **START HERE for current state.** Living board: phase progress,
-  active work, known bugs, what needs QA, next actions.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — **the full phase plan (0–7 + V2)**: done vs. remaining, and how to
-  pick up each remaining phase (spec, branch, validation gate, QA).
-- [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — the **original requirements** (source of truth).
-- [`docs/V2-PLAN.md`](docs/V2-PLAN.md) — the **V2 delivery plan** (dark mode, templates, richer editor,
-  edit-before-insert) + the continuous-improvement approach. All V2 features are DONE (see STATUS).
-- [`docs/UX-REVIEW.md`](docs/UX-REVIEW.md) — **end-user UX review + the prioritized continuous-improvement
-  backlog (CI-1 perf, CI-2 search, CI-3 polish)** — this is the current "what's left" list.
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — design & storage contract & paste sequence.
-- `docs/PHASE2-LAUNCHER.md` · `PHASE3-PASTE.md` · `PHASE4-EDITOR.md` · `PHASE5-IMPORT-EXPORT.md` ·
-  `PHASE6-SETTINGS-WINDOW.md` · `PHASE7-POLISH-PACKAGING.md` — per-phase specs / work orders.
-  (Phases 0–1 are described in `ARCHITECTURE.md`.)
-- [`docs/BACKLOG.md`](docs/BACKLOG.md) — deferred robustness items + longer-term V2 ideas.
-- `README.md` — user-facing docs. `tools/` — screenshot + icon helpers.
+## Document map (this is the whole set — keep it complete and prune anything that goes stale)
+- [`docs/STATUS.md`](docs/STATUS.md) — **START HERE for current state** (what's done, what's open, known caveats, how to verify/extend).
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — design, storage contract, paste sequence, and the **code map** (where things live).
+- [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — the **original requirements** (source of truth for what the app should do).
+- [`README.md`](README.md) — user-facing guide.
+- [`docs/BACKLOG.md`](docs/BACKLOG.md) — out-of-scope **future ideas** only (everything built is in STATUS).
+- `tools/` — `shoot.ps1` (launch+screenshot+kill), `capture-window.ps1`, `make-icon.ps1`.
+
+> Historical per-phase work orders (PHASE*, ROADMAP, V2-PLAN, UX-REVIEW) were removed once the work shipped — they'd
+> only bloat a fresh pickup. The build history lives in git; the docs above are the living, authoritative set.

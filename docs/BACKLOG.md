@@ -1,56 +1,21 @@
-# Deferred items / backlog
+# Backlog — future ideas
 
-Small robustness + UX items deliberately deferred to the polish phase (not blocking). Tracked so
-they don't get lost.
+Everything previously tracked here is **done and shipped** (the MVP robustness items and all V2 features —
+richer editor, edit-before-insert, template variables, response includes, dark mode — plus the end-user
+continuous-improvement pass). See [`STATUS.md`](STATUS.md) for the current state and known cosmetic caveats.
 
-- **Surface invalid responses everywhere.** A malformed `.json` at the **library root** never shows
-  in the UI: "All Responses" lists valid-only and there is no nav node for the root folder, so only
-  invalid files inside a subfolder show their ⚠. Consider listing invalid items in "All Responses"
-  (muted, ⚠, not paste-able) so users can find and fix broken files anywhere. (QA, Phase 2)
-- **Lenient per-field parsing.** One wrong-typed field (e.g. `tags` as a string) currently marks the
-  whole response invalid. Never crashes/blocks siblings, but hand-editing support staff could lose a
-  response over one typo. Consider per-field leniency / `AllowTrailingCommas` / comment-skip. (QA, Phase 1)
-- **Empty-folder-in-empty-library** shows the library-empty message rather than the per-folder empty
-  message (whole-library check wins). Deliberate; revisit only if it confuses users. (QA, Phase 2)
-- **Watcher post-dispose guard.** Tiny theoretical window where `Changed` can fire just after
-  `Dispose`. UI consumer already guards; revisit if it ever bites. (QA, Phase 1)
+The list below is **out-of-current-scope future ideas only** — start any of these only if the user asks.
 
----
+- **Sandboxed user scripting for variables.** Today's template variables are a **fixed, safe allow-list**
+  (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) with **no code execution** — a deliberate
+  security boundary, because responses are shareable files. A future "run custom code in a variable" feature would
+  need a real sandbox / capability model (never raw eval), and careful UX around importing untrusted templates.
+- **Usage analytics / most-used sort.** Optionally track per-response usage counts and offer a "most used" sort or
+  view. Low value for a small library; only worthwhile if teams accumulate very large libraries.
+- **In-app keyboard cheat-sheet.** A tiny "?" overlay listing the shortcuts (arrows/Enter/Shift+Enter/Ctrl+C, etc.).
+  The shortcuts already work and are tooltipped; this is discoverability polish.
 
-## V2 / Future enhancements (post-MVP — do NOT start until all phases 0–7 are complete)
-
-Requested by the user (2026-09-05). These go beyond the MVP scope (some were explicitly excluded from
-the MVP in `PROJECT-BRIEF.md`, e.g. dynamic placeholders) and are intended as a **V2** effort after the
-core app ships.
-
-1. **Richer rich-text editor.** Expand the editor toward a lightweight Word-like experience — more
-   comprehensive formatting (headings, colors, font size, alignment, etc.) beyond the current
-   bold/italic/underline/lists/links/paragraphs subset. Note: this widens the stored HTML subset and
-   the CF_HTML/plain converters — keep the storage contract versioned and back-compatible.
-2. **Edit the composed message before inserting.** Let the user tweak the final text in-app before it
-   goes out — e.g. open the New/Edit editor pre-filled with the selected response/template, ready to
-   modify, then insert the edited result (rather than inserting the stored response verbatim).
-3. **Dynamic variables that run code.** Template variables whose value is computed at insert time by a
-   code block, with the return value inserted — e.g. a `{{greeting}}` that returns "Good morning/
-   afternoon/evening" from the current time. **Design/security note:** executing arbitrary code from a
-   shareable `.json` library is a real risk (responses are copied between users) — needs a sandbox /
-   an allow-listed set of safe built-in functions rather than raw eval. (Conflicts with the MVP's
-   "no dynamic values" scope by design; V2 only.)
-4. **Response includes / composition.** Let a response reference other saved responses so reusable
-   sections chain together, e.g.:
-   ```
-   {{welcome}}
-   Main response content
-   {{closing}}
-   ```
-   Resolve `{{name}}` references (by response name or path) at insert time, with cycle detection and a
-   clear error for missing references. Keeps greetings/closings/standard instructions consistent across
-   templates.
-5. **Dark mode toggle (full UI).** A light/dark theme toggle covering the whole app — launcher, editor,
-   settings, and dialogs. **Approach note:** the current UI hardcodes colors (e.g. `#FFF4F4F8`,
-   `CardBorder`, `Accent`, muted text) inline per view. Doing this cleanly means centralizing colors
-   into a themeable `ResourceDictionary` and switching views to `DynamicResource`, then swapping the
-   dictionary at runtime. Persist the choice in `AppConfig` (e.g. `Theme: System|Light|Dark`) with a
-   toggle in the Settings window; optionally follow the Windows system theme by default. Also re-check
-   the rich-text preview/editor (`FlowDocument` foreground/background) so response text stays readable
-   in dark mode. (User-requested, 2026-09-06.)
+## Explicitly considered and declined (kept here so they aren't re-proposed)
+- Natural/numeric name sort, number-to-pick (1–9) result selection — unnecessary for named responses.
+- CRM integrations, browser extensions, page scraping, ticket automation, AI-generated responses — **out of scope
+  by design** (see `PROJECT-BRIEF.md`); QuickReplyKit is a local, minimal launcher.

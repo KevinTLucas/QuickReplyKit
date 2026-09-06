@@ -1,8 +1,8 @@
 # QuickReplyKit — Original Project Brief (source of truth)
 
 > This is the original instruction/"gauntlet" prompt that kicked off the project, preserved verbatim
-> so requirements are never lost. `ARCHITECTURE.md` is the design that implements it; `ROADMAP.md`
-> tracks delivery against it.
+> so requirements are never lost. `../ARCHITECTURE.md` is the design that implements it; `STATUS.md`
+> tracks the current state. (Every requirement below is implemented — see STATUS.md.)
 
 ---
 
