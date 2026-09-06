@@ -86,7 +86,7 @@ sweep, portable single-file `dotnet publish`, README + user docs, performance ch
 **Finish Phase 7** (E2E self-tests, invalid-file surfacing, perf test, README, portable packaging +
 final regression). Phases 0–6 are done and on `main`.
 
-## Beyond Phase 7 — V2
-A set of post-MVP enhancements (richer editor, edit-before-insert, dynamic code variables, response
-includes) is recorded in [`BACKLOG.md`](BACKLOG.md) under "V2 / Future enhancements". **Do not start
-V2 until Phase 7 is complete and the MVP is validated.**
+## Beyond Phase 7 — V2 (in progress)
+Post-MVP enhancements (richer editor, edit-before-insert, dynamic variables, response includes, dark
+mode) are in [`BACKLOG.md`](BACKLOG.md). The phased plan to deliver them + a continuous end-user polish
+pass is in **[`V2-PLAN.md`](V2-PLAN.md)** (Phase R + Phases 8–11+).
