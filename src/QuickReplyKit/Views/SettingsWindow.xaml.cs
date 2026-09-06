@@ -1,0 +1,137 @@
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Input;
+using Microsoft.Win32;
+using QuickReplyKit.Core;
+using QuickReplyKit.Core.Storage;
+using QuickReplyKit.Interop;
+using QuickReplyKit.Services;
+
+namespace QuickReplyKit.Views;
+
+/// <summary>
+/// Modal preferences dialog. Edits a working copy of the fields and only writes back to
+/// <see cref="AppConfig"/> on Save; the hotkey is rebound (with an inline "in use" message on
+/// failure) and a changed library path re-points the live <see cref="LibraryService"/>.
+/// </summary>
+public partial class SettingsWindow : Window
+{
+    private readonly AppConfig _config;
+    private readonly GlobalHotkey _hotkey;
+    private readonly LibraryService _library;
+    private readonly Action _onLibraryChanged;
+
+    private string _gesture;      // captured hotkey (edited in place by the capture box)
+    private string _libraryPath;  // chosen library folder (may differ from _config until Save)
+
+    public SettingsWindow(AppConfig config, GlobalHotkey hotkey, LibraryService library, Action onLibraryChanged)
+    {
+        _config = config;
+        _hotkey = hotkey;
+        _library = library;
+        _onLibraryChanged = onLibraryChanged;
+        _gesture = config.HotkeyGesture;
+        _libraryPath = config.LibraryPath;
+
+        InitializeComponent();
+
+        HotkeyBox.Text = _gesture;
+        LibraryPathBox.Text = _libraryPath;
+        PasteRich.IsChecked = config.DefaultPasteMode == PasteMode.RichText;
+        PastePlain.IsChecked = config.DefaultPasteMode == PasteMode.PlainText;
+        RememberWindowCheck.IsChecked = config.RememberWindow;
+        StartupCheck.IsChecked = StartupRegistration.IsEnabled();
+    }
+
+    // --- Hotkey capture -----------------------------------------------------
+
+    private void HotkeyBox_GotFocus(object sender, RoutedEventArgs e) => HotkeyBox.Text = "Press a combination…";
+
+    private void HotkeyBox_LostFocus(object sender, RoutedEventArgs e) => HotkeyBox.Text = _gesture;
+
+    private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        e.Handled = true;   // never let the box receive/echo the keystroke
+
+        // Alt-combos surface the real key via SystemKey; a bare modifier keeps us waiting.
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+        string? gesture = HotkeyGesture.Format(Keyboard.Modifiers, key);
+        if (gesture is null) return;
+
+        _gesture = gesture;
+        HotkeyBox.Text = gesture;
+        HideHotkeyError();
+    }
+
+    // --- Library path -------------------------------------------------------
+
+    private void ChangeLibrary_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFolderDialog
+        {
+            Title = "Choose the response library folder",
+            InitialDirectory = Directory.Exists(_libraryPath) ? _libraryPath : "",
+        };
+        if (dlg.ShowDialog(this) == true)
+        {
+            _libraryPath = dlg.FolderName;
+            LibraryPathBox.Text = _libraryPath;
+        }
+    }
+
+    private void OpenLibrary_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Directory.CreateDirectory(_libraryPath);
+            Process.Start(new ProcessStartInfo(_libraryPath) { UseShellExecute = true });
+        }
+        catch { /* best effort */ }
+    }
+
+    // --- Save ---------------------------------------------------------------
+
+    private void Save_Click(object sender, RoutedEventArgs e)
+    {
+        if (!HotkeyGesture.TryParse(_gesture, out _))
+        {
+            ShowHotkeyError("That isn't a valid shortcut. Use a modifier plus a key, e.g. Ctrl+Alt+D.");
+            return;
+        }
+
+        // Rebind before persisting so a rejected shortcut never gets saved (or lost).
+        if (_gesture != _config.HotkeyGesture && !_hotkey.Rebind(_gesture))
+        {
+            _hotkey.Rebind(_config.HotkeyGesture);   // restore the working one
+            ShowHotkeyError("That shortcut is in use — pick another.");
+            return;
+        }
+
+        _config.HotkeyGesture = _gesture;
+        _config.DefaultPasteMode = PastePlain.IsChecked == true ? PasteMode.PlainText : PasteMode.RichText;
+        _config.RememberWindow = RememberWindowCheck.IsChecked == true;
+
+        bool libraryChanged = !string.Equals(_libraryPath, _config.LibraryPath, StringComparison.OrdinalIgnoreCase);
+        if (libraryChanged) _config.LibraryPath = _libraryPath;
+
+        _config.Save();
+        StartupRegistration.SetEnabled(StartupCheck.IsChecked == true);
+
+        if (libraryChanged)
+        {
+            _library.Repoint(_libraryPath);
+            _onLibraryChanged();
+        }
+
+        DialogResult = true;
+    }
+
+    private void ShowHotkeyError(string message)
+    {
+        HotkeyError.Text = message;
+        HotkeyError.Visibility = Visibility.Visible;
+    }
+
+    private void HideHotkeyError() => HotkeyError.Visibility = Visibility.Collapsed;
+}

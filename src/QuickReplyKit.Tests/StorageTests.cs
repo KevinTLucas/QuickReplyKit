@@ -15,6 +15,7 @@ public class AppConfigTests
         Assert.Equal("Ctrl+Alt+D", cfg.HotkeyGesture);
         Assert.Equal(AppPaths.DefaultLibraryDir, cfg.LibraryPath);
         Assert.Equal(PasteMode.RichText, cfg.DefaultPasteMode);
+        Assert.True(cfg.RememberWindow);   // on by default
         Assert.NotNull(cfg.Window);
     }
 
@@ -28,6 +29,7 @@ public class AppConfigTests
             HotkeyGesture = "Ctrl+Shift+Q",
             LibraryPath = @"C:\Custom\Lib",
             DefaultPasteMode = PasteMode.PlainText,
+            RememberWindow = false,
             Window = new WindowBounds { X = 1, Y = 2, Width = 300, Height = 400, MonitorDeviceName = @"\\.\DISPLAY1" },
         };
         cfg.Save(path);
@@ -36,6 +38,7 @@ public class AppConfigTests
         Assert.Equal("Ctrl+Shift+Q", loaded.HotkeyGesture);
         Assert.Equal(@"C:\Custom\Lib", loaded.LibraryPath);
         Assert.Equal(PasteMode.PlainText, loaded.DefaultPasteMode);
+        Assert.False(loaded.RememberWindow);
         Assert.Equal(300, loaded.Window.Width);
         Assert.Equal(400, loaded.Window.Height);
         Assert.Equal(@"\\.\DISPLAY1", loaded.Window.MonitorDeviceName);

@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
+using QuickReplyKit.Core;
 using QuickReplyKit.Core.ImportExport;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Core.Text;
@@ -24,18 +25,23 @@ public partial class LauncherWindow : Window
     private bool _navVisible = true;
     private bool _navUserOverride;    // once toggled by hand, stop auto-managing on resize
 
+    /// <summary>Set when a --size override is in effect (screenshots) so saved bounds don't fight it.</summary>
+    public bool SuppressBoundsRestore { get; set; }
+    private bool _boundsRestored;     // restore once, on the first show
+
     public LauncherWindow(LauncherViewModel vm, AppConfig config)
     {
         _vm = vm;
         _config = config;
         InitializeComponent();
         DataContext = _vm;
-        _vm.RequestHide += Hide;
+        _vm.RequestHide += HideLauncher;
     }
 
     /// <summary>Bring the launcher up, cleared and focused on the search box, ready to type.</summary>
     public void ShowLauncher()
     {
+        RestorePlacement();
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
@@ -77,7 +83,7 @@ public partial class LauncherWindow : Window
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        if (e.Key == Key.Escape) { Hide(); e.Handled = true; return; }
+        if (e.Key == Key.Escape) { HideLauncher(); e.Handled = true; return; }
 
         // Ctrl+L / Ctrl+F refocus the search box (nice-to-have).
         if ((Keyboard.Modifiers & ModifierKeys.Control) != 0 && (e.Key == Key.L || e.Key == Key.F))
@@ -413,22 +419,71 @@ public partial class LauncherWindow : Window
         return node as T;
     }
 
-    // --- Settings gear (stub: opens the library folder for now) -------------
+    // --- Window memory (size + position, always reopened on-screen) ----------
 
-    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    /// <summary>Hide to tray, first saving the launcher's placement so the next show restores it.</summary>
+    private void HideLauncher()
     {
-        try
-        {
-            Directory.CreateDirectory(_config.LibraryPath);
-            Process.Start(new ProcessStartInfo(_config.LibraryPath) { UseShellExecute = true });
-        }
-        catch { /* best effort */ }
+        SaveBounds();
+        Hide();
     }
+
+    /// <summary>Persist the current normal-state bounds (and the monitor it sits on) to config.</summary>
+    private void SaveBounds()
+    {
+        if (!_config.RememberWindow || WindowState != WindowState.Normal || !IsVisible) return;
+
+        _config.Window = new WindowBounds
+        {
+            X = Left,
+            Y = Top,
+            Width = ActualWidth,
+            Height = ActualHeight,
+            MonitorDeviceName = ScreenDeviceNameAt(Left + ActualWidth / 2, Top + ActualHeight / 2),
+        };
+        try { _config.Save(); } catch { /* best effort */ }
+    }
+
+    /// <summary>
+    /// On the first show, if remembering and real bounds are saved, place the window through
+    /// <see cref="WindowPlacement.EnsureVisible"/> against the current monitors so it always lands
+    /// fully on-screen — even after a monitor was unplugged or rearranged.
+    /// </summary>
+    private void RestorePlacement()
+    {
+        if (_boundsRestored || SuppressBoundsRestore) return;
+        _boundsRestored = true;
+
+        var saved = _config.Window;
+        if (!_config.RememberWindow || saved is null || saved.Width <= 0 || saved.Height <= 0) return;
+
+        var workAreas = System.Windows.Forms.Screen.AllScreens
+            .Select(s => new Rect(s.WorkingArea.X, s.WorkingArea.Y, s.WorkingArea.Width, s.WorkingArea.Height))
+            .ToList();
+
+        var placed = WindowPlacement.EnsureVisible(
+            saved, workAreas,
+            new System.Windows.Size(MinWidth, MinHeight), new System.Windows.Size(780, 520));
+
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = placed.X; Top = placed.Y; Width = placed.Width; Height = placed.Height;
+    }
+
+    private static string? ScreenDeviceNameAt(double x, double y)
+    {
+        try { return System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point((int)x, (int)y)).DeviceName; }
+        catch { return null; }
+    }
+
+    // --- Settings gear ------------------------------------------------------
+
+    private void SettingsButton_Click(object sender, RoutedEventArgs e) =>
+        (Application.Current as App)?.OpenSettings();
 
     // Closing hides to tray instead of exiting; the app exits explicitly via the tray menu.
     protected override void OnClosing(CancelEventArgs e)
     {
         e.Cancel = true;
-        Hide();
+        HideLauncher();
     }
 }

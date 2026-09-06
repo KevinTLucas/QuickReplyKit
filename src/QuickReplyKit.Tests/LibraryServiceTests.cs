@@ -31,6 +31,37 @@ public class LibraryServiceTests
     }
 
     [Fact]
+    public void Repoint_RescansTheNewRoot()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("libA", "OnlyInA.json"));
+        TestFiles.WriteResponse(dir.Of("libB", "OnlyInB.json"));
+
+        using var svc = new LibraryService(dir.Of("libA"), seedSourceDir: null,
+            recentPath: dir.Of("recent.json"), watch: false);
+        Assert.Contains(svc.Snapshot.AllResponses, r => r.Name == "OnlyInA");
+
+        svc.Repoint(dir.Of("libB"));
+
+        Assert.Contains(svc.Snapshot.AllResponses, r => r.Name == "OnlyInB");
+        Assert.DoesNotContain(svc.Snapshot.AllResponses, r => r.Name == "OnlyInA");
+    }
+
+    [Fact]
+    public void Repoint_ToSameRoot_JustRescans()
+    {
+        using var dir = new TempDir();
+        TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+        using var svc = NewService(dir);
+        Assert.Single(svc.Snapshot.AllResponses);
+
+        TestFiles.WriteResponse(dir.Of("lib", "B.json"));   // added out-of-band (no watcher)
+        svc.Repoint(dir.Of("lib"));                          // same path → rescan picks it up
+
+        Assert.Equal(2, svc.Snapshot.AllResponses.Count);
+    }
+
+    [Fact]
     public void Search_DelegatesToRankedSearch_ExcludingInvalid()
     {
         using var dir = new TempDir();

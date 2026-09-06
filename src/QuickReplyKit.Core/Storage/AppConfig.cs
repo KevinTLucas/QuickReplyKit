@@ -29,6 +29,9 @@ public sealed class AppConfig
     public WindowBounds Window { get; set; } = new();
     public PasteMode DefaultPasteMode { get; set; } = PasteMode.RichText;
 
+    /// <summary>Restore the launcher's last size/position on show (validated on-screen first).</summary>
+    public bool RememberWindow { get; set; } = true;
+
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

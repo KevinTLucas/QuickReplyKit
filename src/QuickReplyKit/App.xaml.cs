@@ -72,7 +72,9 @@ public partial class App : Application
         InitTray();
 
         _launcher = new LauncherWindow(_vm, _config);
-        ApplySizeOverride(_launcher, ArgValue(e.Args, "--size"));
+        string? sizeOverride = ArgValue(e.Args, "--size");
+        if (!string.IsNullOrEmpty(sizeOverride)) _launcher.SuppressBoundsRestore = true;
+        ApplySizeOverride(_launcher, sizeOverride);
 
         InitHotkey();
 
@@ -162,7 +164,18 @@ public partial class App : Application
         catch { /* best effort */ }
     }
 
-    private void OpenSettings() => ShowLauncher();   // dedicated Settings window arrives in a later phase
+    /// <summary>Open the modal Settings dialog, owned by the launcher when it's visible.</summary>
+    public void OpenSettings()
+    {
+        if (_config is null || _hotkey is null || _library is null || _vm is null) return;
+        Window? owner = _launcher is { IsVisible: true } ? _launcher : null;
+        var dlg = new Views.SettingsWindow(_config, _hotkey, _library, () => _vm.OnLibraryUpdated())
+        {
+            Owner = owner,
+        };
+        if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        dlg.ShowDialog();
+    }
 
     private static string? ArgValue(string[] args, string name)
     {
