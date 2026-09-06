@@ -36,6 +36,7 @@ public sealed class ResponseRowVm : ViewModelBase
         get
         {
             var parts = new List<string>();
+            if (!Item.IsValid) parts.Add("Invalid file — can't be read");
             if (!string.IsNullOrEmpty(Item.App)) parts.Add(Item.App);
             if (!string.IsNullOrEmpty(Item.CategoryPath)) parts.Add(Item.CategoryPath);
             return string.Join("  ·  ", parts);

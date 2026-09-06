@@ -180,9 +180,11 @@ public sealed class LauncherViewModel : ViewModelBase
         {
             NavScope.Favorites => _library.Favorites(),
             NavScope.Recent => _library.Recent(),
-            NavScope.All => snap.ValidResponses.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList(),
+            // All and category views include invalid files (muted, ⚠, not paste-able) so broken
+            // responses can be found and fixed anywhere in the library.
+            NavScope.All => ByValidThenName(snap.AllResponses),
             NavScope.Category => CategoryItems(snap, nav!.CategoryPath),
-            _ => snap.ValidResponses.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList(),
+            _ => ByValidThenName(snap.AllResponses),
         };
     }
 
@@ -192,10 +194,14 @@ public sealed class LauncherViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(path))
             q = q.Where(r => r.CategoryPath == path ||
                              r.CategoryPath.StartsWith(path + "/", StringComparison.OrdinalIgnoreCase));
-        return q.OrderBy(r => r.IsValid ? 0 : 1)
-                .ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+        return ByValidThenName(q);
     }
+
+    /// <summary>Valid rows first, then invalid, each group ordered by name.</summary>
+    private static IReadOnlyList<ResponseItem> ByValidThenName(IEnumerable<ResponseItem> items) =>
+        items.OrderBy(r => r.IsValid ? 0 : 1)
+             .ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+             .ToList();
 
     private void OnToggleFavorite(ResponseRowVm row)
     {
