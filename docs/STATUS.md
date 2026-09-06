@@ -5,9 +5,10 @@
 > **Update this file at the end of every meaningful change** (it is part of the Definition of Done — see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `4d8cee3` · **`dotnet test` = 400 passing**, `dotnet build` clean (0 warnings).
-- **Overall status: ✅ MVP + all V2 features complete and QA'd. Now in a continuous end-user polish pass**
-  (the CI-N backlog below). The app is fully usable, launchable, and portable today.
+- **`main` tip:** `53a1333` · **`dotnet test` = 403 passing**, `dotnet build` clean (0 warnings).
+- **Overall status: ✅ COMPLETE — MVP + all V2 features + the continuous-improvement pass (CI-1/2/3) all done and merged.**
+  The app is polished, reliable, launchable, and portable. No obvious high-value improvement remains open (the UX review's
+  remaining items are low-value/scope-creep — see UX-REVIEW.md). Final regression green (build + 403 tests + all 4 self-tests).
 - **Run:** `dotnet run --project src/QuickReplyKit -- --show` (also runs to tray). Global hotkey **Ctrl+Alt+D**.
 - **Self-tests (all pass):** `--selftest-paste` (PASTE=ok CLIPBOARD_RESTORED=ok), `--selftest-paste-rich`
   (RICHPASTE=ok), `--selftest-paste-ui` (UIPASTE=ok), `--selftest-foreground` (FOREGROUND_TRACK=ok).
@@ -62,13 +63,13 @@ each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff
   `Views/HighlightText.cs`, theme-safe) + body-only snippet; M1 lazy fuzzy fallback (subsequence / Levenshtein ≤1–2 on
   name+tags, tier `Fuzzy`, only when a token has 0 exact matches — common path unregressed); M2 in-scope (selected folder)
   ranked first; M4 invalid files matched by name (ranked below valid, still non-pasteable). `ResponseSearch.Rank`→`SearchHit`.
-- **CI-3 · Interaction polish.** **M3** "Copied ✓" feedback on Copy; **L3** `AutomationProperties.Name` on icon-only
-  buttons (screen-reader); **L5** guard `LibraryWatcher.Start`'s `Directory.CreateDirectory` so an offline OneDrive path
-  isn't recreated locally. (Optional: a tiny keyboard-shortcut hint.)
+- **CI-3 · Interaction polish. ✅ DONE — merged to `main` (`53a1333`, 403 tests).** M3 "Copied ✓" feedback (auto-clears
+  after 1.5s); L3 `AutomationProperties.Name` on the icon-only buttons + ★ toggle (screen-reader); L5 `LibraryWatcher.Start`
+  no longer fabricates the library folder when its parent is missing (offline OneDrive safe), skips watching gracefully.
 - **Considered, NOT doing** (scope/low value): natural-sort, number-to-pick, dark-combobox chrome (cosmetic). See UX-REVIEW.
 
-**Stop condition for the loop:** when no obvious high-value improvement remains and the app feels complete/polished/reliable,
-run a final full regression (build + 4 self-tests + tests) and STOP.
+**Continuous-improvement pass: ✅ COMPLETE.** All CI items merged; final regression green. The loop is stopped. Any further
+work would be new feature requests (see BACKLOG.md for longer-term ideas) — start those only when the user asks.
 
 ## Known issues / caveats (non-blocking)
 - **Large-library startup latency** — ✅ fixed by CI-1 (merged): scan is now parallel, lazy on timestamps, and off

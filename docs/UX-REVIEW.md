@@ -23,7 +23,7 @@ the one real weakness is large-library startup performance. Items are being work
     selected nav) hits first (keep global search, just prioritize scope).
   - **M4** — search filters to valid-only, so a broken response can't be found to fix it. Let search match
     invalid files by **name** (still non-pasteable).
-- **CI-3 · Interaction polish:**
+- **CI-3 · Interaction polish: ✅ DONE — merged to `main` (`53a1333`).**
   - **M3** — "Copy" gives no feedback (looks inert). Add a brief "Copied ✓" on the button/meta line.
   - **L3** — icon-only buttons (☰ ＋ 📋 ⋯ ⚙) lack `AutomationProperties.Name` (screen-reader polish).
   - **L5** — guard `LibraryWatcher.Start`'s `Directory.CreateDirectory` so an offline OneDrive library path
