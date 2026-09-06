@@ -14,7 +14,7 @@ the one real weakness is large-library startup performance. Items are being work
   - **H1** — `ResponseFile.Load` called `File.GetCreationTimeUtc` + `GetLastWriteTimeUtc` per file for the
     common shared/copied-file case; `Created`/`Modified` are **never displayed or used for sort/filter**.
     Fixed: they stay `default` when absent (no syscall; `Save` still fills `Created`). ~19% of the scan here.
-- **CI-2 · Search quality:**
+- **CI-2 · Search quality: ✅ DONE — merged to `main` (`4d8cee3`).**
   - **H2** — results don't show *why*/where a query matched (body/tag hits show a name without the term).
     Bold the matched substring in the name; show a matching-line snippet when the hit is body-only.
   - **M1** — no typo tolerance: "licence" → 0 results. Add a **lazy, dependency-free** fallback (subsequence

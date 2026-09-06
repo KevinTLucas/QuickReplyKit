@@ -5,7 +5,7 @@
 > **Update this file at the end of every meaningful change** (it is part of the Definition of Done — see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `864db1a` · **`dotnet test` = 386 passing**, `dotnet build` clean (0 warnings).
+- **`main` tip:** `4d8cee3` · **`dotnet test` = 400 passing**, `dotnet build` clean (0 warnings).
 - **Overall status: ✅ MVP + all V2 features complete and QA'd. Now in a continuous end-user polish pass**
   (the CI-N backlog below). The app is fully usable, launchable, and portable today.
 - **Run:** `dotnet run --project src/QuickReplyKit -- --show` (also runs to tray). Global hotkey **Ctrl+Alt+D**.
@@ -58,10 +58,10 @@ each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff
   automated session (WPF GPU-composited content isn't readable via `CopyFromScreen` here — pre-change `main` captures blank too);
   UI behavior is covered by the VM/deferred-load tests and needs a human/interactive screenshot pass at QA.
   Files: `Core/Library/LibraryScanner.cs`, `Core/Storage/ResponseFile.cs`, `Core/LibraryService.cs`, `App.xaml.cs`, `ViewModels/LauncherViewModel.cs`.
-- **CI-2 · Search quality.** **H2** highlight matched substring in the name + snippet when the hit is body-only;
-  **M1** lazy, dependency-free typo tolerance (edit-distance ≤1 / subsequence on name+tags, only when a token has 0 exact
-  matches); **M2** rank in-scope (selected-folder) hits first; **M4** let search match invalid files by name (still non-pasteable).
-  Files: `Core/Search/ResponseSearch.cs`, `ViewModels/LauncherViewModel.cs`, `ViewModels/ResponseRowVm.cs`, `Views/LauncherWindow.xaml`.
+- **CI-2 · Search quality. ✅ DONE — merged to `main` (`4d8cee3`, 400 tests).** H2 match highlighting (accent-bold via
+  `Views/HighlightText.cs`, theme-safe) + body-only snippet; M1 lazy fuzzy fallback (subsequence / Levenshtein ≤1–2 on
+  name+tags, tier `Fuzzy`, only when a token has 0 exact matches — common path unregressed); M2 in-scope (selected folder)
+  ranked first; M4 invalid files matched by name (ranked below valid, still non-pasteable). `ResponseSearch.Rank`→`SearchHit`.
 - **CI-3 · Interaction polish.** **M3** "Copied ✓" feedback on Copy; **L3** `AutomationProperties.Name` on icon-only
   buttons (screen-reader); **L5** guard `LibraryWatcher.Start`'s `Directory.CreateDirectory` so an offline OneDrive path
   isn't recreated locally. (Optional: a tiny keyboard-shortcut hint.)
