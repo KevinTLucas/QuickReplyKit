@@ -22,6 +22,7 @@ public partial class App : Application
     private Forms.NotifyIcon? _tray;
     private LauncherWindow? _launcher;
     private GlobalHotkey? _hotkey;
+    private ForegroundMonitor? _foregroundMonitor;
 
     private AppConfig _config = new();
     private LibraryService? _library;
@@ -32,11 +33,15 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // Hidden E2E gate: run the paste self-test and exit before touching tray/single-instance.
+        // Hidden E2E gates: run a self-test and exit before touching tray/single-instance.
         if (e.Args.Any(a => a.Equals("--selftest-paste", StringComparison.OrdinalIgnoreCase)))
         {
-            int code = SelfTest.Run();
-            Shutdown(code);
+            Shutdown(SelfTest.Run());
+            return;
+        }
+        if (e.Args.Any(a => a.Equals("--selftest-foreground", StringComparison.OrdinalIgnoreCase)))
+        {
+            Shutdown(SelfTest.RunForeground());
             return;
         }
 
@@ -70,6 +75,11 @@ public partial class App : Application
         ApplySizeOverride(_launcher, ArgValue(e.Args, "--size"));
 
         InitHotkey();
+
+        // Track the last real (non-QuickReplyKit) foreground window so paste always targets the app
+        // the user was actually in — regardless of whether the launcher is summoned via hotkey, tray,
+        // or a fresh launch. Installed on the UI thread (it owns the message loop the hook needs).
+        _foregroundMonitor = new ForegroundMonitor(_target);
 
         // Background waiter: when any future instance signals, show the launcher on the UI thread.
         var t = new Thread(ShowEventLoop) { IsBackground = true, Name = "ShowEventWaiter" };
@@ -172,6 +182,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _foregroundMonitor?.Dispose();
         _hotkey?.Dispose();
         if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
         _library?.Dispose();
