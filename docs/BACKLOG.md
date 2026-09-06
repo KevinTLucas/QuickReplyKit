@@ -46,3 +46,11 @@ core app ships.
    Resolve `{{name}}` references (by response name or path) at insert time, with cycle detection and a
    clear error for missing references. Keeps greetings/closings/standard instructions consistent across
    templates.
+5. **Dark mode toggle (full UI).** A light/dark theme toggle covering the whole app — launcher, editor,
+   settings, and dialogs. **Approach note:** the current UI hardcodes colors (e.g. `#FFF4F4F8`,
+   `CardBorder`, `Accent`, muted text) inline per view. Doing this cleanly means centralizing colors
+   into a themeable `ResourceDictionary` and switching views to `DynamicResource`, then swapping the
+   dictionary at runtime. Persist the choice in `AppConfig` (e.g. `Theme: System|Light|Dark`) with a
+   toggle in the Settings window; optionally follow the Windows system theme by default. Also re-check
+   the rich-text preview/editor (`FlowDocument` foreground/background) so response text stays readable
+   in dark mode. (User-requested, 2026-09-06.)
