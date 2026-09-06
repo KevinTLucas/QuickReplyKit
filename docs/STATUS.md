@@ -40,12 +40,21 @@ Full per-phase detail + pickup instructions: [`ROADMAP.md`](ROADMAP.md). V2 phas
 From the end-user UX review ([`UX-REVIEW.md`](UX-REVIEW.md) has full detail/rationale/measurements). Do in value order,
 each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff` when green → update this file.
 
-- **CI-1 · Performance (highest value; BUG-class).** Large-library startup blocks the UI ~19s (synchronous scan on the
-  UI thread). Fix: (a) **parallelize** `LibraryScanner.Scan` file loads (measured ~3.6× faster; I/O-bound via AV/OneDrive);
-  (b) **don't scan on the UI thread** — show the launcher immediately with a "Loading…" state, populate on a background
-  task (watcher already marshals updates); (c) **H1**: stop eagerly calling `File.GetCreationTimeUtc`+`GetLastWriteTimeUtc`
-  per file in `ResponseFile.Load` (~30% of scan; `Created`/`Modified` are never displayed/used). Also speeds `LibraryService.Reload()`.
-  Files: `Core/Library/LibraryScanner.cs`, `Core/Storage/ResponseFile.cs`, `Core/LibraryService.cs`, `App.xaml.cs`, VM loading state.
+- **CI-1 · Performance (highest value; BUG-class). ✅ IMPLEMENTED on branch `ci-1-perf` — pending independent QA + `--no-ff` merge.**
+  All three fixes landed: (a) `LibraryScanner.Scan` now enumerates the tree first and loads files with `Parallel.For`
+  (pure/stateless `ResponseFile.Load`), reassembling in the original pre-order so the snapshot is byte-for-byte identical
+  (same items/order/invalid handling); (b) startup no longer scans on the UI thread — `LibraryService` takes
+  `deferInitialScan`, `App` shows the launcher immediately in a **"Loading library…"** state and runs the first scan on a
+  background `Task` (`LoadInitial()` → `Updated` → Dispatcher, the same path the watcher uses); (c) **H1**: `ResponseFile.Load`
+  no longer calls `File.GetCreation/LastWriteTimeUtc` per file — `Created`/`Modified` stay `default` when absent (never
+  displayed/used; `Save` still fills `Created`). Local benchmark (~4.8k files, warm cache, no AV/OneDrive drivers):
+  parallel+lazy **181 ms** vs sequential+eager **532 ms** (~2.9×; eager timestamps were ~19% of the sequential scan) — bigger
+  on real hardware where filter-driver I/O dominates. **386 tests green** (added: parallel-scan-determinism vs sequential
+  oracle incl. nested/invalid files; deferred-load populate+Updated; H1 leaves timestamps default & still valid; 2 old
+  file-time-fallback tests updated to new behavior). All 4 self-tests pass. NOTE: screenshots couldn't be captured in this
+  automated session (WPF GPU-composited content isn't readable via `CopyFromScreen` here — pre-change `main` captures blank too);
+  UI behavior is covered by the VM/deferred-load tests and needs a human/interactive screenshot pass at QA.
+  Files: `Core/Library/LibraryScanner.cs`, `Core/Storage/ResponseFile.cs`, `Core/LibraryService.cs`, `App.xaml.cs`, `ViewModels/LauncherViewModel.cs`.
 - **CI-2 · Search quality.** **H2** highlight matched substring in the name + snippet when the hit is body-only;
   **M1** lazy, dependency-free typo tolerance (edit-distance ≤1 / subsequence on name+tags, only when a token has 0 exact
   matches); **M2** rank in-scope (selected-folder) hits first; **M4** let search match invalid files by name (still non-pasteable).
@@ -59,7 +68,8 @@ each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff
 run a final full regression (build + 4 self-tests + tests) and STOP.
 
 ## Known issues / caveats (non-blocking)
-- **Large-library startup latency** — the CI-1 item above; the one real weakness today.
+- **Large-library startup latency** — addressed by CI-1 (branch `ci-1-perf`, above): scan is now parallel, lazy on
+  timestamps, and off the UI thread (window shows immediately with "Loading library…"). Awaiting QA + merge to `main`.
 - Editable rename/category **ComboBox** closed field keeps native light chrome in dark mode (text readable). Cosmetic.
 - A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook). Documented.
 - **Phase 4 UI** never had a *dedicated* independent QA (its Core did; the Phase-7 + combined QA swept it — no defects). Fine.

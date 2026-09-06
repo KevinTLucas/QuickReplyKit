@@ -5,15 +5,15 @@ compact/large sizes, live keyboard, plus engine benchmarks. Overall: a well-buil
 the one real weakness is large-library startup performance. Items are being worked in value order.
 
 ## Doing now (continuous-improvement batches)
-- **CI-1 · Performance (highest value):**
-  - **B1** — startup scans the whole library **synchronously on the UI thread** (~19s to show with ~4.8k
-    responses). Fix: **parallelize** `LibraryScanner` file loads (measured 3.6× faster; work is I/O-bound
-    via AV/OneDrive filter drivers) **and** don't block the UI — show the launcher immediately with a brief
-    "Loading library…" state, populate on a background task (watcher already marshals updates). Also makes
-    `LibraryService.Reload()` (fires on every debounced change) cheap.
-  - **H1** — `ResponseFile.Load` calls `File.GetCreationTimeUtc` + `GetLastWriteTimeUtc` per file for the
-    common shared/copied-file case (~5.7s of the 18s); `Created`/`Modified` are **never displayed or used
-    for sort/filter**. Drop the eager fallback (lazy/remove). ~30% off every scan. Pure ponytail win.
+- **CI-1 · Performance (highest value): ✅ IMPLEMENTED on branch `ci-1-perf` (pending QA + merge).**
+  - **B1** — startup scanned the whole library **synchronously on the UI thread** (~19s to show with ~4.8k
+    responses). Fixed: `LibraryScanner.Scan` now loads files with `Parallel.For` (I/O-bound; deterministic
+    reassembly keeps the snapshot identical), **and** the initial scan runs on a background `Task` — the
+    launcher shows immediately with a "Loading library…" state and populates via the existing watcher path.
+    Local bench (~4.8k files, warm cache): ~2.9× faster (181 ms vs 532 ms); larger on real AV/OneDrive hardware.
+  - **H1** — `ResponseFile.Load` called `File.GetCreationTimeUtc` + `GetLastWriteTimeUtc` per file for the
+    common shared/copied-file case; `Created`/`Modified` are **never displayed or used for sort/filter**.
+    Fixed: they stay `default` when absent (no syscall; `Save` still fills `Created`). ~19% of the scan here.
 - **CI-2 · Search quality:**
   - **H2** — results don't show *why*/where a query matched (body/tag hits show a name without the term).
     Bold the matched substring in the name; show a matching-line snippet when the hit is body-only.

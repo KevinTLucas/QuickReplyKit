@@ -67,6 +67,52 @@ public class LibraryScannerTests
     }
 
     [Fact]
+    public void Scan_ParallelLoad_MatchesSequentialReference_AndIsDeterministic()
+    {
+        // A tree with nested folders, files at every level, and invalid files interleaved. The parallel
+        // scan must yield exactly the same flat list (items + order + valid flags) as a straightforward
+        // sequential pre-order walk, and the same result on every run.
+        using var t = new TempDir();
+        TestFiles.WriteResponse(t.Of("root-b.json"));
+        TestFiles.WriteResponse(t.Of("root-a.json"));
+        File.WriteAllText(t.Of("root-bad.json"), "{ broken");
+        TestFiles.WriteResponse(t.Of("Beta", "b2.json"));
+        TestFiles.WriteResponse(t.Of("Beta", "b1.json"));
+        File.WriteAllText(t.Of("Beta", "b-bad.json"), "{\"schema\":1}"); // no html → invalid
+        TestFiles.WriteResponse(t.Of("Alpha", "Sub", "deep.json"));
+        TestFiles.WriteResponse(t.Of("Alpha", "a1.json"));
+        Directory.CreateDirectory(t.Of("Empty"));
+
+        var expected = SequentialReference(t.Path, t.Path).ToList();
+
+        // Run several times; every scan must equal the reference and each other.
+        for (int run = 0; run < 5; run++)
+        {
+            var snap = LibraryScanner.Scan(t.Path);
+            var actual = snap.AllResponses
+                .Select(r => (r.RelativePath, r.IsValid))
+                .ToList();
+            Assert.Equal(expected, actual);
+        }
+    }
+
+    /// <summary>
+    /// Independent, obviously-correct sequential pre-order walk used as the oracle for the parallel scan:
+    /// files in a folder sorted OrdinalIgnoreCase, then subfolders sorted the same way, depth-first.
+    /// </summary>
+    private static IEnumerable<(string RelativePath, bool IsValid)> SequentialReference(string dir, string root)
+    {
+        foreach (var file in Directory.EnumerateFiles(dir, "*.json").OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+        {
+            var item = QuickReplyKit.Core.Storage.ResponseFile.Load(file, root);
+            yield return (item.RelativePath, item.IsValid);
+        }
+        foreach (var sub in Directory.EnumerateDirectories(dir).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
+            foreach (var r in SequentialReference(sub, root))
+                yield return r;
+    }
+
+    [Fact]
     public void Scan_LargeLibrary_IsFast()
     {
         using var t = new TempDir();

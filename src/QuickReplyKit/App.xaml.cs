@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using QuickReplyKit.Core;
@@ -77,8 +78,13 @@ public partial class App : Application
 
         ThemeManager.Apply(_config.Theme);
 
+        // Defer the library scan off the UI thread: with a large library it can take many seconds
+        // (I/O-bound), and doing it here would stall the launcher from appearing. The VM starts in a
+        // "Loading…" state and populates when LoadInitial() (kicked off at the end of startup) fires
+        // Updated on the Dispatcher — the same path the watcher already uses.
         _library = new LibraryService(_config.LibraryPath,
-            seedSourceDir: Path.Combine(AppContext.BaseDirectory, "DefaultLibrary"));
+            seedSourceDir: Path.Combine(AppContext.BaseDirectory, "DefaultLibrary"),
+            deferInitialScan: true);
         _vm = new LauncherViewModel(_library, new InsertService(_target), _config);
 
         // The watcher fires on a thread-pool thread; marshal the refresh to the UI thread.
@@ -104,6 +110,10 @@ public partial class App : Application
 
         if (e.Args.Any(a => a.Equals("--show", StringComparison.OrdinalIgnoreCase)))
             ShowLauncher();
+
+        // Run the initial library scan in the background; it populates the (already-visible) launcher
+        // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
+        Task.Run(() => _library.LoadInitial());
     }
 
     private void InitHotkey()

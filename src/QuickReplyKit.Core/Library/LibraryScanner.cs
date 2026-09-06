@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 
@@ -8,28 +9,48 @@ namespace QuickReplyKit.Core.Library;
 /// Walks the library root into a <see cref="CategoryNode"/> tree. Empty folders are kept,
 /// invalid files are marked but never block siblings, a missing root yields an empty snapshot
 /// (and creates nothing). Directories and files are sorted for a stable tree.
+///
+/// The tree/file enumeration is built first (cheap directory walk, deterministic pre-order), then
+/// every <see cref="ResponseFile.Load"/> — which is pure/stateless — runs in parallel. The work is
+/// I/O-bound (AV/OneDrive filter drivers on each file open), so parallel loads are the big win on a
+/// large library. Results are reassembled in the original order, so the snapshot is byte-for-byte
+/// identical (same items, same stable ordering, same invalid handling) to a sequential scan.
 /// </summary>
 public static class LibraryScanner
 {
     public static LibrarySnapshot Scan(string libraryRoot)
     {
-        var all = new List<ResponseItem>();
-
         if (!Directory.Exists(libraryRoot))
+            return Empty(libraryRoot);
+
+        // 1. Build the folder tree and collect every .json path in deterministic pre-order.
+        var files = new List<(CategoryNode node, string path)>();
+        var root = BuildNode(libraryRoot, libraryRoot, files);
+
+        // 2. Load the files in parallel; index-keyed so the outcome is order-independent.
+        var items = new ResponseItem[files.Count];
+        Parallel.For(0, files.Count, i => items[i] = ResponseFile.Load(files[i].path, libraryRoot));
+
+        // 3. Reassemble the tree and the flat list in the original pre-order.
+        var all = new List<ResponseItem>(files.Count);
+        for (int i = 0; i < files.Count; i++)
         {
-            return new LibrarySnapshot
-            {
-                Root = new CategoryNode { Name = SafeLeaf(libraryRoot), RelativePath = "" },
-                AllResponses = all,
-                LibraryRoot = libraryRoot,
-            };
+            files[i].node.Responses.Add(items[i]);
+            all.Add(items[i]);
         }
 
-        var root = BuildNode(libraryRoot, libraryRoot, all);
         return new LibrarySnapshot { Root = root, AllResponses = all, LibraryRoot = libraryRoot };
     }
 
-    private static CategoryNode BuildNode(string dir, string libraryRoot, List<ResponseItem> all)
+    /// <summary>An empty snapshot rooted at <paramref name="libraryRoot"/> (creates nothing on disk).</summary>
+    public static LibrarySnapshot Empty(string libraryRoot) => new()
+    {
+        Root = new CategoryNode { Name = SafeLeaf(libraryRoot), RelativePath = "" },
+        AllResponses = new List<ResponseItem>(),
+        LibraryRoot = libraryRoot,
+    };
+
+    private static CategoryNode BuildNode(string dir, string libraryRoot, List<(CategoryNode, string)> files)
     {
         string rel = Path.GetRelativePath(libraryRoot, dir);
         bool isRoot = rel == ".";
@@ -40,14 +61,10 @@ public static class LibraryScanner
         };
 
         foreach (var file in Directory.EnumerateFiles(dir, "*.json").OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
-        {
-            var item = ResponseFile.Load(file, libraryRoot);
-            node.Responses.Add(item);
-            all.Add(item);
-        }
+            files.Add((node, file));
 
         foreach (var sub in Directory.EnumerateDirectories(dir).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
-            node.Children.Add(BuildNode(sub, libraryRoot, all));
+            node.Children.Add(BuildNode(sub, libraryRoot, files));
 
         return node;
     }

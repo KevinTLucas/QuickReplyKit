@@ -24,11 +24,17 @@ public sealed class LibraryService : IDisposable
 
     public LibrarySnapshot Snapshot { get; private set; }
 
+    /// <summary>
+    /// True until the first scan completes when the initial scan was deferred (see
+    /// <see cref="LoadInitial"/>). Lets the UI show a "Loading…" state instead of "empty".
+    /// </summary>
+    public bool IsLoading { get; private set; }
+
     /// <summary>Raised after the library changed on disk and <see cref="Snapshot"/> was rebuilt.</summary>
     public event Action? Updated;
 
     public LibraryService(string libraryRoot, string? seedSourceDir = null,
-        string? recentPath = null, bool watch = true)
+        string? recentPath = null, bool watch = true, bool deferInitialScan = false)
     {
         _root = libraryRoot;
         _recentPath = recentPath;
@@ -37,13 +43,31 @@ public sealed class LibraryService : IDisposable
             LibrarySeeder.SeedIfEmpty(_root, seedSourceDir);
 
         _recent = recentPath is null ? RecentStore.Load() : RecentStore.Load(recentPath);
-        Snapshot = LibraryScanner.Scan(_root);
+
+        // Deferred: start with an empty snapshot so the window can show immediately; the caller runs
+        // LoadInitial() on a background thread. Otherwise scan up front (tests, self-tests, headless).
+        if (deferInitialScan) { Snapshot = LibraryScanner.Empty(_root); IsLoading = true; }
+        else Snapshot = LibraryScanner.Scan(_root);
 
         if (watch)
         {
             _watcher = new LibraryWatcher(_root);
             _watcher.Changed += OnLibraryChanged;
         }
+    }
+
+    /// <summary>
+    /// Runs the deferred initial scan (call on a background thread), then raises <see cref="Updated"/>
+    /// so the UI populates via its normal Dispatcher path. No-op after <see cref="Dispose"/>.
+    /// </summary>
+    public void LoadInitial()
+    {
+        lock (_gate) { if (_disposed) return; }
+        Reload();
+        IsLoading = false;
+        Action? handler;
+        lock (_gate) { if (_disposed) return; handler = Updated; }
+        handler?.Invoke();
     }
 
     private void OnLibraryChanged()
