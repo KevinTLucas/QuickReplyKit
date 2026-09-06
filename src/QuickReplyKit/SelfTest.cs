@@ -1,11 +1,16 @@
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using QuickReplyKit.Core;
 using QuickReplyKit.Core.Model;
+using QuickReplyKit.Core.Storage;
+using QuickReplyKit.Core.Text;
 using QuickReplyKit.Interop;
 using QuickReplyKit.Services;
+using QuickReplyKit.ViewModels;
 
 namespace QuickReplyKit;
 
@@ -40,6 +45,15 @@ internal static class SelfTest
     [DllImport("user32.dll")] private static extern bool TranslateMessage(ref MSG msg);
     [DllImport("user32.dll")] private static extern nint DispatchMessage(ref MSG msg);
     private const uint PM_REMOVE = 0x0001;
+
+    // --- Raw clipboard readback (for --selftest-paste-rich) ------------------
+    [DllImport("user32.dll")] private static extern bool OpenClipboard(nint hWndNewOwner);
+    [DllImport("user32.dll")] private static extern bool CloseClipboard();
+    [DllImport("user32.dll")] private static extern nint GetClipboardData(uint uFormat);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern uint RegisterClipboardFormat(string lpszFormat);
+    [DllImport("kernel32.dll")] private static extern nint GlobalLock(nint hMem);
+    [DllImport("kernel32.dll")] private static extern bool GlobalUnlock(nint hMem);
+    [DllImport("kernel32.dll")] private static extern nuint GlobalSize(nint hMem);
 
     /// <summary>
     /// <c>--selftest-foreground</c>: prove <see cref="ForegroundMonitor"/> records the last real
@@ -87,6 +101,130 @@ internal static class SelfTest
         finally { KillNotepad(target, launched); }
 
         Console.WriteLine($"FOREGROUND_TRACK={(ok ? "ok" : "fail")}");
+        Console.Out.Flush();
+        return ok ? 0 : 1;
+    }
+
+    /// <summary>
+    /// <c>--selftest-paste-rich</c>: prove the rich paste path puts a well-formed CF_HTML payload on the
+    /// clipboard — the formatting a rich target consumes — alongside the plain-text alternative. Runs the
+    /// real <see cref="ClipboardWriter.WriteRich"/> + <see cref="CfHtml.Build"/> the paste engine uses,
+    /// then reads the clipboard back with raw Win32 and asserts the "HTML Format" blob is byte-for-byte
+    /// <see cref="CfHtml.Build"/> (valid header offsets + our bold fragment) and CF_UNICODETEXT is the
+    /// plain text. Prints one line: <c>RICHPASTE=&lt;ok|fail&gt;</c>.
+    ///
+    /// NOTE: the preferred proof — pasting into an in-process RICHEDIT50W and reading the bold run back —
+    /// is not achievable here: Msftedit has no HTML importer (EM_PASTESPECIAL of "HTML Format" pastes
+    /// nothing; a plain WM_PASTE lands the CF_UNICODETEXT with no formatting), and EM_STREAMOUT's stream
+    /// callback is rejected as an invalid indirect-call target (CFG fail-fast) for an in-proc control. So
+    /// this asserts the clipboard payload, per the documented fallback.
+    /// </summary>
+    public static int RunRichPaste()
+    {
+        AttachConsole(ATTACH_PARENT_PROCESS);
+        bool ok = false;
+        try
+        {
+            string mark = "QRKRICH" + Guid.NewGuid().ToString("N")[..8];
+            string html = $"<p>plain <b>{mark}</b> tail</p><ul><li>one</li><li>two</li></ul>";
+            var item = new ResponseItem { Html = html };
+            string expectedHtml = CfHtml.Build(html);
+
+            if (ClipboardWriter.WriteRich(item.PlainText, expectedHtml))
+            {
+                string gotHtml = ReadClipboardFormatUtf8(RegisterClipboardFormat("HTML Format"));
+                string gotPlain = ReadClipboardText();
+                ok = gotHtml == expectedHtml
+                     && gotHtml.Contains("StartFragment:", StringComparison.Ordinal)
+                     && gotHtml.Contains(mark, StringComparison.Ordinal)
+                     && gotPlain == item.PlainText;
+            }
+        }
+        catch (Exception ex) { Console.Error.WriteLine("[selftest-rich] " + ex); }
+
+        Console.WriteLine($"RICHPASTE={(ok ? "ok" : "fail")}");
+        Console.Out.Flush();
+        return ok ? 0 : 1;
+    }
+
+    /// <summary>Read one clipboard format's HGLOBAL as a null-terminated UTF-8 string (raw Win32).</summary>
+    private static string ReadClipboardFormatUtf8(uint format)
+    {
+        if (format == 0 || !OpenClipboard(0)) return "";
+        try
+        {
+            nint h = GetClipboardData(format);
+            if (h == 0) return "";
+            nint p = GlobalLock(h);
+            if (p == 0) return "";
+            try
+            {
+                int size = (int)GlobalSize(h);
+                if (size <= 0) return "";
+                var bytes = new byte[size];
+                Marshal.Copy(p, bytes, 0, size);
+                int nul = Array.IndexOf(bytes, (byte)0);
+                return Encoding.UTF8.GetString(bytes, 0, nul >= 0 ? nul : size);
+            }
+            finally { GlobalUnlock(h); }
+        }
+        finally { CloseClipboard(); }
+    }
+
+    /// <summary>
+    /// <c>--selftest-paste-ui</c>: regression guard for "clicking Paste in the launcher does nothing".
+    /// Drives the REAL command path — <see cref="LibraryService"/> + <see cref="LauncherViewModel"/> +
+    /// <see cref="InsertService"/> wired as <c>App</c> wires them — from a seeded temp library into a
+    /// fresh Notepad. The target is set explicitly (foreground CAPTURE is covered by
+    /// <c>--selftest-foreground</c>); this proves the VM's default-insert command reaches the engine
+    /// and text lands. Prints one line: <c>UIPASTE=&lt;ok|fail&gt;</c>.
+    /// </summary>
+    public static int RunUiPaste()
+    {
+        AttachConsole(ATTACH_PARENT_PROCESS);
+        bool ok = false;
+        Process? launched = null;
+        nint target = 0;
+        string? tempRoot = null;
+        try
+        {
+            string pasted = "QRK_UIPASTE_" + Guid.NewGuid().ToString("N");
+
+            tempRoot = Path.Combine(Path.GetTempPath(), "QRK_UITest_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+            File.WriteAllText(Path.Combine(tempRoot, "UI Test.json"),
+                "{\"schema\":1,\"html\":\"<p>" + pasted + "</p>\"}");
+            string recentPath = Path.Combine(tempRoot, "recent.json");
+
+            var before = FindNotepadWindows();
+            launched = Process.Start(new ProcessStartInfo(@"C:\Windows\System32\notepad.exe") { UseShellExecute = true });
+            target = WaitForNewNotepad(before, timeoutMs: 6000);
+            if (target != 0)
+            {
+                Thread.Sleep(800);   // let the editor finish initializing
+
+                // Wire the same graph App builds; set the paste target explicitly (this test covers the
+                // VM command → InsertService path, not the WinEvent foreground capture).
+                using var library = new LibraryService(tempRoot, seedSourceDir: null, recentPath: recentPath, watch: false);
+                var insert = new InsertService(new ForegroundTargetTracker { Target = target });
+                var vm = new LauncherViewModel(library, insert, new AppConfig());
+
+                vm.SelectedResult = vm.Results.FirstOrDefault();   // "click a response"
+                ForegroundWindow.Restore(target);
+                if (vm.HasValidSelection) vm.TriggerDefaultInsert();   // the Enter / Paste command
+
+                Thread.Sleep(400);
+                ok = ReadNotepadText(target).Contains(pasted, StringComparison.Ordinal);
+            }
+        }
+        catch (Exception ex) { Console.Error.WriteLine("[selftest-ui] " + ex); }
+        finally
+        {
+            KillNotepad(target, launched);
+            try { if (tempRoot != null) Directory.Delete(tempRoot, recursive: true); } catch { }
+        }
+
+        Console.WriteLine($"UIPASTE={(ok ? "ok" : "fail")}");
         Console.Out.Flush();
         return ok ? 0 : 1;
     }

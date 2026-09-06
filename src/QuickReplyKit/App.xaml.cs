@@ -44,6 +44,16 @@ public partial class App : Application
             Shutdown(SelfTest.RunForeground());
             return;
         }
+        if (e.Args.Any(a => a.Equals("--selftest-paste-rich", StringComparison.OrdinalIgnoreCase)))
+        {
+            Shutdown(SelfTest.RunRichPaste());
+            return;
+        }
+        if (e.Args.Any(a => a.Equals("--selftest-paste-ui", StringComparison.OrdinalIgnoreCase)))
+        {
+            Shutdown(SelfTest.RunUiPaste());
+            return;
+        }
 
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool isFirst);
         _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
