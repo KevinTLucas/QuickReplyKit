@@ -163,6 +163,38 @@ public class TemplateEngineTests
         Assert.Equal("[missing: nope]", TemplateEngine.Resolve("{{nope}}", None, Morning));
     }
 
+    [Fact]
+    public void Include_FanOutBomb_IsBoundedNotExponential()
+    {
+        // A non-cyclic fan-out DAG (t0→t1 t1, t1→t2 t2, …) expands exponentially within MaxDepth;
+        // cycle detection does NOT catch it. The include budget must stop it fast (never hang).
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        const int levels = 30;
+        for (int i = 0; i < levels; i++) map[$"t{i}"] = $"{{{{t{i + 1}}}}}{{{{t{i + 1}}}}}";
+        map[$"t{levels}"] = "leaf";
+        var lookup = Lookup(map);
+
+        string? result = null;
+        var worker = new System.Threading.Thread(() => result = TemplateEngine.Resolve("{{t0}}", lookup, Morning))
+        { IsBackground = true };
+        worker.Start();
+        Assert.True(worker.Join(TimeSpan.FromSeconds(3)), "TemplateEngine hung on a fan-out include bomb");
+        Assert.Contains("[includes: too many]", result);
+    }
+
+    [Fact]
+    public void Include_LegitimateWideReuse_ResolvesFully()
+    {
+        // 100 sections each pulling the same two shared snippets = 200 expansions, well under the cap.
+        var lookup = Lookup(new() { ["greet"] = "Hello", ["footer"] = "Regards" });
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < 100; i++) sb.Append("{{greet}} body {{footer}} ");
+        var result = TemplateEngine.Resolve(sb.ToString(), lookup, Morning);
+        Assert.DoesNotContain("too many", result);
+        Assert.DoesNotContain("[missing", result);
+        Assert.Equal(100, System.Text.RegularExpressions.Regex.Matches(result, "Hello").Count);
+    }
+
     // ---- literal braces / edge cases ----
 
     [Fact]

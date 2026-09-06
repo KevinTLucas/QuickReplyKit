@@ -25,6 +25,14 @@ public static class TemplateEngine
     private const int MaxDepth = 32;
 
     /// <summary>
+    /// Cap on total include expansions per resolve. Cycle detection stops loops, but a non-cyclic
+    /// fan-out DAG (each response including the next twice: t0→t1 t1→t2 t2…) expands exponentially
+    /// within <see cref="MaxDepth"/>. This budget bounds the total work so a crafted/shared library
+    /// can never hang the app. Far above any realistic template (which uses a handful of includes).
+    /// </summary>
+    private const int MaxIncludes = 1000;
+
+    /// <summary>
     /// Allow-listed built-ins. Each is a pure function of (now, optional arg). This dictionary is the
     /// complete set of executable behaviour — extend it by adding another pure function, nothing else.
     /// </summary>
@@ -44,7 +52,8 @@ public static class TemplateEngine
     {
         if (string.IsNullOrEmpty(html)) return html ?? "";
         var lookup = lookupHtmlByName ?? (static _ => null);
-        return ResolveInternal(html, lookup, now, new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0);
+        return ResolveInternal(html, lookup, now, new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0,
+            new[] { MaxIncludes });
     }
 
     /// <summary>True if the text contains at least one <c>{{…}}</c> token (ignoring <c>{{{{</c> escapes).</summary>
@@ -67,7 +76,7 @@ public static class TemplateEngine
     }
 
     private static string ResolveInternal(
-        string html, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth)
+        string html, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget)
     {
         var sb = new StringBuilder(html.Length);
         int i = 0;
@@ -79,7 +88,7 @@ public static class TemplateEngine
                 int close = html.IndexOf("}}", i + 2, StringComparison.Ordinal);
                 if (close < 0) { sb.Append(html, i, html.Length - i); break; } // no closer: literal tail
                 string token = html.Substring(i + 2, close - (i + 2)).Trim();
-                sb.Append(ResolveToken(token, lookup, now, path, depth));
+                sb.Append(ResolveToken(token, lookup, now, path, depth, budget));
                 i = close + 2;
                 continue;
             }
@@ -90,7 +99,7 @@ public static class TemplateEngine
     }
 
     private static string ResolveToken(
-        string token, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth)
+        string token, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget)
     {
         if (token.Length == 0) return "";
 
@@ -105,18 +114,19 @@ public static class TemplateEngine
 
         if (Builtins.TryGetValue(name, out var fn)) return fn(now, arg);
 
-        return ResolveInclude(token, lookup, now, path, depth); // whole token is the response name
+        return ResolveInclude(token, lookup, now, path, depth, budget); // whole token is the response name
     }
 
     private static string ResolveInclude(
-        string name, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth)
+        string name, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget)
     {
         if (depth >= MaxDepth || path.Contains(name)) return $"[cycle: {name}]";
+        if (--budget[0] < 0) return $"[includes: too many]"; // non-cyclic fan-out bomb: stop, never hang
         string? body = lookup(name);
         if (body is null) return $"[missing: {name}]";
 
         path.Add(name);
-        try { return ResolveInternal(body, lookup, now, path, depth + 1); }
+        try { return ResolveInternal(body, lookup, now, path, depth + 1, budget); }
         finally { path.Remove(name); }
     }
 
