@@ -65,6 +65,22 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
    - **Easy retrieval:** "Open logs folder" (Settings + tray), optional "Copy diagnostics" (recent log + version + config).
    - **Constraint:** no NuGet (Serilog/NLog are the enterprise norm but are banned here) — hand-roll a small thread-safe
      `Logger` (BCL `StreamWriter` + lock/queue + size rollover). Keep it lean.
+8. **Richer tag UX (chips) + folder tags + batch-apply.** Three related pieces:
+   - **Tag chips in the editor.** Replace the comma-separated **Tags** textbox (New/Edit response) with a chip/token
+     input: type a tag + Enter/comma → it becomes a small **colored chip** (label + a little **×** to remove) that
+     wraps under the input; add another and it appears alongside. Themed for light/dark. Storage unchanged (still the
+     `tags` string array in the `.json` — no schema change). Nice touch: a stable color per tag (hash the name → a
+     palette slot) so the same tag looks consistent everywhere; consider showing these chips on result rows / preview too.
+   - **Tags on folders (categories).** Let a folder carry its own tags. Folders are plain directories today with no
+     metadata — so this needs a **per-folder sidecar** (e.g. a small `.qrkfolder.json` in the directory) so folder tags
+     **travel when the folder is shared/copied** (matches the app's "share by copying folders" model), or a central
+     `config.json` map (local-only). **Recommend the sidecar**; must be back-compatible (folders without it just have
+     no tags) and ignored by the response scanner. Set/edit via the nav folder's right-click menu.
+   - **Batch-apply folder tags to responses.** An action on a folder — "Apply these tags to all responses in this
+     folder" (ask direct-children vs. recursive) — that **unions** the folder's tags into each response's `tags`
+     (deduped) and rewrites those files, **with a confirmation** showing how many will change. (Explicit batch-apply,
+     not implicit inheritance, to avoid surprises — though implicit "inherit folder tags for search" could be a later
+     option.) Search already matches tags, so batch-applied tags become searchable immediately.
 
 ---
 
