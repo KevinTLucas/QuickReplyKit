@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Threading;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
@@ -21,6 +22,7 @@ public sealed class LauncherViewModel : ViewModelBase
     private readonly IInsertService _insert;
     private readonly AppConfig _config;
     private readonly Func<DateTimeOffset> _now;
+    private readonly DispatcherTimer _copiedHintTimer;
 
     public ObservableCollection<NavNodeVm> NavRoots { get; } = new();
     public ObservableCollection<ResponseRowVm> Results { get; } = new();
@@ -44,6 +46,10 @@ public sealed class LauncherViewModel : ViewModelBase
         PasteCommand = new RelayCommand(_ => DefaultInsert(), _ => HasValidSelection);
         PastePlainCommand = new RelayCommand(_ => PlainInsert(), _ => HasValidSelection);
         CopyCommand = new RelayCommand(_ => CopySelected(), _ => HasValidSelection);
+
+        // Copy keeps the launcher open, so it needs its own confirmation; this auto-clears it.
+        _copiedHintTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+        _copiedHintTimer.Tick += (_, _) => { _copiedHintTimer.Stop(); CopiedHint = ""; };
 
         BuildNav();
         SelectNav(NavRoots.First(n => n.Scope == NavScope.All));   // default landing view
@@ -131,6 +137,12 @@ public sealed class LauncherViewModel : ViewModelBase
     public string PreviewMeta { get => _previewMeta; private set { if (Set(ref _previewMeta, value)) OnPropertyChanged(nameof(HasPreviewMeta)); } }
 
     public bool HasPreviewMeta => !string.IsNullOrEmpty(_previewMeta);
+
+    private string _copiedHint = "";
+    /// <summary>Transient "Copied ✓" confirmation shown after a Copy, auto-cleared after ~1.5s.</summary>
+    public string CopiedHint { get => _copiedHint; private set { if (Set(ref _copiedHint, value)) OnPropertyChanged(nameof(HasCopiedHint)); } }
+
+    public bool HasCopiedHint => !string.IsNullOrEmpty(_copiedHint);
 
     private bool _selectionHasVariables;
     /// <summary>True when the selected response contains <c>{{…}}</c> tokens resolved on insert.</summary>
@@ -340,7 +352,10 @@ public sealed class LauncherViewModel : ViewModelBase
         if (item == null) return;
         _insert.Copy(ResolvedCopy(item));
         _library.MarkUsed(item);
-        // Copy leaves the launcher open so the user can keep browsing.
+        // Copy leaves the launcher open so the user can keep browsing; flash a brief confirmation.
+        CopiedHint = "Copied ✓";
+        _copiedHintTimer.Stop();
+        _copiedHintTimer.Start();
     }
 
     private ResponseItem? ValidSelectedItem() =>

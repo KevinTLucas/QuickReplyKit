@@ -41,7 +41,16 @@ public sealed class LibraryWatcher : IDisposable
     {
         try
         {
-            Directory.CreateDirectory(_root); // a watcher needs an existing dir to attach to
+            // A watcher needs an existing dir to attach to. Create the library folder only when its
+            // parent already exists — never fabricate a deep tree for a temporarily-offline mount
+            // (e.g. OneDrive), which would shadow the cloud library with a stray local folder. If the
+            // root isn't attachable, skip watching gracefully; a later rescan/change picks it up.
+            if (!Directory.Exists(_root))
+            {
+                var parent = Path.GetDirectoryName(_root);
+                if (parent is null || !Directory.Exists(parent)) { _watcher = null; return; }
+                Directory.CreateDirectory(_root);
+            }
             var w = new FileSystemWatcher(_root)
             {
                 IncludeSubdirectories = true,
