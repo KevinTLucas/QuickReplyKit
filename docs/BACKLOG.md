@@ -81,6 +81,21 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
      (deduped) and rewrites those files, **with a confirmation** showing how many will change. (Explicit batch-apply,
      not implicit inheritance, to avoid surprises — though implicit "inherit folder tags for search" could be a later
      option.) Search already matches tags, so batch-applied tags become searchable immediately.
+9. **Robust, safe import — preview (diff) + hard-accept for code.** Two parts:
+   - **Import preview.** Before importing someone else's folder/library, show a clear per-item preview of what will
+     happen: **New** (added), **Changed** (same path, different content), **Duplicate/identical** (same content — skip),
+     **Conflicting** (name clash needing a decision). Let the user review and choose before anything is written
+     (apply-to-all for the safe cases; per-item where it matters). This extends today's import (which resolves
+     conflicts + shows a summary, but doesn't pre-show the full picture). Compute the diff in `LibraryPorter`/
+     `ImportCoordinator` by comparing incoming entries to the current library by relative path + content hash.
+   - **Hard acceptance for code-bearing responses (security gate).** Pairs with the future **"sandboxed user scripting
+     for variables"** idea (below): responses are shareable, so if a response ever carries **executable/custom code**
+     (a scripted variable), importing it must **display the exact code** and require an explicit **per-item "I accept
+     this code"** — **no "Yes to all" for code-bearing items**. Normal (code-free) responses keep the fast **Yes-to-all**
+     path. This keeps importing untrusted libraries safe by default (a malicious template can never run code silently on
+     import). Until user-code variables exist, only the **import-preview** part is buildable; keep this gate as a hard,
+     non-optional requirement of that feature. (Today's built-in variables are a fixed safe allow-list with no code, so
+     current imports carry no executable risk.)
 
 ---
 
@@ -89,7 +104,8 @@ The list below is **out-of-current-scope future ideas only** — start any of th
 - **Sandboxed user scripting for variables.** Today's template variables are a **fixed, safe allow-list**
   (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) with **no code execution** — a deliberate
   security boundary, because responses are shareable files. A future "run custom code in a variable" feature would
-  need a real sandbox / capability model (never raw eval), and careful UX around importing untrusted templates.
+  need a real sandbox / capability model (never raw eval), and careful UX around importing untrusted templates —
+  it **requires** the code-import hard-acceptance gate in requested item #9 (show the code, accept each, no "Yes to all").
 - **Usage analytics / most-used sort.** Optionally track per-response usage counts and offer a "most used" sort or
   view. Low value for a small library; only worthwhile if teams accumulate very large libraries.
 - **In-app keyboard cheat-sheet.** A tiny "?" overlay listing the shortcuts (arrows/Enter/Shift+Enter/Ctrl+C, etc.).
