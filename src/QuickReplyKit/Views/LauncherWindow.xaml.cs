@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
+using QuickReplyKit.Core.ImportExport;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Core.Text;
 using QuickReplyKit.ViewModels;
@@ -238,6 +240,127 @@ public partial class LauncherWindow : Window
             $"Delete “{item.Name}”?\nIt will be moved to the Recycle Bin, so you can restore it later.",
             "Delete", destructive: true);
         if (ok) ResponseManager.Delete(item);
+    }
+
+    // --- Import / export ----------------------------------------------------
+
+    // Right-click a nav node → select it so the category menu acts on it.
+    private void NavTree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (FindAncestor<TreeViewItem>(e.OriginalSource as DependencyObject) is { } node)
+            node.IsSelected = true;
+    }
+
+    // Only categories can be exported as a folder; suppress the menu on Favorites/Recent/All.
+    private void NavContextMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContextMenu m && _vm.SelectedNav?.Scope != NavScope.Category) m.IsOpen = false;
+    }
+
+    private void OverflowButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (OverflowButton.ContextMenu is { } m) { m.PlacementTarget = OverflowButton; m.IsOpen = true; }
+    }
+
+    private void MenuExportResponse_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedItem is not { } item) return;
+        var dlg = new SaveFileDialog
+        {
+            Title = "Export response",
+            Filter = "Response JSON (*.json)|*.json",
+            FileName = item.Name + ".json",
+        };
+        if (dlg.ShowDialog(this) == true) LibraryPorter.Export(item, dlg.FileName);
+    }
+
+    private void MenuExportFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedNav is not { Scope: NavScope.Category } nav) return;
+        var dlg = new SaveFileDialog
+        {
+            Title = "Export folder",
+            Filter = "Zip archive (*.zip)|*.zip",
+            FileName = nav.Title + ".zip",
+        };
+        if (dlg.ShowDialog(this) == true)
+            SaveZip(tmp => LibraryPorter.ExportFolder(_vm.LibraryRoot, nav.CategoryPath, tmp), dlg.FileName);
+    }
+
+    private void MenuExportLibrary_Click(object sender, RoutedEventArgs e) => ExportLibraryFlow();
+    private void MenuImport_Click(object sender, RoutedEventArgs e) => ImportFlow();
+
+    /// <summary>Export the whole library to a chosen .zip (also reachable from the tray).</summary>
+    public void ExportLibraryFlow()
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title = "Export library",
+            Filter = "Zip archive (*.zip)|*.zip",
+            FileName = "QuickReplyKit Library.zip",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+        };
+        if (dlg.ShowDialog(this) == true)
+            SaveZip(tmp => LibraryPorter.ExportLibrary(_vm.LibraryRoot, tmp), dlg.FileName);
+    }
+
+    /// <summary>Import a .json/.zip: pick target category, resolve conflicts, then summarise
+    /// (also reachable from the tray). The watcher refreshes the library on its own.</summary>
+    public void ImportFlow()
+    {
+        var open = new OpenFileDialog
+        {
+            Title = "Import responses",
+            Filter = "Responses (*.json;*.zip)|*.json;*.zip|Response JSON (*.json)|*.json|Zip archive (*.zip)|*.zip",
+            CheckFileExists = true,
+        };
+        if (open.ShowDialog(this) != true) return;
+        string source = open.FileName;
+
+        string? target = InputDialog.Prompt(this, "Import into…",
+            "Target folder (blank = top level; type a new path to create it):",
+            _vm.CurrentCategory, _vm.CategoryPaths(), allowEmpty: true);
+        if (target == null) return;
+
+        var policy = ConflictPolicy.Skip;
+        int conflicts = ImportCoordinator.CountConflicts(_vm.LibraryRoot, source, target);
+        if (conflicts > 0)
+        {
+            var choice = ConfirmDialog.AskImportConflict(this, conflicts);
+            if (choice == null) return;   // cancelled
+            policy = choice.Value;
+        }
+
+        var result = LibraryPorter.Import(_vm.LibraryRoot, source, target, policy);
+        ConfirmDialog.Info(this, "Import complete", SummaryText(result, policy));
+    }
+
+    /// <summary>Human summary of an import outcome, tailored to the policy that was applied.</summary>
+    private static string SummaryText(ImportResult r, ConflictPolicy policy)
+    {
+        var parts = new List<string> { $"{r.Imported} imported" };
+        if (r.Conflicts > 0)
+            parts.Add(policy switch
+            {
+                ConflictPolicy.KeepBoth => $"{r.Conflicts} kept both",
+                ConflictPolicy.Overwrite => $"{r.Conflicts} overwritten",
+                _ => $"{r.Conflicts} skipped (already exist)",
+            });
+        if (r.SkippedInvalid > 0) parts.Add($"{r.SkippedInvalid} skipped (invalid)");
+        return string.Join(", ", parts) + ".";
+    }
+
+    /// <summary>Write a zip via a temp file, then move it into place — never inside the zipped tree.</summary>
+    private static void SaveZip(Action<string> export, string dest)
+    {
+        string tmp = Path.Combine(Path.GetTempPath(), "QRK-Export-" + Guid.NewGuid().ToString("N") + ".zip");
+        try
+        {
+            export(tmp);
+            if (File.Exists(dest)) File.Delete(dest);
+            File.Move(tmp, dest);
+        }
+        finally { try { if (File.Exists(tmp)) File.Delete(tmp); } catch { /* best effort */ } }
     }
 
     // --- Conflict resolution shared by rename ------------------------------

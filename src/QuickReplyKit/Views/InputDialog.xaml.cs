@@ -11,24 +11,31 @@ namespace QuickReplyKit.Views;
 /// </summary>
 public partial class InputDialog : Window
 {
-    private InputDialog(string title, string prompt, string initial, IEnumerable<string>? suggestions)
+    private readonly bool _allowEmpty;
+
+    private InputDialog(string title, string prompt, string initial, IEnumerable<string>? suggestions, bool allowEmpty)
     {
         InitializeComponent();
         Title = title;
         PromptLabel.Text = prompt;
+        _allowEmpty = allowEmpty;
         if (suggestions != null)
             foreach (var s in suggestions) Input.Items.Add(s);
         Input.Text = initial;
     }
 
-    /// <summary>Show the dialog modally; returns the trimmed text, or null if cancelled/empty.</summary>
+    /// <summary>
+    /// Show the dialog modally; returns the trimmed text, or null if cancelled. When
+    /// <paramref name="allowEmpty"/> is true an empty entry is accepted and returned as "" (e.g. the
+    /// library root); otherwise empty is rejected inline and cancel/empty both yield null.
+    /// </summary>
     public static string? Prompt(Window owner, string title, string prompt,
-        string initial = "", IEnumerable<string>? suggestions = null)
+        string initial = "", IEnumerable<string>? suggestions = null, bool allowEmpty = false)
     {
-        var dlg = new InputDialog(title, prompt, initial, suggestions) { Owner = owner };
+        var dlg = new InputDialog(title, prompt, initial, suggestions, allowEmpty) { Owner = owner };
         if (dlg.ShowDialog() != true) return null;
-        var text = dlg.Input.Text?.Trim();
-        return string.IsNullOrEmpty(text) ? null : text;
+        var text = dlg.Input.Text?.Trim() ?? "";
+        return (!allowEmpty && text.Length == 0) ? null : text;
     }
 
     /// <summary>Show an inline error and keep the dialog open (used for a rejected name).</summary>
@@ -50,7 +57,7 @@ public partial class InputDialog : Window
 
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(Input.Text)) { ShowError("Please enter a value."); return; }
+        if (!_allowEmpty && string.IsNullOrWhiteSpace(Input.Text)) { ShowError("Please enter a value."); return; }
         DialogResult = true;
     }
 }
