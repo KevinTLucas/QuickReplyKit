@@ -81,34 +81,35 @@ public class ParserAdversarialTests
         Assert.Equal(big.Length, item.Html.Length);
     }
 
-    // ---- Debatable-but-fine: STJ type strictness. A type mismatch discards the
-    //      whole file (marked invalid, never crashes). Documented as current behavior. ----
+    // ---- Lenient per-field parsing (Phase R): a single wrong-typed/odd field is recovered
+    //      to a default and never discards a response whose html is usable. ----
 
     [Fact]
-    public void TagsAsString_NotArray_IsInvalid_ObservedBehavior()
+    public void TagsAsString_NotArray_BecomesOneTag()
     {
         using var t = new TempDir();
-        // Whole file rejected because tags is the wrong JSON type. Debatable, but
-        // never throws and never blocks siblings, which is the contract.
+        // A bare string is read as a single tag rather than invalidating the whole file.
         var item = Load(t, "{\"schema\":1,\"html\":\"<p>x</p>\",\"tags\":\"licensing\"}");
-        Assert.False(item.IsValid);
+        Assert.True(item.IsValid, item.Error);
+        Assert.Equal(new[] { "licensing" }, item.Tags);
     }
 
     [Fact]
-    public void TrailingCommas_AreRejected_ObservedBehavior()
+    public void TrailingCommas_AreTolerated()
     {
         using var t = new TempDir();
-        // System.Text.Json rejects trailing commas by default. Not a crash → invalid marker.
+        // Hand-edited trailing commas are accepted (AllowTrailingCommas).
         var item = Load(t, "{\"schema\":1,\"html\":\"<p>x</p>\",}");
-        Assert.False(item.IsValid);
+        Assert.True(item.IsValid, item.Error);
     }
 
     [Fact]
-    public void SchemaAsString_IsInvalid_ObservedBehavior()
+    public void SchemaAsString_StillMarksTheFileAsOurs()
     {
         using var t = new TempDir();
+        // schema is a presence marker; a wrong-typed schema does not discard good html.
         var item = Load(t, "{\"schema\":\"1\",\"html\":\"<p>x</p>\"}");
-        Assert.False(item.IsValid);
+        Assert.True(item.IsValid, item.Error);
     }
 
     [Fact]

@@ -1,19 +1,29 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using QuickReplyKit.Core.Model;
 
 namespace QuickReplyKit.Core.Storage;
 
 /// <summary>
-/// Reads/writes the schema-v1 response file. Loading is tolerant: a malformed file, or one
-/// that isn't ours (no schema/html), yields an invalid <see cref="ResponseItem"/> rather than
-/// throwing, so one bad file never blocks its siblings.
+/// Reads/writes the schema-v1 response file. Loading is tolerant per field: a malformed file, or
+/// one that isn't ours (no schema/html), yields an invalid <see cref="ResponseItem"/> rather than
+/// throwing, so one bad file never blocks its siblings. A single odd or wrong-typed field (e.g.
+/// <c>tags</c> as a string, <c>favorite</c> as text) is recovered to a sensible default and does
+/// not invalidate a response whose essential <c>html</c> is usable.
 /// </summary>
 public static class ResponseFile
 {
-    private static readonly JsonSerializerOptions ReadOptions = new()
+    private static readonly JsonNodeOptions NodeOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+    };
+
+    // Be forgiving of hand edits: tolerate trailing commas and // comments.
+    private static readonly JsonDocumentOptions DocOptions = new()
+    {
+        AllowTrailingCommas = true,
+        CommentHandling = JsonCommentHandling.Skip,
     };
 
     private static readonly JsonSerializerOptions WriteOptions = new()
@@ -46,16 +56,22 @@ public static class ResponseFile
 
         try
         {
-            var dto = JsonSerializer.Deserialize<Dto>(File.ReadAllText(fullPath), ReadOptions);
-            if (dto is null || dto.Schema is null || dto.Html is null)
+            var root = JsonNode.Parse(File.ReadAllText(fullPath), NodeOptions, DocOptions);
+            if (root is not JsonObject obj)
+                return Invalidate(item, "Not a QuickReplyKit response (not a JSON object).");
+
+            // Essential markers: our schema id (any value marks the file as ours) and a usable
+            // html string. Everything else is read defensively and falls back on defaults.
+            string? html = AsString(obj["html"]);
+            if (obj["schema"] is null || html is null)
                 return Invalidate(item, "Not a QuickReplyKit response (missing schema or html).");
 
-            item.App = dto.App ?? "";
-            item.Tags = dto.Tags ?? new List<string>();
-            item.Html = dto.Html;
-            item.Favorite = dto.Favorite;
-            item.Created = dto.Created ?? FileTime(fullPath, creation: true);
-            item.Modified = dto.Modified ?? FileTime(fullPath, creation: false);
+            item.Html = html;
+            item.App = AsString(obj["app"]) ?? "";
+            item.Tags = ReadTags(obj["tags"]);
+            item.Favorite = AsBool(obj["favorite"]) ?? false;
+            item.Created = AsDate(obj["created"]) ?? FileTime(fullPath, creation: true);
+            item.Modified = AsDate(obj["modified"]) ?? FileTime(fullPath, creation: false);
             item.IsValid = true;
             return item;
         }
@@ -63,6 +79,33 @@ public static class ResponseFile
         {
             return Invalidate(item, ex.Message);
         }
+    }
+
+    private static string? AsString(JsonNode? node) =>
+        node is JsonValue v && v.TryGetValue(out string? s) ? s : null;
+
+    private static bool? AsBool(JsonNode? node) =>
+        node is JsonValue v && v.TryGetValue(out bool b) ? b : null;
+
+    private static DateTimeOffset? AsDate(JsonNode? node)
+    {
+        if (node is not JsonValue v) return null;
+        if (v.TryGetValue(out DateTimeOffset dto)) return dto;
+        return v.TryGetValue(out string? s) && DateTimeOffset.TryParse(s, out var parsed) ? parsed : null;
+    }
+
+    // Array of strings (skipping non-string elements); a bare string counts as one tag; anything
+    // else → no tags.
+    private static IReadOnlyList<string> ReadTags(JsonNode? node)
+    {
+        if (node is JsonArray arr)
+        {
+            var list = new List<string>();
+            foreach (var el in arr)
+                if (AsString(el) is string s) list.Add(s);
+            return list;
+        }
+        return AsString(node) is string single ? new List<string> { single } : new List<string>();
     }
 
     public static void Save(ResponseItem item, string libraryRoot)
