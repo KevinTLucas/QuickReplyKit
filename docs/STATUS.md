@@ -7,8 +7,8 @@
 - **Last updated:** 2026-09-05
 - **Branch layout:** `main` only (always green). Feature work happens on `phase-N-*` branches (built in
   git worktrees so builds don't lock a running app instance).
-- **`main` tip:** `61020bb` — Merge phase-5-qa.
-- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **266 passing** · `--selftest-paste` →
+- **`main` tip:** `8e3d6c9` — Merge phase-6-qa.
+- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **295 passing** · `--selftest-paste` →
   `PASTE=ok CLIPBOARD_RESTORED=ok` · `--selftest-foreground` → `FOREGROUND_TRACK=ok`.
 - **Launchable?** Yes: `dotnet run --project src/QuickReplyKit -- --show` (also runs to the tray).
   Global hotkey: **Ctrl+Alt+D**.
@@ -31,8 +31,8 @@ subagents, each validated by a separate QA subagent, merged `--no-ff` when green
 | 3 | **Paste engine**: hotkey, focus restore, clipboard-safe insert, history-exclusion (+`ForegroundMonitor` target fix) | ✅ merged + QA | 224 |
 | 4 | Rich-text editor + response management (create/edit/duplicate/rename/move/delete, ctx menu) | ✅ merged (Core QA'd; UI QA pending) | 236 |
 | 5 | Import/Export (Core `LibraryPorter` + UI menus/conflict/summary; **zip path-traversal fixed**) | ✅ merged + QA | 266 |
-| 6 | Settings window, window memory + multi-monitor, tray Settings | ⏳ Core ✅ (`WindowPlacement`) / **UI next** | 266 |
-| 7 | Polish, **rich-paste E2E**, portable single-file packaging, README | ☐ not started | — |
+| 6 | Settings window, window memory + multi-monitor, tray Settings, launch-at-startup | ✅ merged + QA | 295 |
+| 7 | Polish, **rich-paste + live-UI E2E**, portable single-file packaging, README, regression | ⏳ in progress | 295 |
 
 ## Needs QA / known gaps
 - **Phase 4 UI** never had a dedicated independent QA pass (Core did) — worth a sweep in Phase 7.
@@ -45,13 +45,11 @@ subagents, each validated by a separate QA subagent, merged `--no-ff` when green
 - Deferred robustness items: [`BACKLOG.md`](BACKLOG.md).
 
 ## Immediate next actions (in order)
-1. **Phase 6 UI** — Settings window (hotkey capture → `GlobalHotkey.Rebind`; library path; default paste
-   mode; launch-at-startup), window size/position memory using `WindowPlacement.EnsureVisible` (feed it
-   `Screen.AllScreens` work areas on show), tray **Settings** wiring. Branch `phase-6-ui`. Spec:
-   [`PHASE6-SETTINGS-WINDOW.md`](PHASE6-SETTINGS-WINDOW.md).
-2. **Phase 7** — polish, rich-paste + live-UI E2E, `dotnet publish` self-contained single-file portable
-   exe, README + user docs, full-workflow regression, large-library perf. Spec:
-   [`PHASE7-POLISH-PACKAGING.md`](PHASE7-POLISH-PACKAGING.md).
+1. **Phase 7 (in progress)** — rich-paste + live-UI paste self-tests, surface invalid files in the UI
+   (BACKLOG), large-library perf test, README, and portable single-file packaging
+   (`dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`) verified on a
+   clean run. Then a final full-workflow regression. Spec: [`PHASE7-POLISH-PACKAGING.md`](PHASE7-POLISH-PACKAGING.md).
+   Packaging + final run-verification are done on `main` (needs the app instance closed to rebuild).
 
 ## How to resume in a fresh session
 1. Read `CLAUDE.md` then this file, then `ROADMAP.md`.
