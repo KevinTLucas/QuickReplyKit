@@ -175,17 +175,18 @@ public partial class LauncherWindow : Window
             row.IsSelected = true;
     }
 
-    private void ResultsContextMenu_Opened(object sender, RoutedEventArgs e)
+    // Gate the menu BEFORE it opens: cancel it when nothing is selected, and set item
+    // enablement here. (Never mutate IsOpen inside Opened — that reentrancy crashes on
+    // fast repeated right-clicks. Cancelling via e.Handled is the safe WPF pattern.)
+    private void ResultsList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
         var item = _vm.SelectedItem;
-        // No selection → suppress the menu entirely.
-        if (item == null) { ResultsContextMenu.IsOpen = false; return; }
+        if (item == null) { e.Handled = true; return; }
 
         // Edit, Edit & insert, and Copy only make sense for a valid, readable response.
         MenuEdit.IsEnabled = item.IsValid;
         MenuEditInsert.IsEnabled = item.IsValid;
         MenuCopy.IsEnabled = item.IsValid;
-        MenuDuplicate.IsEnabled = true;
     }
 
     private void MenuEdit_Click(object sender, RoutedEventArgs e)
@@ -265,10 +266,11 @@ public partial class LauncherWindow : Window
             node.IsSelected = true;
     }
 
-    // Only categories can be exported as a folder; suppress the menu on Favorites/Recent/All.
-    private void NavContextMenu_Opened(object sender, RoutedEventArgs e)
+    // Only categories can be exported as a folder; cancel the menu on Favorites/Recent/All.
+    // Cancel via e.Handled before it opens — never toggle IsOpen inside Opened (crashes on fast repeats).
+    private void NavTree_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (sender is ContextMenu m && _vm.SelectedNav?.Scope != NavScope.Category) m.IsOpen = false;
+        if (_vm.SelectedNav?.Scope != NavScope.Category) e.Handled = true;
     }
 
     private void OverflowButton_Click(object sender, RoutedEventArgs e)

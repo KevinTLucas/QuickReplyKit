@@ -37,7 +37,7 @@
         </Style>
 
         <!-- Nav category right-click menu (suppressed for the fixed Favorites/Recent/All nodes) -->
-        <ContextMenu x:Key="NavContextMenu" Opened="NavContextMenu_Opened">
+        <ContextMenu x:Key="NavContextMenu">
             <MenuItem Header="Export folder…" Click="MenuExportFolder_Click"/>
         </ContextMenu>
     </Window.Resources>
@@ -129,6 +129,7 @@
                           ItemsSource="{Binding NavRoots}"
                           SelectedItemChanged="NavTree_SelectedItemChanged"
                           PreviewMouseRightButtonDown="NavTree_PreviewMouseRightButtonDown"
+                          ContextMenuOpening="NavTree_ContextMenuOpening"
                           VirtualizingStackPanel.IsVirtualizing="True"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <TreeView.Resources>
@@ -169,9 +170,10 @@
                              ScrollViewer.CanContentScroll="True"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              MouseDoubleClick="ResultsList_MouseDoubleClick"
-                             PreviewMouseRightButtonDown="ResultsList_PreviewMouseRightButtonDown">
+                             PreviewMouseRightButtonDown="ResultsList_PreviewMouseRightButtonDown"
+                             ContextMenuOpening="ResultsList_ContextMenuOpening">
                         <ListBox.ContextMenu>
-                            <ContextMenu x:Name="ResultsContextMenu" Opened="ResultsContextMenu_Opened">
+                            <ContextMenu x:Name="ResultsContextMenu">
                                 <MenuItem x:Name="MenuEdit" Header="Edit…" Click="MenuEdit_Click"/>
                                 <MenuItem x:Name="MenuEditInsert" Header="Edit &amp; insert…"
                                           Click="MenuEditInsert_Click"/>

@@ -71,8 +71,7 @@
             </StackPanel>
             <StackPanel Grid.Column="2">
                 <TextBlock Text="Category (folder — type a new path to create it)" Style="{StaticResource FieldLabel}"/>
-                <ComboBox x:Name="CategoryBox" IsEditable="True" StaysOpenOnEdit="True"
-                          Style="{StaticResource Field}"/>
+                <ComboBox x:Name="CategoryBox" IsEditable="True" StaysOpenOnEdit="True"/>
             </StackPanel>
         </Grid>
 
