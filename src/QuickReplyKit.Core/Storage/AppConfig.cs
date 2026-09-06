@@ -6,6 +6,9 @@ namespace QuickReplyKit.Core.Storage;
 
 public enum PasteMode { RichText, PlainText }
 
+/// <summary>UI theme preference. <see cref="System"/> follows the Windows apps-theme setting.</summary>
+public enum AppTheme { System, Light, Dark }
+
 /// <summary>Persisted launcher window placement.</summary>
 public sealed class WindowBounds
 {
@@ -28,6 +31,9 @@ public sealed class AppConfig
     public string LibraryPath { get; set; } = AppPaths.DefaultLibraryDir;
     public WindowBounds Window { get; set; } = new();
     public PasteMode DefaultPasteMode { get; set; } = PasteMode.RichText;
+
+    /// <summary>Light/Dark, or System to follow Windows. Default follows the OS.</summary>
+    public AppTheme Theme { get; set; } = AppTheme.System;
 
     /// <summary>Restore the launcher's last size/position on show (validated on-screen first).</summary>
     public bool RememberWindow { get; set; } = true;

@@ -4,30 +4,29 @@
         Title="Edit response"
         Width="640" Height="560" MinWidth="480" MinHeight="420"
         WindowStartupLocation="CenterOwner"
-        Background="#FFF4F4F8" FontFamily="Segoe UI" ShowInTaskbar="False">
+        Background="{DynamicResource WindowBg}" Foreground="{DynamicResource TextPrimary}"
+        FontFamily="Segoe UI" ShowInTaskbar="False">
     <Window.Resources>
-        <SolidColorBrush x:Key="Muted" Color="#FF8A8AA0"/>
-        <SolidColorBrush x:Key="CardBorder" Color="#FFE2E2EC"/>
-        <SolidColorBrush x:Key="Accent" Color="#FF4F46E5"/>
-
         <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Margin" Value="2,0,0,2"/>
         </Style>
         <Style x:Key="Field" TargetType="Control">
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorder}"/>
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
 
         <Style x:Key="ToolButton" TargetType="Button">
             <Setter Property="MinWidth" Value="30"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="Margin" Value="0,0,4,0"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontSize" Value="13"/>
@@ -37,15 +36,16 @@
             <Setter Property="Padding" Value="16,7"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
             <Setter Property="MinWidth" Value="88"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="{StaticResource Accent}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="Background" Value="{DynamicResource Accent}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
         </Style>
     </Window.Resources>
 
@@ -94,8 +94,8 @@
         </Grid>
 
         <!-- Formatting toolbar -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8,8,0,0"
-                BorderBrush="{StaticResource CardBorder}" BorderThickness="1,1,1,0" Padding="8,6">
+        <Border Grid.Row="2" Background="{DynamicResource CardBg}" CornerRadius="8,8,0,0"
+                BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,1,1,0" Padding="8,6">
             <StackPanel Orientation="Horizontal">
                 <Button Style="{StaticResource ToolButton}" FontWeight="Bold" Content="B"
                         ToolTip="Bold (Ctrl+B)"
@@ -110,12 +110,12 @@
                         <Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Underline"/></Style>
                     </Button.Resources>
                 </Button>
-                <Border Width="1" Background="{StaticResource CardBorder}" Margin="4,2,8,2"/>
+                <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
                 <Button Style="{StaticResource ToolButton}" Content="• List" ToolTip="Bullet list"
                         Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=Body}"/>
                 <Button Style="{StaticResource ToolButton}" Content="1. List" ToolTip="Numbered list"
                         Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=Body}"/>
-                <Border Width="1" Background="{StaticResource CardBorder}" Margin="4,2,8,2"/>
+                <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
                 <Button x:Name="LinkButton" Style="{StaticResource ToolButton}" Content="🔗 Link"
                         ToolTip="Insert or edit a link" Click="Link_Click"/>
                 <Button x:Name="ClearButton" Style="{StaticResource ToolButton}" Content="Clear ✗"
@@ -125,13 +125,20 @@
 
         <!-- Body -->
         <RichTextBox x:Name="Body" Grid.Row="3" FontSize="14" Padding="8"
-                     BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                     Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextPrimary}"
+                     BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
                      VerticalScrollBarVisibility="Auto"
-                     AcceptsTab="True" SpellCheck.IsEnabled="True"/>
+                     AcceptsTab="True" SpellCheck.IsEnabled="True">
+            <RichTextBox.Resources>
+                <Style TargetType="Hyperlink">
+                    <Setter Property="Foreground" Value="{DynamicResource Hyperlink}"/>
+                </Style>
+            </RichTextBox.Resources>
+        </RichTextBox>
 
         <!-- Error + actions -->
         <Grid Grid.Row="4" Margin="0,12,0,0">
-            <TextBlock x:Name="ErrorText" Foreground="#FFB91C1C" FontSize="12"
+            <TextBlock x:Name="ErrorText" Foreground="{DynamicResource Error}" FontSize="12"
                        VerticalAlignment="Center" TextWrapping="Wrap"
                        HorizontalAlignment="Left" Visibility="Collapsed"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

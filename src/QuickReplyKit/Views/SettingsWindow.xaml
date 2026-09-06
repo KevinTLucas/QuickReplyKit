@@ -3,17 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings" SizeToContent="Height" Width="480"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        ShowInTaskbar="False" Background="#FFF4F4F8" FontFamily="Segoe UI">
+        ShowInTaskbar="False" Background="{DynamicResource WindowBg}"
+        Foreground="{DynamicResource TextPrimary}" FontFamily="Segoe UI">
     <Window.Resources>
-        <SolidColorBrush x:Key="CardBorder" Color="#FFE2E2EC"/>
-        <SolidColorBrush x:Key="Muted" Color="#FF8A8AA0"/>
         <Style x:Key="SectionLabel" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="0,14,0,4"/>
         </Style>
         <Style x:Key="Hint" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,3,0,0"/>
@@ -22,10 +21,16 @@
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
             <Setter Property="MinWidth" Value="80"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorder}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style x:Key="Input" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
         </Style>
     </Window.Resources>
 
@@ -34,13 +39,12 @@
         <!-- Global hotkey -->
         <TextBlock Text="Global hotkey" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
         <TextBox x:Name="HotkeyBox" IsReadOnly="True" IsReadOnlyCaretVisible="False"
-                 FontSize="14" Padding="8,6" Cursor="Hand" Background="White"
-                 BorderBrush="{StaticResource CardBorder}"
+                 FontSize="14" Padding="8,6" Cursor="Hand" Style="{StaticResource Input}"
                  PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus"
                  LostKeyboardFocus="HotkeyBox_LostFocus"/>
         <TextBlock x:Name="HotkeyHint" Style="{StaticResource Hint}"
                    Text="Click, then press the key combination you want (e.g. Ctrl+Alt+D)."/>
-        <TextBlock x:Name="HotkeyError" Foreground="#FFB91C1C" FontSize="12" TextWrapping="Wrap"
+        <TextBlock x:Name="HotkeyError" Foreground="{DynamicResource Error}" FontSize="12" TextWrapping="Wrap"
                    Margin="0,4,0,0" Visibility="Collapsed"/>
 
         <!-- Library path -->
@@ -52,8 +56,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="LibraryPathBox" IsReadOnly="True" FontSize="13"
-                     Padding="8,6" VerticalContentAlignment="Center" Background="White"
-                     BorderBrush="{StaticResource CardBorder}"/>
+                     Padding="8,6" VerticalContentAlignment="Center" Style="{StaticResource Input}"/>
             <Button Grid.Column="1" Content="Change…" Style="{StaticResource ActionButton}"
                     Click="ChangeLibrary_Click"/>
             <Button Grid.Column="2" Content="Open" Style="{StaticResource ActionButton}"
@@ -67,6 +70,18 @@
             <RadioButton x:Name="PastePlain" Content="Plain text" GroupName="Paste" VerticalContentAlignment="Center"/>
         </StackPanel>
         <TextBlock Style="{StaticResource Hint}" Text="What Enter does when you insert a response."/>
+
+        <!-- Theme -->
+        <TextBlock Text="Appearance" Style="{StaticResource SectionLabel}"/>
+        <StackPanel Orientation="Horizontal">
+            <RadioButton x:Name="ThemeSystem" Content="System" GroupName="Theme" Margin="0,0,20,0"
+                         VerticalContentAlignment="Center" Checked="Theme_Changed"/>
+            <RadioButton x:Name="ThemeLight" Content="Light" GroupName="Theme" Margin="0,0,20,0"
+                         VerticalContentAlignment="Center" Checked="Theme_Changed"/>
+            <RadioButton x:Name="ThemeDark" Content="Dark" GroupName="Theme"
+                         VerticalContentAlignment="Center" Checked="Theme_Changed"/>
+        </StackPanel>
+        <TextBlock Style="{StaticResource Hint}" Text="System follows your Windows light/dark setting."/>
 
         <!-- Toggles -->
         <CheckBox x:Name="RememberWindowCheck" Content="Remember window size &amp; position" Margin="0,16,0,0"/>
