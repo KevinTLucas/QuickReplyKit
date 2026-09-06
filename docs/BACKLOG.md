@@ -96,6 +96,25 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
      import). Until user-code variables exist, only the **import-preview** part is buildable; keep this gate as a hard,
      non-optional requirement of that feature. (Today's built-in variables are a fixed safe allow-list with no code, so
      current imports carry no executable risk.)
+10. **Automatic backups + Restore Library.** Before risky/bulk operations — imports (#9), batch tagging (#8), bulk
+    move/delete, or major edits — snapshot the library (+ config) into a small **rolling backup** (keep last N,
+    size/age-capped) under `%APPDATA%\QuickReplyKit\backups\` (a zip; reuse `LibraryPorter.ExportLibrary`). Add
+    **Restore Library** (Settings/tray) to roll back to a chosen snapshot. High-value enterprise safety net — turns a
+    botched bulk op into a one-click undo.
+11. **In-app Trash + retention (soft delete).** Today delete already goes to the **Windows Recycle Bin** (so it's
+    recoverable via Explorer), but an **app-local trash** makes recovery first-class: deleted responses/folders move to
+    a local trash area, kept for a **configurable retention period**, with **Restore** and **Empty trash** in the app and
+    auto-purge after the window. Makes "I deleted our whole IXL folder" an in-product undo, not a support ticket.
+12. **First-run onboarding (≤3 screens).** A very short, skippable first-launch intro shown once (flag in config): the
+    hotkey (**Ctrl+Alt+D**), where responses live, how to search, how to paste. Max ~3 screens. Cheap fix for the
+    classic problem that users never discover half of what an app does.
+13. **About / Diagnostics screen.** A small page: app **version**, library location, response count, registered
+    hotkeys, watcher status, **log location** (#7), config location, and OS/runtime details — with buttons to open the
+    logs/config/library folders. Complements the diagnostics logging (#7); ideal for support ("screenshot this page").
+14. **Full accessibility pass.** Beyond resize + dark mode + the basic `AutomationProperties.Name` already added: full
+    **keyboard control** (every action mouse-free), **screen-reader labels** on all controls incl. results/preview/editor,
+    **high-contrast** theme compatibility, **reduced-motion** behavior (if animations are ever added), and **never using
+    color alone** to convey status — pair the ⚠ invalid marker, favorite ★, and search-match highlight with a shape/label/text.
 
 ---
 
