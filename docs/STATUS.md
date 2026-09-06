@@ -33,6 +33,8 @@ Design + code map: [`../ARCHITECTURE.md`](../ARCHITECTURE.md). User guide: [`../
   invalid-file surfacing (⚠), portable single-file packaging.
 
 ## Known caveats (non-blocking, documented on purpose)
+- **BUG (queued, BACKLOG #6, HIGH):** fast/repeated **right-click** on a result **crashes** the app (context-menu
+  reentrancy — likely the `IsOpen=false` toggle inside `ResultsContextMenu_Opened`). Not yet fixed.
 - **BUG (queued, BACKLOG #1):** the New/Edit editor's **Category combobox** is unreadable in dark mode — white text on
   a white field (closed), and low-contrast dark-on-dark items in the dropdown. Needs a themed ComboBox template.
 - A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook).

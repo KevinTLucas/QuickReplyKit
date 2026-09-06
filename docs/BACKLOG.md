@@ -43,6 +43,28 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
    the page instantly shows what (if anything) it's already bound to — so they can check a combo is free before
    assigning, and jump to any conflict. Also support plain text filtering of the list by gesture or response name.
    This is the "strong ability to view keybinds and find conflicts" ask; build it alongside #4.
+6. **BUG (crash, HIGH) · Fast/repeated right-click on a result crashes the app.** Spamming right-click on a response
+   (re-opening the context menu quickly) crashes QuickReplyKit. **Likely cause:** `LauncherWindow.ResultsContextMenu_Opened`
+   sets `ResultsContextMenu.IsOpen = false` **inside the `Opened` handler** to suppress the menu when nothing is
+   selected — mutating `IsOpen` during `Opened`, combined with `ResultsList_PreviewMouseRightButtonDown` re-selecting a
+   row on every click, is a WPF reentrancy footgun that can throw (or `SelectedItem` is null mid-handler). **Fix:** stop
+   toggling `IsOpen` in `Opened` — instead gate the menu in `ContextMenuOpening` (set `e.Handled = true` to cancel it
+   when there's no valid selection) or via `IsEnabled`, null-guard the handler, and add a stress/repeat test. (Exactly
+   the kind of crash the logging system #7 should capture automatically.)
+7. **Diagnostics / logging system.** So "send me the log file" instantly gives what's needed to debug. Requirements:
+   - **Rolling & size-capped (~50 MB total)** — never grows unbounded; size-based rollover (a few files) or a single
+     capped/circular file. Logs under `%APPDATA%\QuickReplyKit\logs\`.
+   - **Standard levels** (Error/Warn/Info/Debug/Verbose), timestamped, with thread + source/category; each **session**
+     delimited by a header (app version, OS, key config). Async/queued writes so it never blocks the UI.
+   - **Captures crashes automatically:** wire `AppDomain.CurrentDomain.UnhandledException`,
+     `Application.DispatcherUnhandledException`, and `TaskScheduler.UnobservedTaskException` to log the full exception +
+     stack + context (so #6 and any future crash land in the file). Consider keeping the app alive on a handled
+     Dispatcher exception where safe, after logging.
+   - **Settings toggle:** normal (Info+) vs **verbose/debug** (everything), **off by default**; verbose logs key actions
+     — hotkey, show/hide, search, each insert/paste step, library scan/watch, import/export, template resolve, theme, errors.
+   - **Easy retrieval:** "Open logs folder" (Settings + tray), optional "Copy diagnostics" (recent log + version + config).
+   - **Constraint:** no NuGet (Serilog/NLog are the enterprise norm but are banned here) — hand-roll a small thread-safe
+     `Logger` (BCL `StreamWriter` + lock/queue + size rollover). Keep it lean.
 
 ---
 
