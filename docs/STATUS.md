@@ -1,7 +1,8 @@
 # QuickReplyKit — Project Status (living handoff)
 
 > **This is the single source of truth for "where we are."** Update it at the end of every work
-> session. Read [`../CLAUDE.md`](../CLAUDE.md) first for how to build/test/run and the conventions.
+> session. Read [`../CLAUDE.md`](../CLAUDE.md) first for how to build/test/run and the conventions,
+> and [`ROADMAP.md`](ROADMAP.md) for the full phase plan (0–7) with per-phase pickup instructions.
 
 - **Last updated:** 2026-09-05
 - **Branch layout:** `main` only (always green). Feature work happens on `phase-N-*` branches.
