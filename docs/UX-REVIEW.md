@@ -5,7 +5,7 @@ compact/large sizes, live keyboard, plus engine benchmarks. Overall: a well-buil
 the one real weakness is large-library startup performance. Items are being worked in value order.
 
 ## Doing now (continuous-improvement batches)
-- **CI-1 · Performance (highest value): ✅ IMPLEMENTED on branch `ci-1-perf` (pending QA + merge).**
+- **CI-1 · Performance (highest value): ✅ DONE — merged to `main` (`864db1a`).**
   - **B1** — startup scanned the whole library **synchronously on the UI thread** (~19s to show with ~4.8k
     responses). Fixed: `LibraryScanner.Scan` now loads files with `Parallel.For` (I/O-bound; deterministic
     reassembly keeps the snapshot identical), **and** the initial scan runs on a background `Task` — the

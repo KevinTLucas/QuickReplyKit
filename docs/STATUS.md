@@ -5,7 +5,7 @@
 > **Update this file at the end of every meaningful change** (it is part of the Definition of Done — see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `71dc402` · **`dotnet test` = 384 passing**, `dotnet build` clean (0 warnings).
+- **`main` tip:** `864db1a` · **`dotnet test` = 386 passing**, `dotnet build` clean (0 warnings).
 - **Overall status: ✅ MVP + all V2 features complete and QA'd. Now in a continuous end-user polish pass**
   (the CI-N backlog below). The app is fully usable, launchable, and portable today.
 - **Run:** `dotnet run --project src/QuickReplyKit -- --show` (also runs to tray). Global hotkey **Ctrl+Alt+D**.
@@ -40,7 +40,10 @@ Full per-phase detail + pickup instructions: [`ROADMAP.md`](ROADMAP.md). V2 phas
 From the end-user UX review ([`UX-REVIEW.md`](UX-REVIEW.md) has full detail/rationale/measurements). Do in value order,
 each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff` when green → update this file.
 
-- **CI-1 · Performance (highest value; BUG-class). ✅ IMPLEMENTED on branch `ci-1-perf` — pending independent QA + `--no-ff` merge.**
+- **CI-1 · Performance (highest value; BUG-class). ✅ DONE — merged to `main` (`864db1a`).**
+  (Reviewed: async-startup path correct/thread-safe; determinism proven vs a sequential oracle; 386 tests + 4 self-tests
+  green. Screenshots weren't capturable this session — the "Loading library…" visual + dark-mode highlight contrast
+  warrant a human glance when convenient; folded into the final regression pass.)
   All three fixes landed: (a) `LibraryScanner.Scan` now enumerates the tree first and loads files with `Parallel.For`
   (pure/stateless `ResponseFile.Load`), reassembling in the original pre-order so the snapshot is byte-for-byte identical
   (same items/order/invalid handling); (b) startup no longer scans on the UI thread — `LibraryService` takes
@@ -68,8 +71,8 @@ each on a branch → impl (ponytail) → separate-subagent QA → merge `--no-ff
 run a final full regression (build + 4 self-tests + tests) and STOP.
 
 ## Known issues / caveats (non-blocking)
-- **Large-library startup latency** — addressed by CI-1 (branch `ci-1-perf`, above): scan is now parallel, lazy on
-  timestamps, and off the UI thread (window shows immediately with "Loading library…"). Awaiting QA + merge to `main`.
+- **Large-library startup latency** — ✅ fixed by CI-1 (merged): scan is now parallel, lazy on timestamps, and off
+  the UI thread (window shows immediately with "Loading library…").
 - Editable rename/category **ComboBox** closed field keeps native light chrome in dark mode (text readable). Cosmetic.
 - A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook). Documented.
 - **Phase 4 UI** never had a *dedicated* independent QA (its Core did; the Phase-7 + combined QA swept it — no defects). Fine.
@@ -80,6 +83,6 @@ run a final full regression (build + 4 self-tests + tests) and STOP.
 
 ## How to resume in a fresh session
 1. Read `CLAUDE.md`, this file, then `ROADMAP.md` (and `UX-REVIEW.md` for the CI backlog detail).
-2. `export PATH="/c/Program Files/dotnet:$PATH"; dotnet build QuickReplyKit.slnx && dotnet test QuickReplyKit.slnx` → expect **384** green.
+2. `export PATH="/c/Program Files/dotnet:$PATH"; dotnet build QuickReplyKit.slnx && dotnet test QuickReplyKit.slnx` → expect **386** green.
 3. Pick the top open **CI-N** item. Branch off `main` (worktree), implement with ponytail, validate, QA via a **separate**
    subagent (build + tests + both-theme screenshots + the 4 self-tests + back-compat), merge `--no-ff`, delete branch, **update this file**.
