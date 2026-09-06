@@ -24,7 +24,7 @@ public sealed class WindowBounds
 /// </summary>
 public sealed class AppConfig
 {
-    public string HotkeyGesture { get; set; } = "Ctrl+Alt+Space";
+    public string HotkeyGesture { get; set; } = "Ctrl+Alt+D";
     public string LibraryPath { get; set; } = AppPaths.DefaultLibraryDir;
     public WindowBounds Window { get; set; } = new();
     public PasteMode DefaultPasteMode { get; set; } = PasteMode.RichText;
@@ -49,7 +49,7 @@ public sealed class AppConfig
                 if (cfg is not null)
                 {
                     // Guard against explicit nulls in the file.
-                    if (string.IsNullOrEmpty(cfg.HotkeyGesture)) cfg.HotkeyGesture = "Ctrl+Alt+Space";
+                    if (string.IsNullOrEmpty(cfg.HotkeyGesture)) cfg.HotkeyGesture = "Ctrl+Alt+D";
                     if (string.IsNullOrEmpty(cfg.LibraryPath)) cfg.LibraryPath = AppPaths.DefaultLibraryDir;
                     cfg.Window ??= new WindowBounds();
                     return cfg;

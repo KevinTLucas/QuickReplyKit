@@ -474,7 +474,7 @@ public class AppConfigAdversarialTests
         File.WriteAllText(path, "{\"hotkeyGesture\":null,\"libraryPath\":null,\"window\":null}");
 
         var cfg = AppConfig.Load(path);
-        Assert.Equal("Ctrl+Alt+Space", cfg.HotkeyGesture);
+        Assert.Equal("Ctrl+Alt+D", cfg.HotkeyGesture);
         Assert.Equal(AppPaths.DefaultLibraryDir, cfg.LibraryPath);
         Assert.NotNull(cfg.Window);
     }
@@ -486,7 +486,7 @@ public class AppConfigAdversarialTests
         string path = t.Of("config.json");
         File.WriteAllText(path, "{}");
         var cfg = AppConfig.Load(path);
-        Assert.Equal("Ctrl+Alt+Space", cfg.HotkeyGesture);
+        Assert.Equal("Ctrl+Alt+D", cfg.HotkeyGesture);
         Assert.Equal(PasteMode.RichText, cfg.DefaultPasteMode);
     }
 }

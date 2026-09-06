@@ -12,7 +12,7 @@ public class AppConfigTests
         using var t = new TempDir();
         var cfg = AppConfig.Load(t.Of("nope.json"));
 
-        Assert.Equal("Ctrl+Alt+Space", cfg.HotkeyGesture);
+        Assert.Equal("Ctrl+Alt+D", cfg.HotkeyGesture);
         Assert.Equal(AppPaths.DefaultLibraryDir, cfg.LibraryPath);
         Assert.Equal(PasteMode.RichText, cfg.DefaultPasteMode);
         Assert.NotNull(cfg.Window);
@@ -52,7 +52,7 @@ public class AppConfigTests
         File.WriteAllText(path, "{ not valid json ");
 
         var loaded = AppConfig.Load(path);
-        Assert.Equal("Ctrl+Alt+Space", loaded.HotkeyGesture);
+        Assert.Equal("Ctrl+Alt+D", loaded.HotkeyGesture);
     }
 }
 
