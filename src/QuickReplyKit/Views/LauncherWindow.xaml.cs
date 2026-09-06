@@ -181,8 +181,9 @@ public partial class LauncherWindow : Window
         // No selection → suppress the menu entirely.
         if (item == null) { ResultsContextMenu.IsOpen = false; return; }
 
-        // Edit and Copy only make sense for a valid, readable response.
+        // Edit, Edit & insert, and Copy only make sense for a valid, readable response.
         MenuEdit.IsEnabled = item.IsValid;
+        MenuEditInsert.IsEnabled = item.IsValid;
         MenuCopy.IsEnabled = item.IsValid;
         MenuDuplicate.IsEnabled = true;
     }
@@ -191,6 +192,13 @@ public partial class LauncherWindow : Window
     {
         if (_vm.SelectedItem is { IsValid: true } item)
             EditorWindow.OpenEdit(this, _vm.LibraryRoot, _vm.CategoryPaths(), item);
+    }
+
+    private void MenuEditInsert_Click(object sender, RoutedEventArgs e)
+    {
+        // Open the editor on the resolved message; on Insert the edited text is pasted, not saved.
+        if (_vm.SelectedItem is { IsValid: true } item)
+            EditorWindow.OpenCompose(this, _vm.ResolveComposed(item), _vm.InsertComposed);
     }
 
     private void MenuDuplicate_Click(object sender, RoutedEventArgs e)

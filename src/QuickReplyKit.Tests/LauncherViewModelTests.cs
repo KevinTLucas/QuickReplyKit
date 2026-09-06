@@ -582,6 +582,82 @@ public class LauncherViewModelTests
         });
     }
 
+    // --- Edit & insert / compose (Phase 10b) --------------------------------
+
+    [Fact]
+    public void InsertComposed_Rich_ResolvesTokens_ReachesInsertService_AndSavesNoFile()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "A.json"), html: "<p>original</p>");
+            using var svc = NewService(dir);
+            var insert = new FakeInsertService();
+            var vm = new LauncherViewModel(svc, insert, new AppConfig(), MorningClock);
+            bool hidden = false;
+            vm.RequestHide += () => hidden = true;
+
+            // Edited, transient content still carrying a token — resolved on insert.
+            vm.InsertComposed("<p>{{greeting}}! edited</p>", plain: false);
+
+            var call = Assert.Single(insert.Calls);
+            Assert.Equal("rich", call.Mode);
+            Assert.Contains("Good morning", call.Item.Html);
+            Assert.Contains("edited", call.Item.Html);
+            Assert.DoesNotContain("{{", call.Item.Html);
+            Assert.True(hidden);                                   // launcher hides after insert
+
+            // No new file: the library still holds exactly the one seeded response, unchanged.
+            using var reopened = NewService(dir);
+            var only = Assert.Single(reopened.Snapshot.AllResponses);
+            Assert.Equal("A", only.Name);
+            Assert.Equal("<p>original</p>", only.Html);
+        });
+    }
+
+    [Fact]
+    public void InsertComposed_Plain_CallsInsertPlain_WithResolvedText()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+            using var svc = NewService(dir);
+            var insert = new FakeInsertService();
+            var vm = new LauncherViewModel(svc, insert, new AppConfig(), MorningClock);  // Thursday
+
+            vm.InsertComposed("<p>Day: {{day}}</p>", plain: true);
+
+            var call = Assert.Single(insert.Calls);
+            Assert.Equal("plain", call.Mode);
+            Assert.Contains("Thursday", call.Item.PlainText);
+            Assert.DoesNotContain("{{", call.Item.Html);
+        });
+    }
+
+    [Fact]
+    public void ResolveComposed_ExpandsGreetingAndIncludes_ForThePrefill()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Greeter.json"),
+                html: "<p>{{greeting}}, see {{Welcome}}</p>");
+            TestFiles.WriteResponse(dir.Of("lib", "Welcome.json"), html: "<p>the welcome text</p>");
+            using var svc = NewService(dir);
+            var vm = new LauncherViewModel(svc, new FakeInsertService(), new AppConfig(), MorningClock);
+
+            var item = svc.Snapshot.AllResponses.Single(r => r.Name == "Greeter");
+            string prefill = vm.ResolveComposed(item);
+
+            Assert.Contains("Good morning", prefill);              // greeting filled for the editor
+            Assert.Contains("the welcome text", prefill);          // include expanded
+            Assert.DoesNotContain("{{", prefill);
+            // The stored item is untouched.
+            Assert.Equal("<p>{{greeting}}, see {{Welcome}}</p>", item.Html);
+        });
+    }
+
     [Fact]
     public void Construction_SelectsExactlyOneNavNode()
     {
