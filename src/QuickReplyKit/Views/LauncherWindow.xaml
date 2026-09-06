@@ -167,6 +167,8 @@
                         <ListBox.ContextMenu>
                             <ContextMenu x:Name="ResultsContextMenu" Opened="ResultsContextMenu_Opened">
                                 <MenuItem x:Name="MenuEdit" Header="Edit…" Click="MenuEdit_Click"/>
+                                <MenuItem x:Name="MenuEditInsert" Header="Edit &amp; insert…"
+                                          Click="MenuEditInsert_Click"/>
                                 <MenuItem x:Name="MenuDuplicate" Header="Duplicate" Click="MenuDuplicate_Click"/>
                                 <MenuItem x:Name="MenuRename" Header="Rename…" Click="MenuRename_Click"/>
                                 <MenuItem x:Name="MenuMove" Header="Move to…" Click="MenuMove_Click"/>

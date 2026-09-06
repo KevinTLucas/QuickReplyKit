@@ -299,6 +299,25 @@ public sealed class LauncherViewModel : ViewModelBase
         RequestHide?.Invoke();
     }
 
+    /// <summary>
+    /// Resolve an item's stored HTML for the "Edit &amp; insert" editor: greeting/date filled and
+    /// includes expanded, so the user edits the actual message rather than the template.
+    /// </summary>
+    public string ResolveComposed(ResponseItem item) => Resolve(item.Html);
+
+    /// <summary>
+    /// Insert a one-off message composed in the editor (edited, NOT saved to any file). Resolves any
+    /// remaining <c>{{…}}</c> tokens for safety (idempotent when token-free), then runs the real
+    /// insert pipeline into the captured target window and hides the launcher. Touches no file.
+    /// </summary>
+    public void InsertComposed(string html, bool plain)
+    {
+        var item = new ResponseItem { Html = Resolve(html) };
+        if (plain) _insert.InsertPlain(item);
+        else _insert.InsertRich(item);
+        RequestHide?.Invoke();
+    }
+
     private void CopySelected()
     {
         var item = ValidSelectedItem();

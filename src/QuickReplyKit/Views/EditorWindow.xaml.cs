@@ -22,18 +22,33 @@ public partial class EditorWindow : Window
 {
     private readonly string _root;
     private readonly ResponseItem? _editing;   // null = creating a new response
+    private readonly Action<string, bool>? _composeInsert;   // non-null = "Edit & insert" one-off mode
 
     private EditorWindow(string libraryRoot, IEnumerable<string> categories,
-        ResponseItem? editing, string category, string html)
+        ResponseItem? editing, string category, string html,
+        Action<string, bool>? composeInsert = null)
     {
         InitializeComponent();
         _root = libraryRoot;
         _editing = editing;
+        _composeInsert = composeInsert;
 
         foreach (var c in categories) CategoryBox.Items.Add(c);
         CategoryBox.Text = category;
 
-        if (editing != null)
+        if (composeInsert != null)
+        {
+            // Transient compose-and-insert: no file fields, Insert instead of Save.
+            Title = "Edit & insert";
+            MetaRow1.Visibility = Visibility.Collapsed;
+            MetaRow2.Visibility = Visibility.Collapsed;
+            SaveButton.Visibility = Visibility.Collapsed;
+            SaveButton.IsDefault = false;
+            InsertButton.Visibility = Visibility.Visible;
+            InsertButton.IsDefault = true;
+            InsertPlainButton.Visibility = Visibility.Visible;
+        }
+        else if (editing != null)
         {
             Title = "Edit response";
             NameBox.Text = editing.Name;
@@ -46,7 +61,7 @@ public partial class EditorWindow : Window
         }
 
         Body.Document = HtmlToFlowDocument.Convert(html);
-        Loaded += (_, _) => NameBox.Focus();
+        Loaded += (_, _) => (composeInsert != null ? (System.Windows.UIElement)Body : NameBox).Focus();
     }
 
     /// <summary>Open the editor to create a new response. Returns true if one was saved.</summary>
@@ -64,6 +79,18 @@ public partial class EditorWindow : Window
         var dlg = new EditorWindow(libraryRoot, categories, item, item.CategoryPath, item.Html)
         { Owner = owner };
         return dlg.ShowDialog() == true;
+    }
+
+    /// <summary>
+    /// Open the editor in transient "Edit &amp; insert" mode: <paramref name="html"/> is the already
+    /// resolved message. On Insert the (edited) content is handed to <paramref name="onInsert"/>
+    /// (html, plain) — which runs the paste pipeline. Nothing is saved to disk.
+    /// </summary>
+    public static void OpenCompose(Window owner, string html, Action<string, bool> onInsert)
+    {
+        var dlg = new EditorWindow("", System.Array.Empty<string>(), null, "", html, onInsert)
+        { Owner = owner };
+        dlg.ShowDialog();
     }
 
     // --- Toolbar ------------------------------------------------------------
@@ -181,6 +208,18 @@ public partial class EditorWindow : Window
     // --- Save ---------------------------------------------------------------
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => DialogResult = false;
+
+    // --- Edit & insert (transient compose) ----------------------------------
+
+    private void Insert_Click(object sender, RoutedEventArgs e) => ComposeInsert(plain: false);
+    private void InsertPlain_Click(object sender, RoutedEventArgs e) => ComposeInsert(plain: true);
+
+    private void ComposeInsert(bool plain)
+    {
+        string html = FlowDocumentToHtml.Convert(Body.Document);
+        _composeInsert?.Invoke(html, plain);   // resolve + paste into the target, hide the launcher
+        DialogResult = true;                   // close the editor (saves nothing)
+    }
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {

@@ -59,7 +59,7 @@
         </Grid.RowDefinitions>
 
         <!-- Name + Category -->
-        <Grid Grid.Row="0" Margin="0,0,0,8">
+        <Grid x:Name="MetaRow1" Grid.Row="0" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="12"/>
@@ -77,7 +77,7 @@
         </Grid>
 
         <!-- App + Tags -->
-        <Grid Grid.Row="1" Margin="0,0,0,10">
+        <Grid x:Name="MetaRow2" Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="12"/>
@@ -248,7 +248,14 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Cancel" Style="{StaticResource ActionButton}" IsCancel="True"
                         Click="Cancel_Click"/>
-                <Button Content="Save" Style="{StaticResource PrimaryButton}" IsDefault="True"
+                <!-- "Edit & insert" mode swaps Save for these one-off insert actions (no file saved). -->
+                <Button x:Name="InsertPlainButton" Content="Insert plain" Style="{StaticResource ActionButton}"
+                        Click="InsertPlain_Click" Visibility="Collapsed"
+                        ToolTip="Insert the edited text as plain text (nothing is saved)"/>
+                <Button x:Name="InsertButton" Content="Insert" Style="{StaticResource PrimaryButton}"
+                        Click="Insert_Click" Visibility="Collapsed"
+                        ToolTip="Insert the edited text into the app you were in (nothing is saved)"/>
+                <Button x:Name="SaveButton" Content="Save" Style="{StaticResource PrimaryButton}" IsDefault="True"
                         Click="Save_Click"/>
             </StackPanel>
         </Grid>
