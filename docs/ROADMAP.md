@@ -35,7 +35,8 @@ Global hotkey (`RegisterHotKey` + gesture parser), foreground capture + restore 
 `AttachThreadInput`), raw-Win32 clipboard write with **history/cloud exclusion formats**, clipboard
 snapshot/restore, `SendInput` Ctrl+V, `InsertService`, `--selftest-paste`. History-exclusion is
 unit-proven. Spec: `PHASE3-PASTE.md`. Code: `src/QuickReplyKit/Interop/**`, `Services/InsertService.cs`.
-> ⚠️ Real-app target-capture bug is OPEN — see `STATUS.md` top section (fix before new features).
+> ✅ The real-app target-capture bug is FIXED (`ForegroundMonitor`, `main` f8a5b1d) — awaiting the
+> user's live hotkey confirmation. See `STATUS.md`.
 
 ## ✅ Phase 4 — Editor + response management  (merged; Core QA'd — 236 tests)
 Rich-text `EditorWindow` (B/I/U, bullet/numbered lists, link, remove-formatting; Name/Category/App/

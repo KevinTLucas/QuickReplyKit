@@ -6,49 +6,31 @@
 
 - **Last updated:** 2026-09-05
 - **Branch layout:** `main` only (always green). Feature work happens on `phase-N-*` branches.
-- **`main` tip:** `0f8fead` — Merge phase-4-ui.
-- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **236 passing** · paste self-test
-  `PASTE=ok CLIPBOARD_RESTORED=ok` (engine-level; see the bug below for the real-app gap).
+- **`main` tip:** `f8a5b1d` — Merge fix-paste-target.
+- **Health:** `dotnet build` clean (0 warnings) · `dotnet test` **236 passing** · `--selftest-paste` →
+  `PASTE=ok CLIPBOARD_RESTORED=ok` · `--selftest-foreground` → `FOREGROUND_TRACK=ok`.
 - **Launchable?** Yes: `dotnet run --project src/QuickReplyKit -- --show` (also runs to the tray).
 
 ---
 
-## 🔴 TOP PRIORITY — paste into the active app "does nothing" (user-reported)
-**Status: OPEN. Fix this before any new feature work.**
+## ✅ RECENTLY FIXED — paste targeted the wrong window (was user's #1 bug)
+**Status: FIXED on `main` (`f8a5b1d`). Needs a real-world hotkey confirmation from the user.**
 
-**Repro (user):** Open Notepad. Separately launch QuickReplyKit (fresh launch, e.g. `--show`/run).
-Pick a response, click **Paste**. The launcher closes but nothing appears in Notepad.
+**Was:** the paste target was only sampled at show-time via `GetForegroundWindow()`, so a fresh
+launch / tray-open captured the launching shell or the launcher itself instead of the user's app;
+clicking Paste sent Ctrl+V to the wrong window.
 
-**Diagnosis (to verify):** The paste **target window** is captured in `App.CaptureForegroundTarget()`
-which runs inside `ShowLauncher()` and reads `GetForegroundWindow()` at that instant. When the app is
-**launched fresh** (from a terminal/IDE or via `--show`), the foreground window at show-time is the
-launching process — **not Notepad** — so `ForegroundTargetTracker.Target` is the wrong window (or the
-launcher). Clicking Paste then restores focus to the wrong window and sends Ctrl+V there → nothing in
-Notepad. The engine mechanism itself is proven correct by `--selftest-paste` (which sets the target
-explicitly) and by `ClipboardWriterTests` (history-exclusion formats verified).
+**Fix:** `src/QuickReplyKit/Interop/ForegroundMonitor.cs` — a `SetWinEventHook`
+(`EVENT_SYSTEM_FOREGROUND`, `WINEVENT_SKIPOWNPROCESS`) that continuously records the last
+non-QuickReplyKit foreground window into the shared `ForegroundTargetTracker` that `InsertService`
+reads. Wired in `App.xaml.cs` (created on the UI thread, disposed on exit); show-time capture kept as
+a fallback. Proven by `--selftest-foreground` → `FOREGROUND_TRACK=ok`; paste + 236 tests still green.
 
-**So:** the intended **hotkey** flow (Notepad focused → press the global hotkey → target = Notepad →
-Enter/Paste) likely already works, because the hotkey captures foreground *before* we steal focus.
-The bug bites the tray/`--show`/fresh-launch paths, and possibly any path where the last real app
-isn't foreground at show-time.
-
-**Proposed fix (do this next):**
-1. **Continuously track the last real foreground window** instead of only sampling at show-time.
-   Add a `SetWinEventHook(EVENT_SYSTEM_FOREGROUND, …)` in the app that records the most recent
-   foreground HWND that is **not** a QuickReplyKit window; use that as the paste target. This makes
-   tray, hotkey, and fresh-launch all reliable.
-2. Keep the hotkey-time capture as a belt-and-suspenders.
-3. If the resolved target is 0 / our own window, keep the existing graceful fallback (copy to
-   clipboard only) but surface a subtle hint.
-4. **Verify for real**, not just via `--selftest-paste`: drive the actual launcher (open over Notepad
-   via the hotkey, arrow to a response, press Enter and click Paste) and confirm insertion + focus
-   return + clipboard restore. Consider a `--selftest-paste-ui` that exercises the live window path.
-5. Tell the user the correct usage: focus your target app → press the **global hotkey**
-   (`Ctrl+Alt+Space` default) → pick → Enter. (Also make fresh-launch work per #1.)
-
-Files in play: `src/QuickReplyKit/App.xaml.cs` (`CaptureForegroundTarget`, wiring),
-`src/QuickReplyKit/Interop/ForegroundWindow.cs`, `Interop/ForegroundTargetTracker.cs`,
-`Services/InsertService.cs`, `ViewModels/LauncherViewModel.cs` (mode/hide ordering).
+**Remaining confirmation:** automated tests prove the tracker captures the target and the engine
+pastes into a given target, but the live click-through-the-UI path isn't auto-driven. Ask the user to
+verify the real workflow: focus an app (e.g. Notepad) → press the global hotkey **Ctrl+Alt+Space** →
+pick a response → Enter → text lands at the caret. (A `--selftest-paste-ui` that drives the live
+window is a nice-to-have for Phase 7 regression.)
 
 ---
 
@@ -69,7 +51,8 @@ Files in play: `src/QuickReplyKit/App.xaml.cs` (`CaptureForegroundTarget`, wirin
 by a session rate limit and committed **nothing**; the tree is clean at `main`. Re-launch them fresh.)
 
 ## Needs QA / known gaps
-- 🔴 The paste target bug above (top priority).
+- Paste target fix (above) — needs the user's live hotkey confirmation; consider an independent QA
+  pass + a `--selftest-paste-ui` live-window regression test.
 - **Rich-paste E2E is unproven** — self-test only pastes *plain* into Notepad. Add a rich (CF_HTML)
   paste check (WordPad is gone on Win11 24H2; use Word if present, a Win32 RichEdit harness, or an
   in-process RichTextBox) — see BACKLOG. Do this in Phase 7 final verification.
@@ -79,7 +62,7 @@ by a session rate limit and committed **nothing**; the tree is clean at `main`. 
   strict per-field JSON parsing; empty-folder-in-empty-library message).
 
 ## Immediate next actions (in order)
-1. **Fix the paste target bug** (see top section). Highest priority.
+1. **(done — awaiting user's live hotkey confirmation)** paste target fix, see the FIXED section above.
 2. **Phase 5 UI** — import/export menus + conflict dialog + summary, on `phase-5-ui`. Core
    (`QuickReplyKit.Core.ImportExport.LibraryPorter`) already exists on `main`. Spec:
    [`PHASE5-IMPORT-EXPORT.md`](PHASE5-IMPORT-EXPORT.md).
