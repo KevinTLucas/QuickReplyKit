@@ -69,7 +69,8 @@ public partial class App : Application
 
         _config = AppConfig.Load();
 
-        // Debug/QA overrides (used by tools/shoot.ps1): --library <path>, --size WxH, --theme Light|Dark|System.
+        // Debug/QA overrides (used by tools/shoot.ps1): --library <path>, --size WxH, --theme Light|Dark|System,
+        // --show-editor (pop the New-response editor for theming screenshots).
         string? libOverride = ArgValue(e.Args, "--library");
         if (!string.IsNullOrEmpty(libOverride)) _config.LibraryPath = libOverride;
 
@@ -110,6 +111,12 @@ public partial class App : Application
 
         if (e.Args.Any(a => a.Equals("--show", StringComparison.OrdinalIgnoreCase)))
             ShowLauncher();
+
+        // QA override: pop the editor (New) directly so its theming can be screenshotted. The
+        // sample categories give the Category combobox dropdown some items to render.
+        if (e.Args.Any(a => a.Equals("--show-editor", StringComparison.OrdinalIgnoreCase)))
+            Dispatcher.BeginInvoke(new Action(() => Views.EditorWindow.OpenNew(
+                _launcher!, _config!.LibraryPath, new[] { "IXL", "IXL/Math", "Billing", "Onboarding" }, "IXL")));
 
         // Run the initial library scan in the background; it populates the (already-visible) launcher
         // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
