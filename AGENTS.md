@@ -19,8 +19,8 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** `main` includes completed B01-B08 and is green at 519 tests. The app is launchable, but
-the backlog is **not empty**: removal of folder tags leads the remaining work, followed
+**Current state (audited 2026-09-07):** B01-B09 are complete and green at 516 tests. The app is launchable, but
+the backlog is **not empty**: folder-scoped search leads the remaining work, followed
 by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STATUS.md` for the current evidence and
 `docs/BACKLOG.md` for the exact next item.
 
