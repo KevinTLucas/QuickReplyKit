@@ -19,8 +19,8 @@
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains 4 ordered
-  items. B17 import UI and the disjoint B16 Core engine are active in separate worktrees; script UI/import integration,
-  selected-folder polish, and the penultimate enterprise UI audit remain.
+  items. B17 import UI, the disjoint B16 Core engine, and B18 selected-folder polish are active in separate worktrees;
+  script UI/import integration and the penultimate enterprise UI audit remain.
 
 ## Merged And QA'd
 
@@ -78,14 +78,15 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 1. **B17 P1:** redesign import confirmation and ordinary-response selection (active).
 2. **B16 P2:** complete the security-gated computed-variable DSL and mandatory per-code acceptance (Core active).
-3. **B18 P3:** strengthen selected-folder indication.
+3. **B18 P3:** strengthen selected-folder indication (active in a disjoint UI worktree).
 4. **B19 P2:** run the enterprise UI audit/polish pass, then final release validation.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
 **Active worktrees:** `feature/import-review-selection` owns B17 UI/model/tests;
-`feature/sandboxed-script-engine` owns only the disjoint B16 Core engine/new tests. A stale interrupted historical
-hotkey worktree remains quarantined and is not an active source of changes.
+`feature/sandboxed-script-engine` owns only the disjoint B16 Core engine/new tests; and
+`feature/selected-folder-indicator` owns only B18 launcher navigation UI/tests. A stale interrupted historical hotkey
+worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
