@@ -27,6 +27,9 @@ public partial class LauncherWindow : Window
 
     /// <summary>Set when a --size override is in effect (screenshots) so saved bounds don't fight it.</summary>
     public bool SuppressBoundsRestore { get; set; }
+
+    /// <summary>Set during a config restore so shutdown cannot overwrite the restored file.</summary>
+    public bool SuppressBoundsSave { get; set; }
     private bool _boundsRestored;     // restore once, on the first show
 
     public LauncherWindow(LauncherViewModel vm, AppConfig config)
@@ -388,43 +391,47 @@ public partial class LauncherWindow : Window
             _vm.CurrentCategory, _vm.CategoryPaths(), allowEmpty: true);
         if (target == null) return;
 
-        // Preview first: show exactly what's new / changed / identical before writing anything, and
-        // (when there are conflicts) pick the policy right there.
-        List<ImportEntry> entries;
-        try { entries = ImportPreview.Analyze(_vm.LibraryRoot, source, target); }
+        // Plan once, review that exact immutable plan, then execute it. Preview and writes cannot drift.
+        ImportPlan plan;
+        try { plan = LibraryPorter.PlanImport(_vm.LibraryRoot, source, target); }
         catch (Exception ex)
         {
             ConfirmDialog.Info(this, "Can't read that file", "Import preview failed:\n" + ex.Message);
             return;
         }
-        if (entries.Count == 0)
+        if (plan.Entries.Count == 0)
         {
             ConfirmDialog.Info(this, "Nothing to import", "No responses were found in that file.");
             return;
         }
-        var policy = ImportPreviewWindow.Prompt(this, entries);
-        if (policy == null) return;   // cancelled
+        var decisions = ImportPreviewWindow.Prompt(this, plan);
+        if (decisions == null) return;
 
-        // Auto-snapshot before a bulk write so a botched import is a one-click Restore away.
-        LibraryBackup.Create(_vm.LibraryRoot, AppPaths.BackupsDir, "before import");
+        // A bulk write never starts unless the current library can be protected first.
+        try { LibraryBackup.CreateRequired(_vm.LibraryRoot, AppPaths.BackupsDir, "before import"); }
+        catch (IOException ex)
+        {
+            ConfirmDialog.Info(this, "Import canceled", ex.Message);
+            return;
+        }
 
-        var result = LibraryPorter.Import(_vm.LibraryRoot, source, target, policy.Value);
-        ConfirmDialog.Info(this, "Import complete", SummaryText(result, policy.Value));
+        var result = LibraryPorter.Import(plan, decisions);
+        ConfirmDialog.Info(this, "Import complete", SummaryText(result));
     }
 
-    /// <summary>Human summary of an import outcome, tailored to the policy that was applied.</summary>
-    private static string SummaryText(ImportResult r, ConflictPolicy policy)
+    private static string SummaryText(ImportResult result)
     {
-        var parts = new List<string> { $"{r.Imported} imported" };
-        if (r.Conflicts > 0)
-            parts.Add(policy switch
-            {
-                ConflictPolicy.KeepBoth => $"{r.Conflicts} kept both",
-                ConflictPolicy.Overwrite => $"{r.Conflicts} overwritten",
-                _ => $"{r.Conflicts} skipped (already exist)",
-            });
-        if (r.SkippedInvalid > 0) parts.Add($"{r.SkippedInvalid} skipped (invalid)");
-        return string.Join(", ", parts) + ".";
+        int Count(params ImportOutcomeKind[] kinds) => result.Outcomes.Count(o => kinds.Contains(o.Kind));
+        var parts = new List<string>();
+        void Add(int count, string text) { if (count > 0) parts.Add($"{count} {text}"); }
+        Add(Count(ImportOutcomeKind.Imported), "imported");
+        Add(Count(ImportOutcomeKind.Overwritten), "overwritten");
+        Add(Count(ImportOutcomeKind.KeptBoth), "kept as copies");
+        Add(Count(ImportOutcomeKind.Skipped), "skipped");
+        Add(Count(ImportOutcomeKind.Invalid, ImportOutcomeKind.Unsafe), "invalid or unsafe");
+        Add(Count(ImportOutcomeKind.Stale), "changed after preview");
+        Add(Count(ImportOutcomeKind.Failed), "failed");
+        return parts.Count == 0 ? "No changes were made." : string.Join(", ", parts) + ".";
     }
 
     /// <summary>Write a zip via a temp file, then move it into place — never inside the zipped tree.</summary>
@@ -512,7 +519,7 @@ public partial class LauncherWindow : Window
     /// <summary>Persist the current normal-state bounds (and the monitor it sits on) to config.</summary>
     private void SaveBounds()
     {
-        if (!_config.RememberWindow || WindowState != WindowState.Normal || !IsVisible) return;
+        if (SuppressBoundsSave || !_config.RememberWindow || WindowState != WindowState.Normal || !IsVisible) return;
 
         _config.Window = new WindowBounds
         {

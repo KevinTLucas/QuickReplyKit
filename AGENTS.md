@@ -19,8 +19,8 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** `main` includes the B01 right-click crash fix and is green at 436 tests.
-The app is launchable, but the backlog is **not empty**: backup and import integrity lead the remaining work, followed
+**Current state (audited 2026-09-07):** `main` includes B01-B03 and is green at 452 tests. The app is launchable, but
+the backlog is **not empty**: clipboard sanitization leads the remaining work, followed
 by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STATUS.md` for the current evidence and
 `docs/BACKLOG.md` for the exact next item.
 
@@ -31,3 +31,9 @@ Use concise, human-readable branch names that describe the feature or bug; never
 or generated worktree/session identifier. One branch/worktree owns exactly one feature or fix: never work in another
 feature's branch or mix unrelated changes. Before QA and merge, verify the branch-owned commits and files with
 `git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; inherited `main` history is not branch work.
+Commits use only the configured local Git identity: never add `Co-Authored-By` or other AI/agent attribution trailers,
+and never override the repository's Git author configuration.
+
+**QA cleanup:** reuse a single Notepad tab for paste verification and close every test-created tab normally with
+**Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
+Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.
