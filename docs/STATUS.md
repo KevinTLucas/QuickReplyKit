@@ -6,9 +6,9 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main` before this process-doc update:** `97e4ff8`; product merge `c596e29`.
+- **Current `main` at this branch sync:** `1c02ae1`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
-- **Tests:** **436 passed, 0 failed, 0 skipped**.
+- **Tests:** **443 passed, 0 failed, 0 skipped** after B02 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. The only unmerged work is the isolated
@@ -22,6 +22,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B02 transactional backup restore | `c6fdda8` | 443/443; rollback/oldest restore 40 repeated runs; all self-tests 3 rounds; both themes | Complete |
 | B01 repeated right-click crash | `c596e29` | 436/436; 150 rapid cycles per theme; actions usable; log delta clean | Complete |
 | #1 dark-mode Category ComboBox + original #6 right-click fix | `d562052` | 6/6 QA; both themes; original reentrancy path survived 80 rapid clicks | Original fix; later Run crash closed by B01 |
 | #7 rolling diagnostics/logging | `8f74aa9` | 9/9 feature QA; rollover, levels, crash channels, no response-body logging | Partial: requested workflow coverage remains |
@@ -58,22 +59,22 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
-2. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
-3. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
-4. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
-5. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
-6. **B16 P2:** sandboxed dynamic-variable scripts, only after its import, sanitizer, accessibility, and logging gates.
+1. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
+2. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
+3. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
+4. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
+5. **B16 P2:** sandboxed dynamic-variable scripts, only after its import, sanitizer, accessibility, and logging gates.
 
-**Known confirmed regressions/defects:** backup restore correctness, import preview/import disagreement and preview
-containment, search false positives, dark hover contrast, and clipped
+**Known confirmed regressions/defects:** import preview/import disagreement and preview containment, search false
+positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** `bugfix/backup-restore-integrity` contains the committed B02 transactional-restore
-implementation and handoff docs, awaiting independent QA. `bugfix/import-integrity` contains the committed B03
-validated import-plan implementation and is in security/UI QA. `bugfix/clipboard-sanitization` contains the B04
-clipboard trust-boundary implementation (active/hidden markup removal, subset normalization, and safe links); focused
-tests are green and independent security/UI QA is pending. Resume these exact worktrees rather than starting duplicates.
+**Active worktrees:** B02 is merged. `bugfix/import-integrity` passed security re-QA and needs current-main
+integration. `bugfix/clipboard-sanitization` contains the B04 clipboard trust-boundary implementation; its first
+security QA findings are corrected and second independent QA is pending. `bugfix/search-relevance` passed headless QA
+and needs current-main integration. `bugfix/settings-about-layout` and `bugfix/dark-hover-contrast` await independent
+QA/fixes. `feature/folder-trash` is paused cleanly before implementation. Resume these exact worktrees rather than
+starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -96,7 +97,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **436** green. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **443** green on `main`. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    both-theme screenshots, the four self-tests, a no-regression run, and a `--no-ff` merge.
 6. Update this file, BACKLOG, README, and ARCHITECTURE as appropriate before considering the change done.
