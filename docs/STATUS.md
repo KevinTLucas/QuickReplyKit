@@ -6,13 +6,14 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `70e3b0b` (B01 fix plus handoff update); product merge `c596e29`.
+- **Current `main` before this process-doc update:** `97e4ff8`; product merge `c596e29`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **436 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
-- **Git:** every completed feature branch listed below is already an ancestor of `main`; there are no
-  unmerged feature commits. Several merged branches/worktrees remain locally and may be pruned later.
+- **Git:** completed feature branches listed below are ancestors of `main`. The only unmerged work is the isolated
+  B02 and B03 bugfix branches described under Active worktrees. Several fully merged historical branches/worktrees
+  remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   15 ordered items with severity, acceptance criteria, and status. Confirmed data-loss/import defects lead;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
@@ -68,10 +69,12 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** `bugfix/backup-restore-integrity` contains an uncommitted B02 implementation under review;
-`bugfix/import-integrity` contains an early uncommitted B03 planner. Their agents stopped at the current usage limit,
-so resume these exact worktrees rather than starting duplicate branches. Branch names must stay human-readable and
-must not contain AI/vendor names, agent IDs, or generated session labels.
+**Active worktrees:** `bugfix/backup-restore-integrity` contains the committed B02 transactional-restore
+implementation and handoff docs, awaiting independent QA. `bugfix/import-integrity` contains the committed B03
+validated import-plan implementation plus two local refinements in `LibraryPorter.cs` and `ImportPlanTests.cs`, awaiting
+documentation, commit, and independent security/UI QA. Resume these exact worktrees rather than starting duplicates.
+Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
+work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
 ## Known Limits / Human Checks
 
