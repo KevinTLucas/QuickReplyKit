@@ -187,6 +187,23 @@ public partial class LauncherWindow : Window
         MenuEdit.IsEnabled = item.IsValid;
         MenuEditInsert.IsEnabled = item.IsValid;
         MenuCopy.IsEnabled = item.IsValid;
+
+        // "Clear" only shows when the response currently has an instant-paste bind.
+        bool hasHotkey = (Application.Current as App)?.ResponseHotkeyFor(item.RelativePath) is not null;
+        MenuAssignHotkey.IsEnabled = item.IsValid;
+        MenuClearHotkey.Visibility = hasHotkey ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void MenuAssignHotkey_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedItem is { IsValid: true } item)
+            (Application.Current as App)?.OpenAssignHotkey(item);
+    }
+
+    private void MenuClearHotkey_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedItem is { } item)
+            (Application.Current as App)?.ClearResponseHotkey(item.RelativePath);
     }
 
     private void MenuEdit_Click(object sender, RoutedEventArgs e)

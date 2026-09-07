@@ -75,6 +75,32 @@ public class AppConfigTests
         Assert.Equal(AppTheme.Dark, AppConfig.Load(path).Theme);
         Assert.Contains("Dark", File.ReadAllText(path));   // enum stored by name, not number
     }
+
+    [Fact]
+    public void ResponseHotkeys_DefaultEmpty()
+    {
+        using var t = new TempDir();
+        Assert.Empty(AppConfig.Load(t.Of("nope.json")).ResponseHotkeys);
+    }
+
+    [Fact]
+    public void ResponseHotkeys_RoundTrip()
+    {
+        using var t = new TempDir();
+        string path = t.Of("config.json");
+        var cfg = new AppConfig();
+        cfg.ResponseHotkeys.Add(new ResponseHotkey { RelativePath = "IXL/Greeting.json", Gesture = "Ctrl+Alt+1", Plain = false });
+        cfg.ResponseHotkeys.Add(new ResponseHotkey { RelativePath = "Billing/Refund.json", Gesture = "Ctrl+Alt+2", Plain = true });
+        cfg.Save(path);
+
+        var loaded = AppConfig.Load(path);
+        Assert.Equal(2, loaded.ResponseHotkeys.Count);
+        Assert.Equal("IXL/Greeting.json", loaded.ResponseHotkeys[0].RelativePath);
+        Assert.Equal("Ctrl+Alt+1", loaded.ResponseHotkeys[0].Gesture);
+        Assert.False(loaded.ResponseHotkeys[0].Plain);
+        Assert.Equal("Billing/Refund.json", loaded.ResponseHotkeys[1].RelativePath);
+        Assert.True(loaded.ResponseHotkeys[1].Plain);
+    }
 }
 
 public class ThemeResolverTests

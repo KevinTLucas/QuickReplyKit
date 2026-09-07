@@ -19,7 +19,7 @@ namespace QuickReplyKit.Views;
 public partial class SettingsWindow : Window
 {
     private readonly AppConfig _config;
-    private readonly GlobalHotkey _hotkey;
+    private readonly HotkeyService _hotkeys;
     private readonly LibraryService _library;
     private readonly Action _onLibraryChanged;
 
@@ -28,10 +28,10 @@ public partial class SettingsWindow : Window
     private bool _saved;          // set on Save so Close doesn't revert the (persisted) theme
     private bool _loaded;         // gates live theme preview until the radios are initialised
 
-    public SettingsWindow(AppConfig config, GlobalHotkey hotkey, LibraryService library, Action onLibraryChanged)
+    public SettingsWindow(AppConfig config, HotkeyService hotkeys, LibraryService library, Action onLibraryChanged)
     {
         _config = config;
-        _hotkey = hotkey;
+        _hotkeys = hotkeys;
         _library = library;
         _onLibraryChanged = onLibraryChanged;
         _gesture = config.HotkeyGesture;
@@ -122,6 +122,9 @@ public partial class SettingsWindow : Window
     private void Trash_Click(object sender, RoutedEventArgs e) =>
         new TrashWindow(_config.LibraryPath, _config.TrashRetentionDays, _onLibraryChanged) { Owner = this }.ShowDialog();
 
+    private void ManageHotkeys_Click(object sender, RoutedEventArgs e) =>
+        (Application.Current as App)?.OpenHotkeyManager();
+
     // --- Save ---------------------------------------------------------------
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -132,10 +135,10 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        // Rebind before persisting so a rejected shortcut never gets saved (or lost).
-        if (_gesture != _config.HotkeyGesture && !_hotkey.Rebind(_gesture))
+        // Rebind before persisting so a rejected shortcut never gets saved (or lost). TryRebindLauncher
+        // rolls back to the working combo itself on failure (and re-registers all binds either way).
+        if (_gesture != _config.HotkeyGesture && !_hotkeys.TryRebindLauncher(_gesture))
         {
-            _hotkey.Rebind(_config.HotkeyGesture);   // restore the working one
             ShowHotkeyError("That shortcut is in use — pick another.");
             return;
         }

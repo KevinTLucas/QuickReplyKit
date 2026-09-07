@@ -122,6 +122,19 @@ Open from the ⚙ button or the tray. You can set:
 - **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
+- **Keyboard shortcuts…** — opens the shortcuts manager (see below).
+
+## Per-response instant-paste hotkeys
+
+Bind a global hotkey to a **specific** response and it pastes straight into whatever app you're in — **without
+opening QuickReplyKit**. Right-click a response → **Instant-paste hotkey…**, press a combination, and choose rich
+or plain text. These binds are stored locally (in your `config.json`, keyed by the response's path), so a shared
+library never fights over global keys.
+
+Open **Settings → Keyboard shortcuts…** for the manager: it lists the launcher hotkey and every per-response bind,
+flags conflicts (a duplicate within QuickReplyKit, or a combo another app already owns), and has a **find-a-shortcut**
+box — press any combination to see what it's bound to — plus a filter over the list. If a hotkey can't be registered
+(already in use), the app keeps running and the manager shows it as "in use by another app".
 
 ## System tray
 

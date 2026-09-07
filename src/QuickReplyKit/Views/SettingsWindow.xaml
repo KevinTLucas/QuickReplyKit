@@ -46,6 +46,9 @@
                    Text="Click, then press the key combination you want (e.g. Ctrl+Alt+D)."/>
         <TextBlock x:Name="HotkeyError" Foreground="{DynamicResource Error}" FontSize="12" TextWrapping="Wrap"
                    Margin="0,4,0,0" Visibility="Collapsed"/>
+        <Button Content="Keyboard shortcuts…" HorizontalAlignment="Left" Margin="0,8,0,0"
+                Style="{StaticResource ActionButton}" Click="ManageHotkeys_Click"
+                ToolTip="See every shortcut, assign per-response instant-paste keys, and check for conflicts."/>
 
         <!-- Library path -->
         <TextBlock Text="Response library folder" Style="{StaticResource SectionLabel}"/>
