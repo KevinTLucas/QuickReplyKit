@@ -420,8 +420,8 @@ public partial class LauncherWindow : Window
     {
         var open = new OpenFileDialog
         {
-            Title = "Import responses",
-            Filter = "Responses (*.json;*.zip)|*.json;*.zip|Response JSON (*.json)|*.json|Zip archive (*.zip)|*.zip",
+            Title = "Import responses and scripts",
+            Filter = "QuickReplyKit items (*.json;*.zip)|*.json;*.zip|JSON (*.json)|*.json|Zip archive (*.zip)|*.zip",
             CheckFileExists = true,
         };
         if (open.ShowDialog(this) != true) return;
@@ -443,11 +443,11 @@ public partial class LauncherWindow : Window
         }
         if (plan.Entries.Count == 0)
         {
-            ConfirmDialog.Info(this, "Nothing to import", "No responses were found in that file.");
+            ConfirmDialog.Info(this, "Nothing to import", "No responses or scripts were found in that file.");
             return;
         }
-        var decisions = ImportPreviewWindow.Prompt(this, plan);
-        if (decisions == null) return;
+        var review = ImportPreviewWindow.Prompt(this, plan);
+        if (review == null) return;
 
         // A bulk write never starts unless the current library can be protected first.
         try { LibraryBackup.CreateRequired(_vm.LibraryRoot, _config.BackupPath, "before import"); }
@@ -458,7 +458,7 @@ public partial class LauncherWindow : Window
             return;
         }
 
-        var result = LibraryPorter.Import(plan, decisions);
+        var result = LibraryPorter.Import(plan, review.Actions, review.AcceptedScriptEntries);
         ConfirmDialog.Info(this, "Import complete", SummaryText(result));
     }
 

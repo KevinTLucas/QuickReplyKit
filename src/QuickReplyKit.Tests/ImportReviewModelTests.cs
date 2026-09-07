@@ -20,7 +20,7 @@ public class ImportReviewModelTests
         Assert.All(model.Rows.Skip(1), row => Assert.False(row.IsSelected));
         Assert.All(model.Rows.Skip(3), row => Assert.False(row.CanSelect));
         Assert.Equal(ImportAction.KeepBoth, model.Rows[2].ConflictAction);
-        Assert.Equal("1 of 3 responses selected", model.SelectedSummary);
+        Assert.Equal("1 of 3 items selected", model.SelectedSummary);
         Assert.True(model.CanImport);
     }
 
@@ -38,7 +38,7 @@ public class ImportReviewModelTests
         Assert.True(model.Rows[0].IsSelected);
         Assert.True(model.Rows[1].IsSelected);
         Assert.False(model.Rows[2].IsSelected);
-        Assert.Equal("2 of 3 responses selected", model.SelectedSummary);
+        Assert.Equal("2 of 3 items selected", model.SelectedSummary);
 
         model.Rows[2].IsSelected = true; // explicit individual acceptance remains possible
         model.Clear();
@@ -71,9 +71,9 @@ public class ImportReviewModelTests
         new("C:\\library", "source.zip", [1, 2, 3], entries);
 
     private static ImportPlanEntry Entry(int id, ImportClassification classification, ImportAction action) =>
-        new(id, $"source-{id}.json", $"Folder/Response {id}.json", classification, action,
+        new(id, ImportItemKind.Response, $"source-{id}.json", $"Folder/Response {id}.json", classification, action,
             classification == ImportClassification.DuplicateElsewhere ? "Other/Copy.json" : null,
-            classification is ImportClassification.Invalid or ImportClassification.Unsafe ? "Cannot import." : null,
+            classification is ImportClassification.Invalid or ImportClassification.Unsafe ? "Cannot import." : null, null,
             [1, 2, 3], $"C:\\library\\Folder\\Response {id}.json", null,
             classification == ImportClassification.Conflict
                 ? $"C:\\library\\Folder\\Response {id} (imported).json" : null);

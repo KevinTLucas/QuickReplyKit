@@ -1,8 +1,10 @@
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
+using QuickReplyKit.Core.Scripts;
 using QuickReplyKit.Core.Storage;
 
 namespace QuickReplyKit.Core.ImportExport;
@@ -24,8 +26,9 @@ public static class LibraryPorter
     public const long MaxEntryBytes = 10L * 1024 * 1024;
     public const long MaxImportBytes = 100L * 1024 * 1024;
     private const string FolderSidecar = ".qrkfolder.json";
+    private static readonly UTF8Encoding Utf8 = new(false, true);
 
-    private sealed record Candidate(string Path, byte[] Content, string? Error = null);
+    private sealed record Candidate(ImportItemKind Kind, string Path, byte[] Content, string? Error = null);
 
     public static void Export(ResponseItem item, string destPath)
     {
@@ -97,25 +100,45 @@ public static class LibraryPorter
             if (!TryDestination(root, targetCategory, candidate.Path, out string relative, out string full,
                     out string? pathError))
             {
-                entries.Add(Entry(id, candidate.Path, display, ImportClassification.Unsafe,
+                entries.Add(Entry(id, candidate.Kind, candidate.Path, display, ImportClassification.Unsafe,
                     pathError ?? "Unsafe destination path."));
                 continue;
             }
             if (!reserved.Add(full))
             {
-                entries.Add(Entry(id, candidate.Path, relative, ImportClassification.Unsafe,
+                entries.Add(Entry(id, candidate.Kind, candidate.Path, relative, ImportClassification.Unsafe,
                     "Another incoming entry resolves to the same destination."));
                 continue;
             }
             if (candidate.Error is not null)
             {
-                entries.Add(Entry(id, candidate.Path, relative, ImportClassification.Invalid, candidate.Error));
+                entries.Add(Entry(id, candidate.Kind, candidate.Path, relative, ImportClassification.Invalid, candidate.Error));
                 continue;
             }
-            if (!ResponseFile.Validate(candidate.Content, out string? validationError))
+
+            string? codeSource = null;
+            string? validationError;
+            if (candidate.Kind == ImportItemKind.Script)
             {
-                entries.Add(Entry(id, candidate.Path, relative, ImportClassification.Invalid,
-                    validationError ?? "Invalid response file."));
+                try
+                {
+                    var parsed = ScriptDefinitionFile.Parse(Utf8.GetString(candidate.Content));
+                    validationError = parsed.Success ? null : parsed.Error ?? parsed.Marker;
+                    codeSource = parsed.Value?.Expression;
+                }
+                catch (DecoderFallbackException)
+                {
+                    validationError = "Script definition is not valid UTF-8.";
+                }
+            }
+            else
+            {
+                if (ResponseFile.Validate(candidate.Content, out validationError)) validationError = null;
+            }
+            if (validationError is not null)
+            {
+                entries.Add(Entry(id, candidate.Kind, candidate.Path, relative, ImportClassification.Invalid,
+                    validationError));
                 continue;
             }
 
@@ -140,7 +163,7 @@ public static class LibraryPorter
                 keepBoth = NextFree(full, reserved);
                 reserved.Add(keepBoth);
             }
-            else if (FindExact(existing, contentHash, candidate.Content) is { } duplicate)
+            else if (FindExact(existing, candidate.Kind, contentHash, candidate.Content) is { } duplicate)
             {
                 classification = ImportClassification.DuplicateElsewhere;
                 action = ImportAction.Skip;
@@ -152,21 +175,30 @@ public static class LibraryPorter
                 action = ImportAction.Import;
             }
 
-            entries.Add(new ImportPlanEntry(id, candidate.Path, relative, classification, action, match, null,
-                candidate.Content, full, destinationHash, keepBoth));
+            entries.Add(new ImportPlanEntry(id, candidate.Kind, candidate.Path, relative, classification, action,
+                match, null, codeSource, candidate.Content, full, destinationHash, keepBoth));
         }
 
         return new ImportPlan(root, source, sourceHash, entries);
     }
 
     /// <summary>Execute the immutable preview plan with optional per-row decisions.</summary>
-    public static ImportResult Import(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions = null)
+    public static ImportResult Import(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions = null,
+        IReadOnlySet<int>? acceptedScriptEntries = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         Diag.Verbose("LibraryPorter", "ImportExecution", $"start entries={plan.Entries.Count}");
         try
         {
-            var result = ExecuteImport(plan, decisions);
+            ScriptTrustLedger? trust = null;
+            string? trustError = null;
+            if (acceptedScriptEntries is { Count: > 0 })
+            {
+                var opened = ScriptTrustLedger.Open();
+                trust = opened.Success ? opened.Value : null;
+                trustError = opened.Error ?? opened.Marker;
+            }
+            var result = ExecuteImport(plan, decisions, acceptedScriptEntries, trust, trustError);
             int Count(ImportOutcomeKind kind) => result.Outcomes.Count(o => o.Kind == kind);
             Diag.Info("LibraryPorter", "ImportExecution",
                 $"complete entries={result.Outcomes.Count} imported={Count(ImportOutcomeKind.Imported)} overwritten={Count(ImportOutcomeKind.Overwritten)} keptBoth={Count(ImportOutcomeKind.KeptBoth)} skipped={Count(ImportOutcomeKind.Skipped)} invalid={Count(ImportOutcomeKind.Invalid)} unsafe={Count(ImportOutcomeKind.Unsafe)} stale={Count(ImportOutcomeKind.Stale)} failed={Count(ImportOutcomeKind.Failed)} elapsedMs={sw.ElapsedMilliseconds}");
@@ -179,7 +211,12 @@ public static class LibraryPorter
         }
     }
 
-    private static ImportResult ExecuteImport(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions)
+    internal static ImportResult Import(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions,
+        IReadOnlySet<int>? acceptedScriptEntries, ScriptTrustLedger trust) =>
+        ExecuteImport(plan, decisions, acceptedScriptEntries, trust, null);
+
+    private static ImportResult ExecuteImport(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions,
+        IReadOnlySet<int>? acceptedScriptEntries, ScriptTrustLedger? trust, string? trustError)
     {
         var result = new ImportResult
         {
@@ -189,7 +226,7 @@ public static class LibraryPorter
 
         var actions = plan.Entries.ToDictionary(e => e.Id,
             e => NormalizeAction(e, decisions is not null && decisions.TryGetValue(e.Id, out var chosen)
-                ? chosen : e.DefaultAction));
+                ? chosen : e.DefaultAction, acceptedScriptEntries));
         var stale = new HashSet<int>();
         if (sourceStale)
         {
@@ -222,9 +259,15 @@ public static class LibraryPorter
                     "Source or destination changed after preview; skipped.");
             else if (actions[entry.Id] == ImportAction.Skip)
                 outcome = new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Skipped,
-                    entry.Classification == ImportClassification.Identical ? "Identical; no changes made." : "Skipped.");
+                    entry.Kind == ImportItemKind.Script && acceptedScriptEntries?.Contains(entry.Id) != true
+                        ? "Script was not explicitly accepted; skipped."
+                        : entry.Classification == ImportClassification.Identical
+                            ? "Identical; no changes made." : "Skipped.");
+            else if (entry.Kind == ImportItemKind.Script && trust is null)
+                outcome = new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
+                    "Script trust storage is unavailable; no file was written. " + trustError);
             else
-                outcome = Write(plan.LibraryRoot, entry, actions[entry.Id]);
+                outcome = Write(plan.LibraryRoot, entry, actions[entry.Id], trust);
 
             result.Outcomes.Add(outcome);
             if (outcome.Kind is ImportOutcomeKind.Imported or ImportOutcomeKind.Overwritten or ImportOutcomeKind.KeptBoth)
@@ -253,12 +296,15 @@ public static class LibraryPorter
         return Import(plan, decisions);
     }
 
-    private static ImportPlanEntry Entry(int id, string source, string destination,
+    private static ImportPlanEntry Entry(int id, ImportItemKind kind, string source, string destination,
         ImportClassification classification, string message) =>
-        new(id, source, destination, classification, ImportAction.Skip, null, message,
+        new(id, kind, source, destination, classification, ImportAction.Skip, null, message, null,
             Array.Empty<byte>(), null, null, null);
 
-    private static ImportAction NormalizeAction(ImportPlanEntry entry, ImportAction action) => entry.Classification switch
+    private static ImportAction NormalizeAction(ImportPlanEntry entry, ImportAction action,
+        IReadOnlySet<int>? acceptedScriptEntries) =>
+        entry.Kind == ImportItemKind.Script && acceptedScriptEntries?.Contains(entry.Id) != true
+            ? ImportAction.Skip : entry.Classification switch
     {
         ImportClassification.New or ImportClassification.DuplicateElsewhere =>
             action == ImportAction.Import ? action : ImportAction.Skip,
@@ -266,7 +312,8 @@ public static class LibraryPorter
         _ => ImportAction.Skip,
     };
 
-    private static ImportOutcome Write(string root, ImportPlanEntry entry, ImportAction action)
+    private static ImportOutcome Write(string root, ImportPlanEntry entry, ImportAction action,
+        ScriptTrustLedger? trust)
     {
         string destination = action == ImportAction.KeepBoth ? entry.KeepBothFullPath! : entry.DestinationFullPath!;
         try
@@ -279,6 +326,18 @@ public static class LibraryPorter
                 File.Move(temp, destination, action == ImportAction.Overwrite);
             }
             finally { try { if (File.Exists(temp)) File.Delete(temp); } catch { /* best effort */ } }
+
+            if (entry.Kind == ImportItemKind.Script)
+            {
+                var installed = ScriptDefinitionFile.Load(destination);
+                if (!installed.Success || !File.ReadAllBytes(destination).AsSpan().SequenceEqual(entry.Content))
+                    return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
+                        "Installed script could not be verified; it was not trusted.");
+                var accepted = trust!.Trust(installed.Value!);
+                if (!accepted.Success)
+                    return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
+                        "Script was written but could not be trusted: " + (accepted.Error ?? accepted.Marker));
+            }
 
             var kind = action switch
             {
@@ -322,15 +381,17 @@ public static class LibraryPorter
                 throw new InvalidDataException("Only .json response files and .zip archives can be imported.");
             if (Path.GetFileName(source).Equals(FolderSidecar, StringComparison.OrdinalIgnoreCase))
                 return Array.Empty<Candidate>();
+            var kind = KindOf(source);
+            long limit = EntryLimit(kind);
             long size = new FileInfo(source).Length;
-            return new[] { size > MaxEntryBytes
-                ? new Candidate(Path.GetFileName(source), Array.Empty<byte>(), "Response exceeds the 10 MB limit.")
-                : new Candidate(Path.GetFileName(source), File.ReadAllBytes(source)) };
+            return new[] { size > limit
+                ? new Candidate(kind, Path.GetFileName(source), Array.Empty<byte>(), LimitMessage(kind))
+                : new Candidate(kind, Path.GetFileName(source), File.ReadAllBytes(source)) };
         }
 
         using var zip = ZipFile.OpenRead(source);
         if (zip.Entries.Count > MaxImportEntries)
-            return new[] { new Candidate("Archive", Array.Empty<byte>(),
+            return new[] { new Candidate(ImportItemKind.Response, "Archive", Array.Empty<byte>(),
                 $"Archive exceeds the {MaxImportEntries:N0}-entry limit.") };
 
         var responseEntries = zip.Entries.Where(entry => entry.Name.Length > 0
@@ -340,7 +401,7 @@ public static class LibraryPorter
         foreach (var entry in responseEntries)
         {
             if (declaredTotal > MaxImportBytes - entry.Length)
-                return new[] { new Candidate("Archive", Array.Empty<byte>(),
+                return new[] { new Candidate(ImportItemKind.Response, "Archive", Array.Empty<byte>(),
                     "Archive exceeds the 100 MB response limit.") };
             declaredTotal += entry.Length;
         }
@@ -349,25 +410,27 @@ public static class LibraryPorter
         long total = 0;
         foreach (var entry in responseEntries)
         {
-            if (entry.Length > MaxEntryBytes)
+            var kind = KindOf(entry.FullName);
+            long limit = EntryLimit(kind);
+            if (entry.Length > limit)
             {
-                candidates.Add(new(entry.FullName, Array.Empty<byte>(), "Response exceeds the 10 MB limit."));
+                candidates.Add(new(kind, entry.FullName, Array.Empty<byte>(), LimitMessage(kind)));
                 continue;
             }
             byte[] content;
             try
             {
                 using var stream = entry.Open();
-                content = ReadLimited(stream, MaxEntryBytes, MaxImportBytes - total);
+                content = ReadLimited(stream, limit, MaxImportBytes - total);
             }
             catch (InvalidDataException ex)
             {
-                candidates.Add(new(entry.FullName, Array.Empty<byte>(), ex.Message));
+                candidates.Add(new(KindOf(entry.FullName), entry.FullName, Array.Empty<byte>(), ex.Message));
                 if (ex.Message.StartsWith("Archive exceeds", StringComparison.Ordinal)) break;
                 continue;
             }
             total += content.Length;
-            candidates.Add(new(entry.FullName, content));
+            candidates.Add(new(KindOf(entry.FullName), entry.FullName, content));
         }
         return candidates;
     }
@@ -388,24 +451,34 @@ public static class LibraryPorter
         return output.ToArray();
     }
 
-    private static Dictionary<string, List<(string Path, byte[] Content)>> ExistingContent(string root)
+    private static Dictionary<(ImportItemKind Kind, string Hash), List<(string Path, byte[] Content)>> ExistingContent(string root)
     {
-        var map = new Dictionary<string, List<(string, byte[])>>(StringComparer.Ordinal);
+        var map = new Dictionary<(ImportItemKind, string), List<(string, byte[])>>();
         foreach (string file in EnumerateLibraryFiles(root))
         {
             byte[] content;
             try { content = File.ReadAllBytes(file); } catch { continue; }
-            if (!ResponseFile.Validate(content, out _)) continue;
-            string hash = Convert.ToHexString(SHA256.HashData(content));
-            if (!map.TryGetValue(hash, out var list)) map[hash] = list = new();
+            var kind = KindOf(file);
+            bool valid;
+            try
+            {
+                valid = kind == ImportItemKind.Script
+                    ? ScriptDefinitionFile.Parse(Utf8.GetString(content)).Success
+                    : ResponseFile.Validate(content, out _);
+            }
+            catch (DecoderFallbackException) { continue; }
+            if (!valid) continue;
+            var key = (kind, Convert.ToHexString(SHA256.HashData(content)));
+            if (!map.TryGetValue(key, out var list)) map[key] = list = new();
             list.Add((file, content));
         }
         return map;
     }
 
-    private static string? FindExact(Dictionary<string, List<(string Path, byte[] Content)>> existing,
-        byte[] hash, byte[] content) =>
-        existing.TryGetValue(Convert.ToHexString(hash), out var matches)
+    private static string? FindExact(
+        Dictionary<(ImportItemKind Kind, string Hash), List<(string Path, byte[] Content)>> existing,
+        ImportItemKind kind, byte[] hash, byte[] content) =>
+        existing.TryGetValue((kind, Convert.ToHexString(hash)), out var matches)
             ? matches.FirstOrDefault(m => m.Content.AsSpan().SequenceEqual(content)).Path
             : null;
 
@@ -498,6 +571,16 @@ public static class LibraryPorter
         catch { return true; }
     }
 
+    private static ImportItemKind KindOf(string path) =>
+        path.EndsWith(ScriptDefinitionFile.Extension, StringComparison.OrdinalIgnoreCase)
+            ? ImportItemKind.Script : ImportItemKind.Response;
+
+    private static long EntryLimit(ImportItemKind kind) => kind == ImportItemKind.Script
+        ? ScriptDefinitionFile.MaxFileBytes : MaxEntryBytes;
+
+    private static string LimitMessage(ImportItemKind kind) => kind == ImportItemKind.Script
+        ? "Script exceeds its storage limit." : "Response exceeds the 10 MB limit.";
+
     private static byte[] HashFile(string path)
     {
         using var stream = File.OpenRead(path);
@@ -507,8 +590,9 @@ public static class LibraryPorter
     private static string NextFree(string destination, HashSet<string> reserved)
     {
         string dir = Path.GetDirectoryName(destination)!;
-        string name = Path.GetFileNameWithoutExtension(destination);
-        string ext = Path.GetExtension(destination);
+        bool script = destination.EndsWith(ScriptDefinitionFile.Extension, StringComparison.OrdinalIgnoreCase);
+        string ext = script ? ScriptDefinitionFile.Extension : Path.GetExtension(destination);
+        string name = Path.GetFileName(destination)[..^ext.Length];
         string candidate = Path.Combine(dir, $"{name} (imported){ext}");
         for (int n = 2; File.Exists(candidate) || reserved.Contains(candidate); n++)
             candidate = Path.Combine(dir, $"{name} (imported {n}){ext}");
@@ -517,9 +601,37 @@ public static class LibraryPorter
 
     private static void ZipDirectory(string sourceDir, string destZip)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destZip))!);
-        if (File.Exists(destZip)) File.Delete(destZip);
-        ZipFile.CreateFromDirectory(sourceDir, destZip, CompressionLevel.Optimal, includeBaseDirectory: false);
+        string source = Path.GetFullPath(sourceDir);
+        string destination = Path.GetFullPath(destZip);
+        if (IsInside(source, destination))
+            throw new InvalidOperationException("Export destination must be outside the exported folder.");
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+        if (File.Exists(destination)) File.Delete(destination);
+        using var archive = ZipFile.Open(destination, ZipArchiveMode.Create);
+        foreach (string file in EnumerateExportFiles(source))
+        {
+            if (Path.GetFileName(file).Equals("script-trust.json", StringComparison.OrdinalIgnoreCase)) continue;
+            archive.CreateEntryFromFile(file, Path.GetRelativePath(source, file).Replace('\\', '/'),
+                CompressionLevel.Optimal);
+        }
+    }
+
+    private static IEnumerable<string> EnumerateExportFiles(string root)
+    {
+        var pending = new Stack<string>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            string dir = pending.Pop();
+            string[] files;
+            string[] dirs;
+            try { files = Directory.GetFiles(dir); dirs = Directory.GetDirectories(dir); }
+            catch { continue; }
+            foreach (string file in files)
+                if (!IsReparsePoint(file)) yield return file;
+            foreach (string child in dirs)
+                if (!IsReparsePoint(child)) pending.Push(child);
+        }
     }
 
     private static void ExportZip(string kind, string sourceDir, string destZip)
