@@ -75,6 +75,27 @@
                     ToolTip="Restore or permanently remove deleted responses" Click="Trash_Click"/>
         </StackPanel>
 
+        <!-- Backup path -->
+        <TextBlock Text="Backup folder" Style="{StaticResource SectionLabel}"/>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="BackupPathBox" IsReadOnly="True" FontSize="13"
+                     Padding="8,6" VerticalContentAlignment="Center" Style="{StaticResource Input}"/>
+            <Button Grid.Column="1" Content="Change…" Style="{StaticResource ActionButton}"
+                    Click="ChangeBackup_Click"/>
+            <Button Grid.Column="2" Content="Open" Style="{StaticResource ActionButton}"
+                    ToolTip="Open this folder in Explorer" Click="OpenBackup_Click"/>
+            <Button Grid.Column="3" Content="Reset" Style="{StaticResource ActionButton}"
+                    ToolTip="Use the default QuickReplyKit backup folder" Click="ResetBackup_Click"/>
+        </Grid>
+        <TextBlock x:Name="BackupPathError" Foreground="{DynamicResource Error}" FontSize="12"
+                   TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"/>
+
         <!-- Default paste behaviour -->
         <TextBlock Text="Default paste behaviour" Style="{StaticResource SectionLabel}"/>
         <StackPanel Orientation="Horizontal">
