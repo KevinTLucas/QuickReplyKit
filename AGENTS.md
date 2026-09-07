@@ -31,3 +31,7 @@ Use concise, human-readable branch names that describe the feature or bug; never
 or generated worktree/session identifier. One branch/worktree owns exactly one feature or fix: never work in another
 feature's branch or mix unrelated changes. Before QA and merge, verify the branch-owned commits and files with
 `git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; inherited `main` history is not branch work.
+
+**QA cleanup:** reuse a single Notepad tab for paste verification and close every test-created tab normally with
+**Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
+Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.

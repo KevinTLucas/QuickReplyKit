@@ -62,7 +62,12 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
 - `tools/shoot.ps1 -Out <png> [-AppArgs "--show --size 780x520"] [-Wait 4]` — launch, screenshot the
   window, kill it. Then **Read the PNG** to inspect. (`capture-window.ps1` = raw capture;
   `make-icon.ps1` = regenerate `app.ico`.) Screenshots go under the session scratchpad, never the repo.
-- Always kill leftovers when done: `Get-Process QuickReplyKit,notepad | Stop-Process -Force`.
+- **Notepad QA hygiene (mandatory):** reuse one Notepad window/tab for repeated paste checks. Track every process or
+  tab the QA run creates and close it normally in cleanup (`finally` where applicable), choosing **Don't save** for
+  test content. Do not launch one fresh Notepad per iteration, and do not rely on `Stop-Process notepad` as routine
+  cleanup: Windows 11 Notepad session restore retains force-killed tabs and reopens them later. Before reporting QA
+  complete, verify no test-created Notepad tabs/windows or QuickReplyKit processes remain. Never close a pre-existing
+  user Notepad window unless the user explicitly asks.
 
 ## Conventions & guardrails (do not violate without a note in STATUS.md)
 - **No third-party packages.** BCL / native WPF only — no NuGet for the app or runtime. (Win32 via
