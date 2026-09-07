@@ -158,9 +158,16 @@ public partial class LauncherWindow : Window
                     "QuickReplyKit can import up to 250,000 characters of clipboard content.");
                 return;
             }
-            OpenEditorForNew(needsSanitizing
+            string sanitized = needsSanitizing
                 ? await Task.Run(() => ClipboardHtml.Sanitize(html))
-                : ClipboardHtml.FromPlainText(html));
+                : ClipboardHtml.FromPlainText(html);
+            if (html.Length > 0 && sanitized.Length == 0)
+            {
+                ConfirmDialog.Info(this, "Clipboard content wasn't imported",
+                    "The clipboard content was too complex or could not be converted safely.");
+                return;
+            }
+            OpenEditorForNew(sanitized);
         }
         finally { NewFromClipboardButton.IsEnabled = true; }
     }

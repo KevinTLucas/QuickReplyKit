@@ -15,6 +15,8 @@ namespace QuickReplyKit.Core.Text;
 public static class ClipboardHtml
 {
     public const int MaxInputChars = 250_000;
+    internal const int MaxTags = 4_096;
+    internal const int MaxDepth = 256;
     private const string StartMarker = "<!--StartFragment-->";
     private const string EndMarker = "<!--EndFragment-->";
     private static readonly HashSet<string> Blocked = new(StringComparer.OrdinalIgnoreCase)
@@ -114,6 +116,8 @@ public static class ClipboardHtml
     {
         var output = new StringBuilder(html.Length);
         var skipped = new Stack<string>();
+        var open = new Stack<string>();
+        int tags = 0;
         int i = 0;
         while (i < html.Length)
         {
@@ -143,6 +147,15 @@ public static class ClipboardHtml
             string name = TagName(tag);
             bool closing = tag.Length > 1 && tag[1] == '/';
             bool hasNoContent = VoidElements.Contains(name);
+            bool selfClosing = tag.AsSpan(0, tag.Length - 1).TrimEnd().EndsWith("/", StringComparison.Ordinal);
+            if (++tags > MaxTags) return "";
+            if (closing && open.TryPeek(out string? parent) && name.Equals(parent, StringComparison.OrdinalIgnoreCase))
+                open.Pop();
+            else if (!closing && !hasNoContent && !selfClosing)
+            {
+                open.Push(name);
+                if (open.Count > MaxDepth) return "";
+            }
 
             if (skipped.Count > 0)
             {
@@ -226,7 +239,7 @@ public static class ClipboardHtml
     private static bool Hidden(string tag, HashSet<string> hiddenClasses, HashSet<string> hiddenIds)
     {
         if (Attribute(tag, "hidden") is not null || Attribute(tag, "inert") is not null
-            || Attribute(tag, "aria-hidden")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
+            || Attribute(tag, "aria-hidden")?.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) == true)
             return true;
         string? classes = Attribute(tag, "class");
         if (classes?.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
@@ -244,9 +257,9 @@ public static class ClipboardHtml
         {
             int colon = declaration.IndexOf(':');
             if (colon < 0) continue;
-            string key = declaration[..colon].Trim();
-            string value = Regex.Replace(declaration[(colon + 1)..], @"\s*!\s*important\s*$", "",
-                RegexOptions.IgnoreCase).Trim();
+            string key = CssUnescape(declaration[..colon].Trim());
+            string value = Regex.Replace(CssUnescape(declaration[(colon + 1)..]),
+                @"\s*!\s*important\s*$", "", RegexOptions.IgnoreCase).Trim();
             if (key.Equals("display", StringComparison.OrdinalIgnoreCase)
                     && value.Equals("none", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("visibility", StringComparison.OrdinalIgnoreCase)
@@ -269,16 +282,42 @@ public static class ClipboardHtml
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (Match block in Regex.Matches(html, @"<style\b[^>]*>(.*?)</style\s*>",
                      RegexOptions.IgnoreCase | RegexOptions.Singleline))
-        foreach (Match rule in Regex.Matches(block.Groups[1].Value, @"([^{}]+)\{([^{}]*)\}",
+        foreach (Match rule in Regex.Matches(
+                     Regex.Replace(block.Groups[1].Value, @"/\*.*?\*/", "", RegexOptions.Singleline),
+                     @"([^{}]+)\{([^{}]*)\}",
                      RegexOptions.Singleline))
         {
             if (!HiddenStyle(rule.Groups[2].Value)) continue;
-            foreach (Match cls in Regex.Matches(rule.Groups[1].Value, @"\.([A-Za-z_][\w-]*)"))
+            string selector = CssUnescape(rule.Groups[1].Value);
+            foreach (Match cls in Regex.Matches(selector, @"\.([-A-Za-z_][\w-]*)"))
                 classes.Add(cls.Groups[1].Value);
-            foreach (Match id in Regex.Matches(rule.Groups[1].Value, @"#([A-Za-z_][\w-]*)"))
+            foreach (Match id in Regex.Matches(selector, @"#([-A-Za-z_][\w-]*)"))
                 ids.Add(id.Groups[1].Value);
         }
         return (classes, ids);
+    }
+
+    private static string CssUnescape(string value)
+    {
+        if (!value.Contains('\\')) return value;
+        var result = new StringBuilder(value.Length);
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (value[i] != '\\' || ++i >= value.Length) { if (i < value.Length) result.Append(value[i]); continue; }
+            int start = i;
+            while (i < value.Length && i - start < 6 && Uri.IsHexDigit(value[i])) i++;
+            if (i > start)
+            {
+                if (int.TryParse(value.AsSpan(start, i - start), NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture, out int code) && code is > 0 and <= 0x10FFFF
+                    && code is not (>= 0xD800 and <= 0xDFFF))
+                    result.Append(char.ConvertFromUtf32(code));
+                if (i < value.Length && char.IsWhiteSpace(value[i])) { }
+                else i--;
+            }
+            else result.Append(value[i]);
+        }
+        return result.ToString();
     }
 
     private static bool TryOffsetFragment(string html, out string fragment)

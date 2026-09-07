@@ -133,6 +133,7 @@ public class ClipboardHtmlTests
     [InlineData("visibility:hidden ! important")]
     [InlineData("mso-hide:all !IMPORTANT")]
     [InlineData("opacity:0%")]
+    [InlineData(@"display:\6e one!\69 mportant")]
     public void Sanitize_RemovesImportantHiddenContent(string style) =>
         Assert.Equal("<p>visible</p>",
             ClipboardHtml.Sanitize($"<p>visible<span style='{style}'>secret</span></p>"));
@@ -145,6 +146,21 @@ public class ClipboardHtmlTests
     public void Sanitize_RemovesContentHiddenByStylesheetId() =>
         Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize(
             "<style>#secret{display:none}</style><p>visible<span id='secret'>secret</span></p>"));
+
+    [Fact]
+    public void Sanitize_NormalizesCssEscapesAndLeadingHyphenSelectors()
+    {
+        string html = @"<style>#\73 ecret{display:\6e one}.\68 ide{visibility:hidden}" +
+            @".-hidden{opacity:0%}</style><p>visible<span id='secret'>id</span>" +
+            "<span class='hide'>class</span><span class='-hidden'>hyphen</span></p>";
+
+        Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize(html));
+    }
+
+    [Fact]
+    public void Sanitize_TrimsAriaHiddenValue() =>
+        Assert.Equal("<p>visible</p>",
+            ClipboardHtml.Sanitize("<p>visible<span aria-hidden=' true '>secret</span></p>"));
 
     [Fact]
     public void Sanitize_RemovesSelfClosingSyntaxForBlockedContainer() =>
@@ -205,6 +221,20 @@ public class ClipboardHtmlTests
     [Fact]
     public void Sanitize_RejectsOversizedClipboardHtml() =>
         Assert.Equal("", ClipboardHtml.Sanitize(new string('x', ClipboardHtml.MaxInputChars + 1)));
+
+    [Fact]
+    public void Sanitize_RejectsExcessiveNestingBeforeWpfConversion()
+    {
+        string html = string.Concat(Enumerable.Repeat("<b>", ClipboardHtml.MaxDepth + 1)) + "x";
+        Assert.Equal("", ClipboardHtml.Sanitize(html));
+    }
+
+    [Fact]
+    public void Sanitize_RejectsExcessiveTagCountBeforeWpfConversion()
+    {
+        string html = "<p>" + string.Concat(Enumerable.Repeat("<b>x</b>", ClipboardHtml.MaxTags / 2)) + "</p>";
+        Assert.Equal("", ClipboardHtml.Sanitize(html));
+    }
 
     [Fact]
     public void FromPlainText_RejectsOversizedClipboardText() =>
