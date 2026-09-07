@@ -160,7 +160,7 @@ view-models, interop, and app wiring.
 
 The implemented paths above are merged and tested. Remaining work is intentionally explicit in
 [`docs/BACKLOG.md`](docs/BACKLOG.md): import selection/review, the security-gated computed-variable DSL,
-selected-folder polish, and the final enterprise UI standards audit.
+and the final enterprise UI standards audit.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
