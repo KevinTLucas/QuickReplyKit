@@ -181,6 +181,11 @@
                                 <MenuItem x:Name="MenuRename" Header="Rename…" Click="MenuRename_Click"/>
                                 <MenuItem x:Name="MenuMove" Header="Move to…" Click="MenuMove_Click"/>
                                 <Separator/>
+                                <MenuItem x:Name="MenuAssignHotkey" Header="Instant-paste hotkey…"
+                                          Click="MenuAssignHotkey_Click"/>
+                                <MenuItem x:Name="MenuClearHotkey" Header="Clear instant-paste hotkey"
+                                          Click="MenuClearHotkey_Click"/>
+                                <Separator/>
                                 <MenuItem x:Name="MenuCopy" Header="Copy" Click="MenuCopy_Click"/>
                                 <MenuItem x:Name="MenuExportResponse" Header="Export response…"
                                           Click="MenuExportResponse_Click"/>

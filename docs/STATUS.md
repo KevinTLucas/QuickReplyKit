@@ -11,8 +11,14 @@
 - **⏳ Backlog sprint in progress** (2026-09-06): working through [`BACKLOG.md`](BACKLOG.md) top-down.
   **Merged to main:** BUG #6 (right-click crash), BUG #1 (dark ComboBox), #7 diagnostics/logging.
   **Awaiting QA merge:** #3 Edit button + #2 Automatic colour (`feature/edit-palettes`), #13 About screen
-  (`feature/about-screen`), #10 backups + restore (`feature/backups`). **Not yet started:** #4/#5 hotkeys, #8 tags,
-  #9 import preview, #11 trash, #12 onboarding, #14 accessibility.
+  (`feature/about-screen`), #10 backups + restore (`feature/backups`), **#4/#5 per-response instant-paste hotkeys +
+  hotkey manager (`feature/hotkeys`)**. **Not yet started:** #8 tags, #9 import preview, #11 trash, #12 onboarding,
+  #14 accessibility.
+- **`feature/hotkeys` branch:** #4/#5 implemented — builds clean (0 warnings), `dotnet test` **417 passing**
+  (was 407 on main base minus the deleted single-hotkey `GlobalHotkeyTests`, plus 13 new: `HotkeyConflictsTests`
+  ×11 + AppConfig `ResponseHotkeys` round-trip ×2). `--selftest-paste` → `PASTE=ok CLIPBOARD_RESTORED=ok`.
+  Manager screenshotted legibly (light + dark). Instant-paste tested via unit + build, **not verified live**
+  end-to-end (real global keypress into a foreground app).
 - **Both known bugs are now fixed** — no open bugs. Remaining work = the queued *features* in BACKLOG.md.
 
 ## What it is / what it does

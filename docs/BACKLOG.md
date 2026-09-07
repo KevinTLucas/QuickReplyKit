@@ -21,24 +21,19 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
    editor popup, pre-filled) — but it's hidden. Surface it more visibly: e.g. an **edit (✎) button** on the selected
    result row or in the preview action bar, opening the same editor. (Also expose "Edit & insert".) No new editor
    needed — just a visible entry point to the existing `EditorWindow.OpenEdit`.
-4. **Per-response instant-paste hotkeys (no launcher).** Let a user bind a **global hotkey to a specific response**
-   that pastes it **directly at the cursor without opening the app**, as **rich or plain** (choose per bind). Reuses
-   the existing paste engine (`ForegroundMonitor` target + `InsertService` + history-exclusion + clipboard restore) —
-   the hotkey handler resolves the response's templates and inserts, no window shown. **Design decisions to make:**
-   where the bind is stored — in the response `.json` (travels when shared, but risks cross-user conflicts) vs. a
-   central `config.json` map (local, safer) — recommend **local config map** by relative path, so shared libraries
-   don't fight over global keys; register each via `RegisterHotKey` at startup and on change; fail gracefully when a
-   gesture is already taken (surface it in the manager, item #5). Set the bind from the response's context menu /
-   editor ("Assign hotkey…").
-5. **Hotkey manager + conflict detection + "search by key" (Settings).** A dedicated keybinds page listing **every**
-   assigned hotkey — the global launcher hotkey **and** all per-response binds — with each bind's gesture + target
-   (launcher / response name) + rich/plain, and edit/clear. It must clearly flag conflicts: (a) **duplicate gestures
-   within the app** (block/warn before saving), and (b) **gestures rejected by Windows** because another app/OS owns
-   them (detectable: `RegisterHotKey` returns false → mark that bind "in use, pick another", don't crash).
-   **Search-by-key (like a game/modpack controls screen):** a capture field where the user **presses a key combo** and
-   the page instantly shows what (if anything) it's already bound to — so they can check a combo is free before
-   assigning, and jump to any conflict. Also support plain text filtering of the list by gesture or response name.
-   This is the "strong ability to view keybinds and find conflicts" ask; build it alongside #4.
+4. ✅ **IMPLEMENTED on `feature/hotkeys` (pending QA/merge)** — Per-response instant-paste hotkeys. A user binds a
+   global hotkey to a specific response that pastes **directly at the cursor without opening the app**, rich or plain
+   per bind. Binds live in `AppConfig.ResponseHotkeys` (local, keyed by library-relative path), registered at startup
+   and re-registered on change via `HotkeyService`/`HotkeyRegistrar` (one message-only window, many ids). The handler
+   resolves templates fresh each press (`TemplateEngine`) then `InsertService` — no window shown. `RegisterHotKey`
+   failure is non-fatal (surfaced, not crashed). Assign/clear from the response right-click menu ("Instant-paste
+   hotkey…"). See STATUS.md.
+5. ✅ **IMPLEMENTED on `feature/hotkeys` (pending QA/merge)** — Hotkey manager + conflict detection + search-by-key.
+   `HotkeyManagerWindow` (opened from Settings → "Keyboard shortcuts…", or `--show-hotkeys`) lists the launcher hotkey
+   and every per-response bind (gesture + target + rich/plain, Edit/Clear). Flags conflicts: duplicates within the app
+   (`HotkeyConflicts.Duplicates`) and Windows-rejected binds (`RegisterHotKey` false → "in use by another app"). A
+   search-by-key capture field reports Free/Launcher/response via `HotkeyConflicts.Resolve`, plus a plain-text filter
+   over the list. Conflict logic is pure/OS-free and unit-tested (`HotkeyConflictsTests`).
 6. ✅ **DONE (merged `d562052`)** — Fast/repeated right-click crash. Root cause was mutating `ContextMenu.IsOpen` inside
    the `Opened` handler (reentrancy). Both the results and nav menus now gate in `ContextMenuOpening` via `e.Handled`;
    no `IsOpen` mutation remains. Independent QA: survived 80 right-clicks @15ms with no crash. See STATUS.md.

@@ -25,11 +25,14 @@ src/
     Templates/               TemplateEngine (built-in variables + response includes)
     ImportExport/            LibraryPorter (export/import zip, conflict + path-traversal safe)
   QuickReplyKit/             WPF app
-    Views/                   LauncherWindow, EditorWindow, SettingsWindow, InputDialog, ConfirmDialog, HighlightText
+    Views/                   LauncherWindow, EditorWindow, SettingsWindow, AssignHotkeyWindow, HotkeyManagerWindow,
+                             InputDialog, ConfirmDialog, HighlightText
     ViewModels/              LauncherViewModel, ResponseRowVm, NavNodeVm, RelayCommand, ViewModelBase, ImportCoordinator
-    Interop/                 GlobalHotkey, HotkeyGesture, ForegroundWindow, ForegroundMonitor, ForegroundTargetTracker,
+    Interop/                 HotkeyRegistrar (many hotkeys, one msg-only window), HotkeyGesture, HotkeyConflicts (pure
+                             dup/lookup logic), ForegroundWindow, ForegroundMonitor, ForegroundTargetTracker,
                              ClipboardWriter, ClipboardBackup, InputSender
-    Services/                InsertService, IInsertService, ThemeManager, StartupRegistration
+    Services/                InsertService, IInsertService, HotkeyService (owns launcher + per-response binds, instant
+                             paste), ThemeManager, StartupRegistration
     Themes/                  Light.xaml, Dark.xaml (DynamicResource brushes)
     App.xaml(.cs)            startup, single-instance, tray, hotkey, async initial scan; SelfTest.cs (--selftest-* gates)
   QuickReplyKit.Tests/       xUnit over Core + view-models (403 tests)
@@ -51,8 +54,9 @@ view-models, interop, and app wiring.
     "created": "…", "modified": "…" }
   ```
 - **App config**: `%APPDATA%\QuickReplyKit\config.json` (hotkey, library path, default paste mode, window bounds,
-  **theme**, remember-window). **Recent**: `%APPDATA%\QuickReplyKit\recent.json` (local-only). **Favorites** live
-  in each response file so they travel when shared.
+  **theme**, remember-window, **per-response instant-paste hotkeys** — a local `responseHotkeys` list keyed by
+  library-relative path, so shared libraries don't fight over global keys). **Recent**:
+  `%APPDATA%\QuickReplyKit\recent.json` (local-only). **Favorites** live in each response file so they travel when shared.
 
 ## Rich text & templates
 - **Canonical stored form = a restricted HTML subset**: bold, italic, underline, **strikethrough**, ul/ol/li,
