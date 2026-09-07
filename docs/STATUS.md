@@ -20,7 +20,8 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable, but a user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains 2 ordered
-  items. The B16 Core engine is active; script UI/import integration and the penultimate enterprise UI audit remain.
+  items. B16's Core foundation passed independent security/correctness QA; runtime and secure-import integration are
+  active in separate worktrees. Script-manager UI and the final enterprise UI audit remain.
 
 ## Merged And QA'd
 
@@ -78,13 +79,17 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B16 P2:** complete the security-gated computed-variable DSL and mandatory per-code acceptance (Core active).
+1. **B16 P2:** complete runtime and secure-import integration in parallel, then the script-manager UI and final
+   security/accessibility QA.
 2. **B19 P2:** run the enterprise UI audit/polish pass, then final release validation.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** `feature/sandboxed-script-engine` owns the B16 Core engine/new tests; B17 and B18 are complete.
-A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** `feature/sandboxed-script-engine` is the B16 integration branch; its foundation passed 99 focused
+and 671 integrated tests plus independent security/correctness QA. `feature/sandboxed-script-runtime` owns only
+runtime/library/template paths; `feature/sandboxed-script-import` owns only import/export and import-review paths.
+B17 and B18 are complete. A stale interrupted historical hotkey worktree remains quarantined and is not an active
+source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

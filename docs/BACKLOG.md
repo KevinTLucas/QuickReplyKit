@@ -12,7 +12,9 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B16 - Sandboxed user scripts for dynamic variables
 
 - **Severity:** P2 feature; security-critical design
-- **Status:** Core engine in progress on `feature/sandboxed-script-engine`; UI/import integration follows B17
+- **Status:** Core foundation security QA complete on `feature/sandboxed-script-engine` (99 focused, 671 integrated);
+  runtime/template integration is active on `feature/sandboxed-script-runtime`, and secure import/review integration is
+  active on `feature/sandboxed-script-import`. Script-manager UI follows those two branches.
 - **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
 - **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
   scripts; persist definitions in a documented format; invoke them with explicit template syntax such as
