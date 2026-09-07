@@ -1,128 +1,123 @@
-# Backlog — future ideas
+# QuickReplyKit - Open Backlog
 
-Everything previously tracked here is **done and shipped** (the MVP robustness items and all V2 features —
-richer editor, edit-before-insert, template variables, response includes, dark mode — plus the end-user
-continuous-improvement pass). See [`STATUS.md`](STATUS.md) for the current state and known cosmetic caveats.
+Only unfinished work belongs here. Completed implementation and QA history is summarized in
+[`STATUS.md`](STATUS.md) and preserved in Git. Prioritize data safety and accessibility before optional ideas.
 
-## Requested — queued to build (user, 2026-09-06)
+## Requested Work
 
-Prioritized; a bug first. Follow the normal flow (branch → ponytail → separate-subagent QA → merge; update docs).
+### P0 - Fix import preview/import integrity (original #8/#9)
 
-1. ✅ **DONE (merged `d562052`)** — Dark-mode Category ComboBox readability. App-wide themed `ComboBox`/`ComboBoxItem`
-   `ControlTemplate` in `App.xaml` bound to theme brushes via `DynamicResource` (covers the editor Category picker and
-   the Move/Rename dialog). Independent QA: readable in both themes, closed field + open dropdown. See STATUS.md.
-2. **Standardize the editor text-color & highlight palettes to common colors.** The editor already has a text-color
-   (**A**) button and a highlight swatch popup (Phase 10a). Refine both to a **standard, common-color** set — e.g.
-   text: black / gray / red / orange / green / blue / purple (+ "automatic/theme default"); highlight: yellow / green
-   / cyan / pink / orange / gray (+ none). Keep the swatches discoverable and legible in both themes (see the known
-   caveat: a highlight with no explicit text color can be low-contrast in dark mode — consider pairing a sensible
-   dark text color when a light highlight is applied).
-3. **Make "Edit" discoverable.** Editing an existing response already works via **right-click → Edit** (reuses the
-   editor popup, pre-filled) — but it's hidden. Surface it more visibly: e.g. an **edit (✎) button** on the selected
-   result row or in the preview action bar, opening the same editor. (Also expose "Edit & insert".) No new editor
-   needed — just a visible entry point to the existing `EditorWindow.OpenEdit`.
-4. ✅ **IMPLEMENTED on `feature/hotkeys` (pending QA/merge)** — Per-response instant-paste hotkeys. A user binds a
-   global hotkey to a specific response that pastes **directly at the cursor without opening the app**, rich or plain
-   per bind. Binds live in `AppConfig.ResponseHotkeys` (local, keyed by library-relative path), registered at startup
-   and re-registered on change via `HotkeyService`/`HotkeyRegistrar` (one message-only window, many ids). The handler
-   resolves templates fresh each press (`TemplateEngine`) then `InsertService` — no window shown. `RegisterHotKey`
-   failure is non-fatal (surfaced, not crashed). Assign/clear from the response right-click menu ("Instant-paste
-   hotkey…"). See STATUS.md.
-5. ✅ **IMPLEMENTED on `feature/hotkeys` (pending QA/merge)** — Hotkey manager + conflict detection + search-by-key.
-   `HotkeyManagerWindow` (opened from Settings → "Keyboard shortcuts…", or `--show-hotkeys`) lists the launcher hotkey
-   and every per-response bind (gesture + target + rich/plain, Edit/Clear). Flags conflicts: duplicates within the app
-   (`HotkeyConflicts.Duplicates`) and Windows-rejected binds (`RegisterHotKey` false → "in use by another app"). A
-   search-by-key capture field reports Free/Launcher/response via `HotkeyConflicts.Resolve`, plus a plain-text filter
-   over the list. Conflict logic is pure/OS-free and unit-tested (`HotkeyConflictsTests`).
-6. ✅ **DONE (merged `d562052`)** — Fast/repeated right-click crash. Root cause was mutating `ContextMenu.IsOpen` inside
-   the `Opened` handler (reentrancy). Both the results and nav menus now gate in `ContextMenuOpening` via `e.Handled`;
-   no `IsOpen` mutation remains. Independent QA: survived 80 right-clicks @15ms with no crash. See STATUS.md.
-7. ✅ **DONE (merged `8f74aa9`)** — Diagnostics/logging system. Hand-rolled thread-safe `Logger` (Core/Diagnostics)
-   + `Diag` facade: async single-writer, level-gated (Error/Warn/Info/Debug/Verbose), size-capped rolling (~10 MB/file,
-   keep 5 → ~50 MB) under `%APPDATA%\QuickReplyKit\logs\`; session header; crash capture (AppDomain/Dispatcher/Task,
-   logged-not-swallowed); Settings verbose toggle (live) + "Open logs folder" (Settings + tray). Independent QA 9/9
-   incl. security (no body/PII leak). Original spec kept below for reference.
-   <details><summary>original requirements</summary>
-   - **Rolling & size-capped (~50 MB total)** — never grows unbounded; size-based rollover (a few files) or a single
-     capped/circular file. Logs under `%APPDATA%\QuickReplyKit\logs\`.
-   - **Standard levels** (Error/Warn/Info/Debug/Verbose), timestamped, with thread + source/category; each **session**
-     delimited by a header (app version, OS, key config). Async/queued writes so it never blocks the UI.
-   - **Captures crashes automatically:** wire `AppDomain.CurrentDomain.UnhandledException`,
-     `Application.DispatcherUnhandledException`, and `TaskScheduler.UnobservedTaskException` to log the full exception +
-     stack + context (so #6 and any future crash land in the file). Consider keeping the app alive on a handled
-     Dispatcher exception where safe, after logging.
-   - **Settings toggle:** normal (Info+) vs **verbose/debug** (everything), **off by default**; verbose logs key actions
-     — hotkey, show/hide, search, each insert/paste step, library scan/watch, import/export, template resolve, theme, errors.
-   - **Easy retrieval:** "Open logs folder" (Settings + tray), optional "Copy diagnostics" (recent log + version + config).
-   - **Constraint:** no NuGet (Serilog/NLog are the enterprise norm but are banned here) — hand-roll a small thread-safe
-     `Logger` (BCL `StreamWriter` + lock/queue + size rollover). Keep it lean.
-   </details>
-8. **Richer tag UX (chips) + folder tags + batch-apply.** Three related pieces:
-   - **Tag chips in the editor.** Replace the comma-separated **Tags** textbox (New/Edit response) with a chip/token
-     input: type a tag + Enter/comma → it becomes a small **colored chip** (label + a little **×** to remove) that
-     wraps under the input; add another and it appears alongside. Themed for light/dark. Storage unchanged (still the
-     `tags` string array in the `.json` — no schema change). Nice touch: a stable color per tag (hash the name → a
-     palette slot) so the same tag looks consistent everywhere; consider showing these chips on result rows / preview too.
-   - **Tags on folders (categories).** Let a folder carry its own tags. Folders are plain directories today with no
-     metadata — so this needs a **per-folder sidecar** (e.g. a small `.qrkfolder.json` in the directory) so folder tags
-     **travel when the folder is shared/copied** (matches the app's "share by copying folders" model), or a central
-     `config.json` map (local-only). **Recommend the sidecar**; must be back-compatible (folders without it just have
-     no tags) and ignored by the response scanner. Set/edit via the nav folder's right-click menu.
-   - **Batch-apply folder tags to responses.** An action on a folder — "Apply these tags to all responses in this
-     folder" (ask direct-children vs. recursive) — that **unions** the folder's tags into each response's `tags`
-     (deduped) and rewrites those files, **with a confirmation** showing how many will change. (Explicit batch-apply,
-     not implicit inheritance, to avoid surprises — though implicit "inherit folder tags for search" could be a later
-     option.) Search already matches tags, so batch-applied tags become searchable immediately.
-9. **Robust, safe import — preview (diff) + hard-accept for code.** Two parts:
-   - **Import preview.** Before importing someone else's folder/library, show a clear per-item preview of what will
-     happen: **New** (added), **Changed** (same path, different content), **Duplicate/identical** (same content — skip),
-     **Conflicting** (name clash needing a decision). Let the user review and choose before anything is written
-     (apply-to-all for the safe cases; per-item where it matters). This extends today's import (which resolves
-     conflicts + shows a summary, but doesn't pre-show the full picture). Compute the diff in `LibraryPorter`/
-     `ImportCoordinator` by comparing incoming entries to the current library by relative path + content hash.
-   - **Hard acceptance for code-bearing responses (security gate).** Pairs with the future **"sandboxed user scripting
-     for variables"** idea (below): responses are shareable, so if a response ever carries **executable/custom code**
-     (a scripted variable), importing it must **display the exact code** and require an explicit **per-item "I accept
-     this code"** — **no "Yes to all" for code-bearing items**. Normal (code-free) responses keep the fast **Yes-to-all**
-     path. This keeps importing untrusted libraries safe by default (a malicious template can never run code silently on
-     import). Until user-code variables exist, only the **import-preview** part is buildable; keep this gate as a hard,
-     non-optional requirement of that feature. (Today's built-in variables are a fixed safe allow-list with no code, so
-     current imports carry no executable risk.)
-10. **Automatic backups + Restore Library.** Before risky/bulk operations — imports (#9), batch tagging (#8), bulk
-    move/delete, or major edits — snapshot the library (+ config) into a small **rolling backup** (keep last N,
-    size/age-capped) under `%APPDATA%\QuickReplyKit\backups\` (a zip; reuse `LibraryPorter.ExportLibrary`). Add
-    **Restore Library** (Settings/tray) to roll back to a chosen snapshot. High-value enterprise safety net — turns a
-    botched bulk op into a one-click undo.
-11. **In-app Trash + retention (soft delete).** Today delete already goes to the **Windows Recycle Bin** (so it's
-    recoverable via Explorer), but an **app-local trash** makes recovery first-class: deleted responses/folders move to
-    a local trash area, kept for a **configurable retention period**, with **Restore** and **Empty trash** in the app and
-    auto-purge after the window. Makes "I deleted our whole IXL folder" an in-product undo, not a support ticket.
-12. **First-run onboarding (≤3 screens).** A very short, skippable first-launch intro shown once (flag in config): the
-    hotkey (**Ctrl+Alt+D**), where responses live, how to search, how to paste. Max ~3 screens. Cheap fix for the
-    classic problem that users never discover half of what an app does.
-13. **About / Diagnostics screen.** A small page: app **version**, library location, response count, registered
-    hotkeys, watcher status, **log location** (#7), config location, and OS/runtime details — with buttons to open the
-    logs/config/library folders. Complements the diagnostics logging (#7); ideal for support ("screenshot this page").
-14. **Full accessibility pass.** Beyond resize + dark mode + the basic `AutomationProperties.Name` already added: full
-    **keyboard control** (every action mouse-free), **screen-reader labels** on all controls incl. results/preview/editor,
-    **high-contrast** theme compatibility, **reduced-motion** behavior (if animations are ever added), and **never using
-    color alone** to convey status — pair the ⚠ invalid marker, favorite ★, and search-match highlight with a shape/label/text.
+The 2026-09-07 independent audit found four correctness/security gaps in the merged flow:
 
----
+- **Identical is not a no-op.** Preview labels same-path, byte-identical files as Identical/skipped, but
+  `LibraryPorter.Import` applies the selected conflict policy to every existing destination. Overwrite rewrites the
+  file and Keep both creates a duplicate. Make import consume the preview plan or independently skip identical files.
+- **Preview lacks path containment.** A crafted ZIP entry can make `ImportPreview.Analyze` probe/read outside the
+  library before confirmation. Apply the same canonical containment rule used by `LibraryPorter.Import` before any
+  destination read.
+- **ZIP import drops folder tags.** Export includes `.qrkfolder.json`, but import treats it as a response, fails
+  `ResponseFile.Load`, and skips it. Import the sidecar through a separately validated metadata path. Direct folder
+  copying already preserves it.
+- **Invalid entries are mislabelled.** Preview classifies every `.json` by destination bytes without response
+  validation, while the importer later rejects invalid responses. Preview invalid entries explicitly and keep valid
+  siblings importable.
 
-The list below is **out-of-current-scope future ideas only** — start any of these only if the user asks.
+Then finish the originally requested review UX: detect same-content duplicates at another path and allow per-item
+decisions for meaningful conflicts while retaining apply-to-all for ordinary responses. Add adversarial ZIP tests and
+an export-folder -> import -> folder-tags round trip.
 
-- **Sandboxed user scripting for variables.** Today's template variables are a **fixed, safe allow-list**
-  (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) with **no code execution** — a deliberate
-  security boundary, because responses are shareable files. A future "run custom code in a variable" feature would
-  need a real sandbox / capability model (never raw eval), and careful UX around importing untrusted templates —
-  it **requires** the code-import hard-acceptance gate in requested item #9 (show the code, accept each, no "Yes to all").
-- **Usage analytics / most-used sort.** Optionally track per-response usage counts and offer a "most used" sort or
-  view. Low value for a small library; only worthwhile if teams accumulate very large libraries.
-- **In-app keyboard cheat-sheet.** A tiny "?" overlay listing the shortcuts (arrows/Enter/Shift+Enter/Ctrl+C, etc.).
-  The shortcuts already work and are tooltipped; this is discoverability polish.
+**Future code security gate:** if executable variables are ever added, show the exact imported code and require
+explicit acceptance for every code-bearing item. No Yes-to-all for code. This is blocked/not applicable while
+templates remain the fixed, non-executable allow-list.
 
-## Explicitly considered and declined (kept here so they aren't re-proposed)
-- Natural/numeric name sort, number-to-pick (1–9) result selection — unnecessary for named responses.
-- CRM integrations, browser extensions, page scraping, ticket automation, AI-generated responses — **out of scope
-  by design** (see `PROJECT-BRIEF.md`); QuickReplyKit is a local, minimal launcher.
+### P0 - Fix backup restore correctness (original #10)
+
+The merged restore has two audit-found bugs:
+
+- `Restore` creates/prunes a pre-restore snapshot before opening the selected ZIP. Selecting the oldest of the 10
+  retained backups can prune that same file and make restore fail. Protect/copy the selected archive before pruning.
+- Replacement is delete-then-copy after extraction, not atomic. A copy failure can leave a partially restored
+  library. Stage and swap safely, with rollback when replacement fails.
+
+Add regression tests for restoring the oldest retained backup and a forced replacement failure.
+
+### P1 - Full accessibility pass (original #14)
+
+Not started. Go beyond resize/dark mode and the launcher's existing basic automation names:
+
+- Make every action and dialog operable without a mouse, with predictable tab order, visible focus, and Escape /
+  default-button behavior.
+- Add useful screen-reader names, labels, roles, and state to launcher results, navigation, preview, editor toolbar,
+  tag chips, import preview, backup, Trash, onboarding, About, and hotkey dialogs.
+- Validate Windows High Contrast. Never use color alone for invalid/import/conflict/favorite/match state; pair it
+  with text or a shape. Respect reduced motion; the current themed ComboBox uses a Slide popup animation and needs
+  reduced-motion/High-Contrast-safe behavior.
+- QA with keyboard-only walkthroughs, UI Automation inspection, both themes, High Contrast, resize/DPI checks, and
+  all four paste self-tests.
+
+### P1 - Complete automatic backup coverage (original #10)
+
+Partially shipped in `f303524`: rolling library zip snapshots (10 retained), Restore Library, manual backup,
+and automatic backup before import.
+
+Remaining:
+
+- Include `%APPDATA%\QuickReplyKit\config.json` in a restorable snapshot, without breaking old library-only backups.
+- Add a size and/or age retention ceiling; count-only retention can still consume unbounded space with large libraries.
+- Create a backup before recursive folder-tag batch apply. Apply the same rule to any future bulk move/delete or
+  major multi-response edit.
+- Make backup failure visible before a risky operation; do not silently continue when the safety copy was required.
+
+### P2 - Complete diagnostics logging coverage (original #7)
+
+Partially shipped in `8f74aa9`: async level-gated rolling logs, session headers, crash capture, Settings toggle, and
+Open logs actions are complete. Logging is bounded and current call sites avoid response bodies.
+
+Remaining from the original request:
+
+- Add source/category metadata to log entries.
+- In verbose mode, cover search, watcher events, import/export, template resolution, theme changes, and each paste
+  stage. Continue logging only identifiers/steps and errors, never response bodies, clipboard content, or customer data.
+
+### P2 - Complete folder-tag batch UX (original #8)
+
+The merged UI always applies tags recursively. Let the user choose **direct children** or **this folder and all
+subfolders** before confirmation. Keep union/dedupe behavior and add tests for both scopes. The ZIP sidecar loss is
+the higher-priority import-integrity item above.
+
+### P2 - Complete in-app Trash (original #11)
+
+Partially shipped in `ef5a573`: response delete moves to app-local Trash; users can restore, delete forever, or empty;
+restore refuses conflicts and path escapes; startup purge honors `TrashRetentionDays`.
+
+Remaining:
+
+- Add folder/category deletion to Trash, preserving the full subtree for one-step restore.
+- Add a Settings retention control. The persisted setting exists today (default 30 days; `0` = keep forever) but is
+  not editable in the UI.
+- Ensure any folder delete gets an automatic backup first and is covered by live delete/restore/conflict tests.
+
+### P2 - Refresh About / Diagnostics (original #13)
+
+The shipped screen (`23468f7`) reports version, runtime/OS, launcher hotkey, paste mode, theme, verbose logging,
+library/count/watcher state, config, and logs. It predates per-response hotkeys and later safety features.
+
+Add the launcher's **actual Windows registration state**, configured/registered/failed response-bind counts, plus
+backup and Trash paths. Keep it read-only, copyable, and safe to attach to a support ticket; never include response
+bodies, clipboard data, or other customer content.
+
+## Future Ideas - Start Only When The User Explicitly Asks
+
+- **Sandboxed user scripting for variables.** Current variables are a fixed safe allow-list with no code execution.
+  Any scripting design needs a real sandbox/capability model and cannot ship before the import hard-acceptance gate
+  above. Never raw-eval code from a shareable response file.
+- **Usage analytics / most-used sort.** Local and opt-in only; worthwhile only if actual usage shows Recent/Favorites
+  are insufficient.
+- **Keyboard shortcut cheat sheet.** Small discoverability overlay after the accessibility pass if onboarding and
+  tooltips still prove insufficient.
+
+## Explicitly Declined
+
+- Natural/numeric name sorting and number-to-pick result selection: insufficient value for named responses.
+- CRM integrations, browser extensions, page scraping, ticket automation, and AI-generated responses: outside the
+  product brief. QuickReplyKit remains a local, focused response launcher.
