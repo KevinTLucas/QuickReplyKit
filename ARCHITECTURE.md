@@ -159,6 +159,7 @@ and the security-gated computed-variable DSL.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
-  `-ui`, `-foreground`). Current user direction requires headless tests and static XAML review only: do not drive,
-  move, focus, or capture desktop windows. Two manual spot-checks remain: a live hotkey paste into a third-party app,
+  `-ui`, `-foreground`). UI changes also use isolated app launches, repository screenshot helpers, and direct visual
+  review without GPT Computer Use/UIAutomation or interference with unrelated windows. Two manual spot-checks remain:
+  a live hotkey paste into a third-party app,
   and confirming pasted text is absent from Win+V history.

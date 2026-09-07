@@ -37,6 +37,8 @@
             <Button Content="Open logs folder" Style="{StaticResource Btn}" Click="OpenLogs_Click"/>
             <Button Content="Open config folder" Style="{StaticResource Btn}" Click="OpenConfig_Click"/>
             <Button Content="Open library" Style="{StaticResource Btn}" Click="OpenLibrary_Click"/>
+            <Button Content="Open backup folder" Style="{StaticResource Btn}" Click="OpenBackup_Click"/>
+            <Button Content="Open Trash" Style="{StaticResource Btn}" Click="OpenTrash_Click"/>
             <Button Content="Copy" Style="{StaticResource Btn}" ToolTip="Copy this diagnostics text" Click="Copy_Click"/>
             <Button Content="Close" Style="{StaticResource Btn}" Margin="0" IsCancel="True" IsDefault="True"/>
         </WrapPanel>

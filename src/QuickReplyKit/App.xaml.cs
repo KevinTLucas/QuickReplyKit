@@ -125,7 +125,12 @@ public partial class App : Application
 
         if (e.Args.Any(a => a.Equals("--show-about", StringComparison.OrdinalIgnoreCase)))
             Dispatcher.BeginInvoke(new Action(() =>
-                new Views.AboutWindow(_config!, _library!) { Owner = _launcher }.ShowDialog()));
+            {
+                var dialog = new Views.AboutWindow(_config!, _library!, _hotkeys!);
+                if (_launcher is { IsVisible: true }) dialog.Owner = _launcher;
+                else dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                dialog.ShowDialog();
+            }));
 
         if (e.Args.Any(a => a.Equals("--show-backup", StringComparison.OrdinalIgnoreCase)))
             Dispatcher.BeginInvoke(new Action(() =>

@@ -21,6 +21,11 @@ public sealed class LibraryWatcher : IDisposable
 
     public event Action? Changed;
 
+    public bool IsAttached
+    {
+        get { lock (_gate) return !_disposed && _watcher is not null; }
+    }
+
     public LibraryWatcher(string libraryRoot, int debounceMs = 250)
     {
         _root = libraryRoot;

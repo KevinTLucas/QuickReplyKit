@@ -20,8 +20,8 @@
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
-- **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains
-  2 ordered items with severity, acceptance criteria, and status. Sandboxed scripting remains deliberately last.
+- **State:** launchable, but a user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains 5 ordered
+  items. B15 is active; import UX, scripts, selected-folder polish, and a penultimate enterprise UI audit remain.
 
 ## Merged And QA'd
 
@@ -76,8 +76,11 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B15 P2:** complete the About / Diagnostics support snapshot.
-2. **B16 P2:** implement the security-gated computed-variable DSL.
+1. **B15 P2:** complete the About / Diagnostics support snapshot (active).
+2. **B17 P1:** redesign import confirmation and ordinary-response selection.
+3. **B16 P2:** implement the security-gated computed-variable DSL and mandatory per-code acceptance.
+4. **B18 P3:** strengthen selected-folder indication.
+5. **B19 P2:** run the enterprise UI audit/polish pass, then final release validation.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
@@ -88,8 +91,9 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 
 ## Known Limits / Human Checks
 
-- **Current QA boundary:** the user has disabled Computer Use/UIAutomation/screenshot-based validation. Agents must
-  use headless tests and static UI review and must not move, focus, or close the user's live app or other windows.
+- **Current QA boundary:** app launches, project screenshot/capture scripts, and interactive view inspection are allowed
+  again. Do not use GPT Computer Use/UIAutomation or touch unrelated user windows. Close every test-created app window
+  normally; reuse one Notepad tab if paste verification genuinely needs it.
 - A highlight with no explicit text color can be low contrast in dark mode, as in Word/Outlook. The editor's
   **Automatic (theme default)** text-color option restores inherited text color.
 - `--selftest-paste-rich` proves byte-correct CF_HTML on the clipboard; Win11 RichEdit does not import HTML, so it
@@ -110,5 +114,5 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 4. Run build + tests; expect **563** green after B14. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
-   `--no-ff` merge. Do not drive or capture the user's desktop.
+   `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.
 6. Update this file, BACKLOG, README, and ARCHITECTURE as appropriate before considering the change done.

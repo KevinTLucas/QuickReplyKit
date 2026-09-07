@@ -41,6 +41,7 @@ Record successful verification in `docs/STATUS.md` rather than a non-reproducibl
 **Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
 Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.
 
-**Current QA boundary:** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated input, or
-other desktop-driving tools. Do not move, focus, or close the user's windows. Use command-line build/tests, focused
-headless harnesses, self-test output when it will not disturb the desktop, and static XAML/code review.
+**Current QA boundary:** app launches, repository screenshot/capture scripts, and direct inspection of test-created
+QuickReplyKit windows are allowed. Do not use GPT Computer Use/UIAutomation or touch unrelated user windows. Close
+every test-created window normally; if paste verification genuinely needs Notepad, reuse one tab and close it with
+**Don't save**. Continue command-line tests and static review alongside visual QA.

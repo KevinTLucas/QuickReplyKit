@@ -18,6 +18,8 @@ public static class Diag
     }
 
     public static string? Directory => _logger?.Directory;
+    public static bool IsEnabled => _logger?.IsEnabled == true;
+    public static LogLevel? Threshold => _logger?.Threshold;
 
     public static void Error(string source, string category, string message, Exception? ex = null) =>
         _logger?.Error(source, category, message, ex);

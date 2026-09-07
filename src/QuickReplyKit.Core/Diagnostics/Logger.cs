@@ -30,6 +30,7 @@ public sealed class Logger : IDisposable
     public LogLevel Threshold { get; set; } = LogLevel.Info;
 
     public string Directory => _dir;
+    public bool IsEnabled => _enabled;
 
     // maxBytes/maxFiles default to ~50 MB total; overridable so tests can force a roll cheaply.
     public Logger(string dir, LogLevel threshold = LogLevel.Info,

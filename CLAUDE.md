@@ -61,10 +61,10 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
 dotnet publish src/QuickReplyKit -c Release -r win-x64 --self-contained true \
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o publish
 ```
-**Current QA boundary (mandatory):** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated
-mouse/keyboard input, or any other desktop-driving tool. The user keeps the live app on another monitor while work is
-underway. Validate with command-line build/tests, focused headless harnesses, self-test output, and static XAML/code
-review. Run a Windows paste self-test only when it will not disturb the user's desktop session.
+**Current QA boundary (mandatory):** app launches, repository screenshot/capture scripts, and inspection of test-created
+QuickReplyKit windows are allowed. Do not use GPT Computer Use/UIAutomation or touch unrelated user windows. Close all
+test-created windows normally. If paste verification genuinely requires Notepad, reuse one tab and close it with
+**Don't save**. Pair visual QA with headless tests and static XAML review.
 - **Notepad QA hygiene:** if a paste check is explicitly needed, reuse one QA-created Notepad window/tab and close it
   normally in cleanup (`finally` where applicable), choosing **Don't save**. Never launch one Notepad per iteration,
   use force-kill as normal cleanup, move/focus the user's windows, or close a pre-existing user Notepad window.
@@ -132,8 +132,8 @@ the implementation against the acceptance text and leave any genuine gap in BACK
 - [`README.md`](README.md) — user-facing guide.
 - [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work and explicitly deferred future ideas
   (completed implementation and QA history is in STATUS and Git).
-- `tools/` — optional legacy screenshot helpers (do not use while the current no-desktop-automation directive is in
-  force) and `make-icon.ps1`.
+- `tools/` — screenshot helpers for isolated QA app instances plus `make-icon.ps1`; do not use GPT Computer
+  Use/UIAutomation.
 
 > Historical per-phase work orders (PHASE*, ROADMAP, V2-PLAN, UX-REVIEW) were removed once the work shipped — they'd
 > only bloat a fresh pickup. The build history lives in git; the docs above are the living, authoritative set.
