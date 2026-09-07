@@ -189,16 +189,14 @@
                     <TreeView.Resources>
                         <HierarchicalDataTemplate DataType="{x:Type vm:NavNodeVm}" ItemsSource="{Binding Children}">
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Border x:Name="SelectionBar" Width="3" Margin="0,1,0,1"
-                                        Background="Transparent" IsHitTestVisible="False"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Icon}" Margin="6,0"/>
-                                <TextBlock x:Name="NavTitle" Grid.Column="2" Text="{Binding Title}"
-                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Icon}" Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="NavTitle" Text="{Binding Title}"
+                                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+                                </StackPanel>
+                                <Border x:Name="SelectionBar" Width="3" Margin="-2,1,0,1"
+                                        HorizontalAlignment="Left" Background="Transparent"
+                                        IsHitTestVisible="False"/>
                             </Grid>
                             <HierarchicalDataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
