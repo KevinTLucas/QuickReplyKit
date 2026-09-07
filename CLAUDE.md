@@ -101,9 +101,11 @@ review. Run a Windows paste self-test only when it will not disturb the user's d
     merge, audit `git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; every branch-only commit
     and file must belong to that feature/fix. Ancestor commits already in `main` are inherited history, not branch work.
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
-  - After every merge to `main`, rerun the integrated build/tests and refresh `publish/QuickReplyKit.exe` from that
-    exact `main` tip with the canonical publish command above. Record successful publish verification in
-    `docs/STATUS.md`; do not pin a hash because .NET single-file bundles are not byte-reproducible between publishes.
+  - After every product/runtime/asset merge to `main`, rerun the integrated build/tests and refresh
+    `publish/QuickReplyKit.exe` from that exact tip with the canonical command above. A docs-only merge does not change
+    the binary. If the canonical exe is running and locked, do not close it: publish to `publish/latest/QuickReplyKit.exe`
+    and promote it on the next unlocked publish. Record that state in `docs/STATUS.md`. Do not pin a bundle hash because
+    .NET single-file output is not byte-reproducible between publishes.
   - Commits use only the repository's configured local Git identity. Do not add `Co-Authored-By`, AI/vendor,
     agent, or automation attribution trailers, and do not override `user.name` or `user.email` in commands.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.
@@ -114,8 +116,9 @@ review. Run a Windows paste self-test only when it will not disturb the user's d
   2. If behaviour, commands, features, or the design changed, update `README.md` (user-facing) and
      [`ARCHITECTURE.md`](ARCHITECTURE.md). If it changes future scope, update [`docs/BACKLOG.md`](docs/BACKLOG.md).
   3. New user-facing capability → add tests; keep `dotnet test` green. Never leave `main` un-green or docs stale.
-  4. After the merge is green, rebuild the self-contained portable exe from `main`; the distributable must never lag
-     behind merged code.
+  4. After a product/runtime/asset merge is green, rebuild the self-contained portable exe from `main`; if the
+     canonical file is locked by a running user instance, put the current build in `publish/latest` without touching
+     that instance.
   A change isn't "done" until code + tests + these docs are all consistent.
 
 The audited baseline and exact expected test count live only in `docs/STATUS.md`; do not copy a changing test count
