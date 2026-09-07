@@ -17,8 +17,8 @@
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
-  human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
-  remain locally and may be pruned after confirming no agent still owns them.
+  human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
+  the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable, but a user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains 2 ordered
   items. The B16 Core engine is active; script UI/import integration and the penultimate enterprise UI audit remain.
 
