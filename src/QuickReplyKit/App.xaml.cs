@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Interop;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Diagnostics;
+using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Interop;
 using QuickReplyKit.Services;
@@ -23,7 +24,7 @@ public partial class App : Application
     private EventWaitHandle? _showEvent;
     private Forms.NotifyIcon? _tray;
     private LauncherWindow? _launcher;
-    private GlobalHotkey? _hotkey;
+    private HotkeyService? _hotkeys;
     private ForegroundMonitor? _foregroundMonitor;
 
     private AppConfig _config = new();
@@ -121,6 +122,10 @@ public partial class App : Application
             Dispatcher.BeginInvoke(new Action(() => Views.EditorWindow.OpenNew(
                 _launcher!, _config!.LibraryPath, new[] { "IXL", "IXL/Math", "Billing", "Onboarding" }, "IXL")));
 
+        // QA override: pop the keyboard-shortcuts manager so its theming can be screenshotted.
+        if (e.Args.Any(a => a.Equals("--show-hotkeys", StringComparison.OrdinalIgnoreCase)))
+            Dispatcher.BeginInvoke(new Action(OpenHotkeyManager));
+
         // Run the initial library scan in the background; it populates the (already-visible) launcher
         // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
         Task.Run(() => _library.LoadInitial());
@@ -150,12 +155,87 @@ public partial class App : Application
 
     private void InitHotkey()
     {
-        _hotkey = new GlobalHotkey();
-        _hotkey.Pressed += ShowLauncher;   // fires on the UI thread
-        if (!_hotkey.Rebind(_config.HotkeyGesture))
+        _hotkeys = new HotkeyService(_config, _library!, new InsertService(_target));
+        _hotkeys.LauncherPressed += ShowLauncher;   // fires on the UI thread
+        _hotkeys.ReloadAll();                        // launcher + every per-response instant-paste bind
+        if (!_hotkeys.LauncherRegistered)
             _tray?.ShowBalloonTip(5000, "QuickReplyKit",
                 $"Couldn't register the hotkey “{_config.HotkeyGesture}” (it may be in use). " +
                 "The app is running; open it from the tray.", Forms.ToolTipIcon.Warning);
+    }
+
+    /// <summary>Set or replace the instant-paste bind for a response, then persist and re-register.</summary>
+    public void SetResponseHotkey(string relativePath, string gesture, bool plain)
+    {
+        _config.ResponseHotkeys.RemoveAll(b =>
+            string.Equals(b.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase));
+        _config.ResponseHotkeys.Add(new ResponseHotkey { RelativePath = relativePath, Gesture = gesture, Plain = plain });
+        PersistHotkeys();
+    }
+
+    /// <summary>Remove any instant-paste bind for a response, then persist and re-register.</summary>
+    public void ClearResponseHotkey(string relativePath)
+    {
+        if (_config.ResponseHotkeys.RemoveAll(b =>
+                string.Equals(b.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase)) > 0)
+            PersistHotkeys();
+    }
+
+    private void PersistHotkeys()
+    {
+        try { _config.Save(); } catch { /* best effort */ }
+        _hotkeys?.ReloadAll();
+    }
+
+    /// <summary>The current bind for a response's relative path, or null.</summary>
+    public ResponseHotkey? ResponseHotkeyFor(string relativePath) =>
+        _config.ResponseHotkeys.FirstOrDefault(b =>
+            string.Equals(b.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Open the "Assign hotkey…" dialog for a response and apply the chosen bind.</summary>
+    public void OpenAssignHotkey(ResponseItem item)
+    {
+        if (_hotkeys is null) return;
+        Window? owner = _launcher is { IsVisible: true } ? _launcher : null;
+        var existing = ResponseHotkeyFor(item.RelativePath);
+        var dlg = new Views.AssignHotkeyWindow(item.Name, existing,
+            gesture => DescribeConflict(gesture, item.RelativePath))
+        {
+            Owner = owner,
+        };
+        if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        if (dlg.ShowDialog() != true) return;
+
+        if (dlg.Removed) ClearResponseHotkey(item.RelativePath);
+        else SetResponseHotkey(item.RelativePath, dlg.Gesture!, dlg.Plain);
+    }
+
+    /// <summary>Open the keyboard-shortcuts manager (launcher + all binds, conflicts, search-by-key).</summary>
+    public void OpenHotkeyManager()
+    {
+        if (_hotkeys is null || _library is null) return;
+        Window? owner = _launcher is { IsVisible: true } ? _launcher : null;
+        var dlg = new Views.HotkeyManagerWindow(_config, _hotkeys, _library, this) { Owner = owner };
+        if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        dlg.ShowDialog();
+    }
+
+    /// <summary>
+    /// Human conflict message if <paramref name="gesture"/> is already owned by the launcher or a
+    /// different response (excluding <paramref name="selfPath"/>), else null (free to assign).
+    /// </summary>
+    public string? DescribeConflict(string gesture, string? selfPath)
+    {
+        var others = _config.ResponseHotkeys.Where(b =>
+            !string.Equals(b.RelativePath, selfPath, StringComparison.OrdinalIgnoreCase));
+        var hit = HotkeyConflicts.Resolve(gesture, _config.HotkeyGesture, others);
+        return hit.Kind switch
+        {
+            HotkeyConflicts.TargetKind.Launcher => "Already used by the launcher hotkey.",
+            HotkeyConflicts.TargetKind.Response =>
+                $"Already used by “{Path.GetFileNameWithoutExtension(hit.RelativePath)}”.",
+            _ => null,
+        };
     }
 
     private void ShowEventLoop()
@@ -238,9 +318,9 @@ public partial class App : Application
     /// <summary>Open the modal Settings dialog, owned by the launcher when it's visible.</summary>
     public void OpenSettings()
     {
-        if (_config is null || _hotkey is null || _library is null || _vm is null) return;
+        if (_config is null || _hotkeys is null || _library is null || _vm is null) return;
         Window? owner = _launcher is { IsVisible: true } ? _launcher : null;
-        var dlg = new Views.SettingsWindow(_config, _hotkey, _library, () => _vm.OnLibraryUpdated())
+        var dlg = new Views.SettingsWindow(_config, _hotkeys, _library, () => _vm.OnLibraryUpdated())
         {
             Owner = owner,
         };
@@ -270,7 +350,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _foregroundMonitor?.Dispose();
-        _hotkey?.Dispose();
+        _hotkeys?.Dispose();
         if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
         _library?.Dispose();
         _mutex?.Dispose();

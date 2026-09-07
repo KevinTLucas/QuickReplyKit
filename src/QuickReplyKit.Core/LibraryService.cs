@@ -104,6 +104,11 @@ public sealed class LibraryService : IDisposable
         }
     }
 
+    /// <summary>Valid response at a given library-relative path (case-insensitive), or null.</summary>
+    public ResponseItem? FindByRelativePath(string relativePath) =>
+        Snapshot.ValidResponses.FirstOrDefault(
+            r => string.Equals(r.RelativePath, relativePath, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>First valid response whose name matches (case-insensitive), or null. Backs template includes.</summary>
     public ResponseItem? FindByName(string name) =>
         Snapshot.ValidResponses.FirstOrDefault(

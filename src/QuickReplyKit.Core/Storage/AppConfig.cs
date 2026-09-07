@@ -9,6 +9,18 @@ public enum PasteMode { RichText, PlainText }
 /// <summary>UI theme preference. <see cref="System"/> follows the Windows apps-theme setting.</summary>
 public enum AppTheme { System, Light, Dark }
 
+/// <summary>
+/// A global hotkey bound to a specific response, pasting it instantly without opening the app.
+/// Keyed by library-relative path (not stored in the .json) so shared libraries don't fight over
+/// global keys — the binding lives in this local config. <see cref="Plain"/> chooses plain vs rich.
+/// </summary>
+public sealed class ResponseHotkey
+{
+    public string RelativePath { get; set; } = "";
+    public string Gesture { get; set; } = "";
+    public bool Plain { get; set; }
+}
+
 /// <summary>Persisted launcher window placement.</summary>
 public sealed class WindowBounds
 {
@@ -41,6 +53,9 @@ public sealed class AppConfig
     /// <summary>Verbose (Debug/Verbose) diagnostic logging. Off by default → Info+ only.</summary>
     public bool VerboseLogging { get; set; } = false;
 
+    /// <summary>Per-response instant-paste hotkeys, keyed by library-relative path (local only).</summary>
+    public List<ResponseHotkey> ResponseHotkeys { get; set; } = new();
+
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -64,6 +79,7 @@ public sealed class AppConfig
                     if (string.IsNullOrEmpty(cfg.HotkeyGesture)) cfg.HotkeyGesture = "Ctrl+Alt+D";
                     if (string.IsNullOrEmpty(cfg.LibraryPath)) cfg.LibraryPath = AppPaths.DefaultLibraryDir;
                     cfg.Window ??= new WindowBounds();
+                    cfg.ResponseHotkeys ??= new();
                     return cfg;
                 }
             }
