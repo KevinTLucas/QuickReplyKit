@@ -77,6 +77,24 @@ public class TrashServiceTests
     }
 
     [Fact]
+    public void Restore_RefusesToEscapeLibraryRoot()
+    {
+        using var lib = new TempDir();
+        var trash = lib.Of("..", "trash");
+        // Hand-craft a malicious trash entry whose original path tries to climb out of the library.
+        var id = "evil";
+        var dir = Path.Combine(trash, id);
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "pwn.json"), "{}");
+        File.WriteAllText(Path.Combine(dir, "meta.json"),
+            "{\"name\":\"pwn\",\"originalRelativePath\":\"../pwned.json\",\"deletedUtc\":\"2026-01-01T00:00:00Z\"}");
+
+        Assert.False(TrashService.Restore(id, lib.Path, trash));
+        Assert.False(File.Exists(Path.Combine(lib.Path, "..", "pwned.json")));   // nothing written outside root
+        Directory.Delete(trash, true);
+    }
+
+    [Fact]
     public void Empty_RemovesAll()
     {
         using var lib = new TempDir();

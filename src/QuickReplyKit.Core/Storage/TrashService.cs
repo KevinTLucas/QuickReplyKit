@@ -11,7 +11,7 @@ public sealed record TrashedItem(string Id, string Name, string OriginalRelative
 /// first-class Restore / Empty, so "I deleted our whole IXL folder" is an in-product undo rather than
 /// a support ticket. Each trashed response lives in its own <c>trash/&lt;id&gt;/</c> folder alongside a
 /// <c>meta.json</c> recording where it came from; Restore puts it back at its original library path.
-/// (The launcher's delete still goes to the Windows Recycle Bin too; this is the in-app layer.)
+/// (This replaces the Recycle-Bin delete for responses — the launcher's Delete now moves here.)
 /// </summary>
 public static class TrashService
 {
@@ -78,7 +78,10 @@ public static class TrashService
         var file = ResponseFileIn(dir);
         if (meta is null || file is null) return false;
 
-        string target = Path.Combine(libraryRoot, meta.OriginalRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        string target = Path.GetFullPath(Path.Combine(libraryRoot, meta.OriginalRelativePath.Replace('/', Path.DirectorySeparatorChar)));
+        // Defence in depth: a hand-edited meta.json must never let a restore escape the library root.
+        string root = Path.GetFullPath(libraryRoot);
+        if (!target.StartsWith(root + Path.DirectorySeparatorChar, System.StringComparison.OrdinalIgnoreCase)) return false;
         if (File.Exists(target)) return false;
 
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
