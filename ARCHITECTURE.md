@@ -133,8 +133,9 @@ view-models, interop, and app wiring.
   restorable without changing settings. Restored config is retargeted to the actual restored library folder; the old
   launcher's final config save is suppressed and QuickReplyKit restarts so restored settings become authoritative.
   `AppConfig.BackupPath` selects the snapshot directory (default `AppPaths.BackupsDir`). `BackupLocation` requires an
-  absolute path and verifies write access before Settings saves it and before create/list/restore operations. An
-  unavailable configured path therefore blocks only the affected safety operation, never normal startup.
+  absolute path outside the response library and verifies write access before Settings saves it and before
+  create/list/restore operations. An unavailable configured path therefore blocks only the affected safety operation,
+  never normal startup.
   `TrashService` soft-deletes individual responses and complete category subtrees. Folder deletion validates the
   library tree, requires a `LibraryBackup` snapshot, and moves every nested response/side file as one typed Trash
   payload. Old response-only metadata remains readable. Restore recreates the exact original hierarchy, refuses
