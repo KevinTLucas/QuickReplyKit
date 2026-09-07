@@ -5,13 +5,13 @@
 > **Update this file on every meaningful change** — it's part of the Definition of Done (see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `3ccdc66` · **`dotnet test` = 403 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
+- **`main` tip:** `d562052` · **`dotnet test` = 403 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
 - **App: ✅ feature-complete & merged** — MVP + all V2 features + the end-user continuous-improvement pass are done.
   Polished, launchable, and portable.
-- **Open work: NOT NONE.** There are **2 known bugs** (incl. a HIGH-priority crash — see "Known issues" below) and a
-  **prioritized backlog of ~14 queued items** in [`BACKLOG.md`](BACKLOG.md) (bugs + new features), all **queued, not
-  started** (parked until the user says build). Start with the **BACKLOG top items** (right-click crash #6, dark-mode
-  combobox #1) if picking up work.
+- **⏳ Backlog sprint in progress** (2026-09-06): working through [`BACKLOG.md`](BACKLOG.md) top-down. **Done & merged
+  so far:** BUG #6 (right-click crash) + BUG #1 (dark-mode ComboBox). **In flight / next:** #3 Edit button + #2 Automatic
+  colour (branch `feature/edit-palettes`, QA running), then #7 logging. Remaining queued items are in BACKLOG.md.
+- **Both known bugs are now fixed** — no open bugs. Remaining work = the queued *features* in BACKLOG.md.
 
 ## What it is / what it does
 A lightweight Windows response launcher for support teams: global hotkey (**Ctrl+Alt+D**) → search/browse a
@@ -36,11 +36,12 @@ Design + code map: [`../ARCHITECTURE.md`](../ARCHITECTURE.md). User guide: [`../
   invalid-file surfacing (⚠), portable single-file packaging.
 
 ## Known caveats (non-blocking, documented on purpose)
-- **BUG (queued, BACKLOG #6, HIGH):** fast/repeated **right-click** on a result **crashes** the app (context-menu
-  reentrancy — likely the `IsOpen=false` toggle inside `ResultsContextMenu_Opened`). Not yet fixed.
-- **BUG (queued, BACKLOG #1):** the New/Edit editor's **Category combobox** is unreadable in dark mode — white text on
-  a white field (closed), and low-contrast dark-on-dark items in the dropdown. Needs a themed ComboBox template.
-- A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook).
+- ~~BUG #6 right-click crash~~ **FIXED** (merged `d562052`): context menus now gate in `ContextMenuOpening` via
+  `e.Handled` instead of mutating `IsOpen` inside `Opened`. QA: survived 80 rapid right-clicks.
+- ~~BUG #1 dark-mode ComboBox~~ **FIXED** (merged `d562052`): app-wide themed `ComboBox`/`ComboBoxItem` template in
+  `App.xaml` (DynamicResource brushes). QA: readable in both themes, closed + open dropdown.
+- A **highlight** color with no explicit text color can be low-contrast in dark mode (same as Word/Outlook). The editor's
+  new **"Automatic (theme default)"** text-colour option lets a user revert to theme-inherited (readable) text.
 - `--selftest-paste-rich` proves the clipboard carries valid **CF_HTML** (what Outlook/Word/browsers render), not an
   in-app render (Win11 Msftedit has no HTML importer).
 - **2 human spot-checks** (un-automatable): a live **Ctrl+Alt+D** paste into a third-party app; confirm pasted text is

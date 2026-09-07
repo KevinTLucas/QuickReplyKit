@@ -8,13 +8,9 @@ continuous-improvement pass). See [`STATUS.md`](STATUS.md) for the current state
 
 Prioritized; a bug first. Follow the normal flow (branch → ponytail → separate-subagent QA → merge; update docs).
 
-1. **BUG · Dark-mode Category combobox is unreadable.** In the New/Edit response editor, the **Category (folder)**
-   combobox's closed/editable field renders **white background with white text** in dark mode (can't read the typed
-   path); the open dropdown is dark but its folder items are **near-black text on dark = very low contrast**. This
-   supersedes the old "cosmetic combobox chrome" caveat — it's a real usability defect. **Fix:** give the editable
-   `ComboBox` a proper themed `ControlTemplate` (or restyle its editable `TextBox` part + `ComboBoxItem`s) so the
-   field background/foreground and the dropdown item text all use the theme brushes (`CardBg`/`TextPrimary`/`Accent`
-   selection) with good contrast in **both** light and dark. Same treatment anywhere else an editable combobox is used.
+1. ✅ **DONE (merged `d562052`)** — Dark-mode Category ComboBox readability. App-wide themed `ComboBox`/`ComboBoxItem`
+   `ControlTemplate` in `App.xaml` bound to theme brushes via `DynamicResource` (covers the editor Category picker and
+   the Move/Rename dialog). Independent QA: readable in both themes, closed field + open dropdown. See STATUS.md.
 2. **Standardize the editor text-color & highlight palettes to common colors.** The editor already has a text-color
    (**A**) button and a highlight swatch popup (Phase 10a). Refine both to a **standard, common-color** set — e.g.
    text: black / gray / red / orange / green / blue / purple (+ "automatic/theme default"); highlight: yellow / green
@@ -43,14 +39,9 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
    the page instantly shows what (if anything) it's already bound to — so they can check a combo is free before
    assigning, and jump to any conflict. Also support plain text filtering of the list by gesture or response name.
    This is the "strong ability to view keybinds and find conflicts" ask; build it alongside #4.
-6. **BUG (crash, HIGH) · Fast/repeated right-click on a result crashes the app.** Spamming right-click on a response
-   (re-opening the context menu quickly) crashes QuickReplyKit. **Likely cause:** `LauncherWindow.ResultsContextMenu_Opened`
-   sets `ResultsContextMenu.IsOpen = false` **inside the `Opened` handler** to suppress the menu when nothing is
-   selected — mutating `IsOpen` during `Opened`, combined with `ResultsList_PreviewMouseRightButtonDown` re-selecting a
-   row on every click, is a WPF reentrancy footgun that can throw (or `SelectedItem` is null mid-handler). **Fix:** stop
-   toggling `IsOpen` in `Opened` — instead gate the menu in `ContextMenuOpening` (set `e.Handled = true` to cancel it
-   when there's no valid selection) or via `IsEnabled`, null-guard the handler, and add a stress/repeat test. (Exactly
-   the kind of crash the logging system #7 should capture automatically.)
+6. ✅ **DONE (merged `d562052`)** — Fast/repeated right-click crash. Root cause was mutating `ContextMenu.IsOpen` inside
+   the `Opened` handler (reentrancy). Both the results and nav menus now gate in `ContextMenuOpening` via `e.Handled`;
+   no `IsOpen` mutation remains. Independent QA: survived 80 right-clicks @15ms with no crash. See STATUS.md.
 7. **Diagnostics / logging system.** So "send me the log file" instantly gives what's needed to debug. Requirements:
    - **Rolling & size-capped (~50 MB total)** — never grows unbounded; size-based rollover (a few files) or a single
      capped/circular file. Logs under `%APPDATA%\QuickReplyKit\logs\`.
