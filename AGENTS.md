@@ -34,7 +34,8 @@ feature's branch or mix unrelated changes. Before QA and merge, verify the branc
 Commits use only the configured local Git identity: never add `Co-Authored-By` or other AI/agent attribution trailers,
 and never override the repository's Git author configuration.
 After every merge to `main`, rerun the integrated build/tests and rebuild the self-contained
-`publish/QuickReplyKit.exe` from that exact tip; record file size/hash evidence in `docs/STATUS.md`.
+`publish/QuickReplyKit.exe` from that exact tip; record successful verification in `docs/STATUS.md` rather than a
+bundle hash, which is not byte-reproducible.
 
 **QA cleanup:** reuse a single Notepad tab for paste verification and close every test-created tab normally with
 **Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because

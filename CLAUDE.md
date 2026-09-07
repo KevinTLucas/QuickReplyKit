@@ -102,7 +102,8 @@ review. Run a Windows paste self-test only when it will not disturb the user's d
     and file must belong to that feature/fix. Ancestor commits already in `main` are inherited history, not branch work.
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
   - After every merge to `main`, rerun the integrated build/tests and refresh `publish/QuickReplyKit.exe` from that
-    exact `main` tip with the canonical publish command above. Record the file size/hash evidence in `docs/STATUS.md`.
+    exact `main` tip with the canonical publish command above. Record successful publish verification in
+    `docs/STATUS.md`; do not pin a hash because .NET single-file bundles are not byte-reproducible between publishes.
   - Commits use only the repository's configured local Git identity. Do not add `Co-Authored-By`, AI/vendor,
     agent, or automation attribution trailers, and do not override `user.name` or `user.email` in commands.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.
