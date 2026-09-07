@@ -139,7 +139,7 @@ public static class ClipboardHtml
             int end = TagEnd(html, i + 1);
             if (end < 0)
             {
-                if (skipped.Count == 0) Escape(output, html[i..]);
+                // An unterminated tag has no trustworthy visible-content boundary.
                 break;
             }
 

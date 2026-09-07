@@ -206,6 +206,14 @@ public class ClipboardHtmlTests
         Assert.Equal("<p>vafter</p>",
             ClipboardHtml.Sanitize("<p>v<script data-x='>''>secret</script>after</p>"));
 
+    [Theory]
+    [InlineData("<p>v<script data-x='>secret</script>after</p>")]
+    [InlineData("<p>v<script data-x=\">secret</script>after</p>")]
+    [InlineData("<p>v<iframe data-x='\">secret</iframe>after</p>")]
+    [InlineData("<p>v<span hidden title='>secret</span>after</p>")]
+    public void Sanitize_DropsRemainderAfterUnterminatedAttribute(string html) =>
+        Assert.Equal("<p>v</p>", ClipboardHtml.Sanitize(html));
+
     [Fact]
     public void Sanitize_KeepsSupportedFormattingAndDropsUnsupportedStyles() =>
         Assert.Equal("<p style=\"text-align:center\"><span style=\"color:#FF0000\"><b>x</b></span></p>",
