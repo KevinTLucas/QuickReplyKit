@@ -4,6 +4,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Threading;
 using QuickReplyKit.Core;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Core.Templates;
@@ -312,7 +313,9 @@ public sealed class LauncherViewModel : ViewModelBase
         var item = ValidSelectedItem();
         if (item == null) return;
         var resolved = ResolvedCopy(item);
-        if (_config.DefaultPasteMode == PasteMode.PlainText) _insert.InsertPlain(resolved);
+        bool plain = _config.DefaultPasteMode == PasteMode.PlainText;
+        Diag.Verbose($"insert {(plain ? "plain" : "rich")}: \"{item.Name}\"");
+        if (plain) _insert.InsertPlain(resolved);
         else _insert.InsertRich(resolved);
         _library.MarkUsed(item);
         RequestHide?.Invoke();
@@ -322,6 +325,7 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         var item = ValidSelectedItem();
         if (item == null) return;
+        Diag.Verbose($"insert plain (shift): \"{item.Name}\"");
         _insert.InsertPlain(ResolvedCopy(item));
         _library.MarkUsed(item);
         RequestHide?.Invoke();

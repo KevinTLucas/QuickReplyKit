@@ -16,6 +16,9 @@ public static class AppPaths
     public static string ConfigPath => Path.Combine(AppDataDir, "config.json");
     public static string RecentPath => Path.Combine(AppDataDir, "recent.json");
 
+    /// <summary>Rolling diagnostic logs (see <c>Diagnostics.Logger</c>).</summary>
+    public static string LogsDir => Path.Combine(AppDataDir, "logs");
+
     /// <summary>Default library root; the effective root is configurable in settings.</summary>
     public static string DefaultLibraryDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppName, "Library");

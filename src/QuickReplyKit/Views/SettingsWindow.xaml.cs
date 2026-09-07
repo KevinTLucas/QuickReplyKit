@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
 using QuickReplyKit.Core;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Interop;
 using QuickReplyKit.Services;
@@ -47,6 +48,7 @@ public partial class SettingsWindow : Window
         ThemeDark.IsChecked = config.Theme == AppTheme.Dark;
         RememberWindowCheck.IsChecked = config.RememberWindow;
         StartupCheck.IsChecked = StartupRegistration.IsEnabled();
+        VerboseLogCheck.IsChecked = config.VerboseLogging;
         _loaded = true;
 
         // Revert a live-previewed theme if the dialog is dismissed without saving.
@@ -109,6 +111,8 @@ public partial class SettingsWindow : Window
         catch { /* best effort */ }
     }
 
+    private void OpenLogs_Click(object sender, RoutedEventArgs e) => App.OpenLogsFolder();
+
     // --- Save ---------------------------------------------------------------
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -131,6 +135,8 @@ public partial class SettingsWindow : Window
         _config.DefaultPasteMode = PastePlain.IsChecked == true ? PasteMode.PlainText : PasteMode.RichText;
         _config.Theme = SelectedTheme();
         _config.RememberWindow = RememberWindowCheck.IsChecked == true;
+        _config.VerboseLogging = VerboseLogCheck.IsChecked == true;
+        Diag.SetVerbose(_config.VerboseLogging);   // takes effect immediately, no restart
 
         bool libraryChanged = !string.Equals(_libraryPath, _config.LibraryPath, StringComparison.OrdinalIgnoreCase);
         if (libraryChanged) _config.LibraryPath = _libraryPath;

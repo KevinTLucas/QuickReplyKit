@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using QuickReplyKit.Core;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Interop;
 using QuickReplyKit.Services;
@@ -77,6 +78,8 @@ public partial class App : Application
         string? themeOverride = ArgValue(e.Args, "--theme");
         if (Enum.TryParse<AppTheme>(themeOverride, ignoreCase: true, out var themePref)) _config.Theme = themePref;
 
+        InitLogging();
+
         ThemeManager.Apply(_config.Theme);
 
         // Defer the library scan off the UI thread: with a large library it can take many seconds
@@ -123,6 +126,28 @@ public partial class App : Application
         Task.Run(() => _library.LoadInitial());
     }
 
+    /// <summary>App version from the assembly (single-file-safe), else "dev".</summary>
+    public static string Version =>
+        System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "dev";
+
+    // Start the rolling logger and route every crash channel into it, so "send me the log file" is
+    // enough to diagnose an issue. Crashes are LOGGED but not swallowed — surfacing a fault beats
+    // silently limping on in a possibly-corrupt state (the fix is to fix the fault, not hide it).
+    private void InitLogging()
+    {
+        Diag.Init(AppPaths.LogsDir, _config.VerboseLogging);
+        Diag.Info($"===== session start | v{Version} | {Environment.OSVersion} | " +
+                  $"theme={_config.Theme} | verbose={_config.VerboseLogging} | library=\"{_config.LibraryPath}\" =====");
+
+        AppDomain.CurrentDomain.UnhandledException += (_, ev) =>
+            Diag.Error("Unhandled AppDomain exception (terminating=" + ev.IsTerminating + ")", ev.ExceptionObject as Exception);
+        DispatcherUnhandledException += (_, ev) =>
+            Diag.Error("Unhandled Dispatcher exception", ev.Exception);
+        TaskScheduler.UnobservedTaskException += (_, ev) =>
+            { Diag.Error("Unobserved task exception", ev.Exception); ev.SetObserved(); };
+        Exit += (_, _) => { Diag.Info("===== session end ====="); Diag.Shutdown(); };
+    }
+
     private void InitHotkey()
     {
         _hotkey = new GlobalHotkey();
@@ -144,6 +169,7 @@ public partial class App : Application
 
     private void ShowLauncher()
     {
+        Diag.Verbose("show launcher");
         CaptureForegroundTarget();
         _launcher?.ShowLauncher();
     }
@@ -172,6 +198,7 @@ public partial class App : Application
         menu.Items.Add("Import…", null, (_, _) => Dispatcher.Invoke(() => { ShowLauncher(); _launcher?.ImportFlow(); }));
         menu.Items.Add("Export library…", null, (_, _) => Dispatcher.Invoke(() => { ShowLauncher(); _launcher?.ExportLibraryFlow(); }));
         menu.Items.Add("Settings", null, (_, _) => Dispatcher.Invoke(OpenSettings));
+        menu.Items.Add("Open logs folder", null, (_, _) => OpenLogsFolder());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(() => Shutdown(0)));
 
@@ -194,6 +221,18 @@ public partial class App : Application
                 new System.Diagnostics.ProcessStartInfo(_config.LibraryPath) { UseShellExecute = true });
         }
         catch { /* best effort */ }
+    }
+
+    /// <summary>Open the logs folder in Explorer (creating it first so it always opens).</summary>
+    public static void OpenLogsFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(AppPaths.LogsDir);
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo(AppPaths.LogsDir) { UseShellExecute = true });
+        }
+        catch (Exception ex) { Diag.Warn("OpenLogsFolder failed: " + ex.Message); }
     }
 
     /// <summary>Open the modal Settings dialog, owned by the launcher when it's visible.</summary>

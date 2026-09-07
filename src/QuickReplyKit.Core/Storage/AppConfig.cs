@@ -38,6 +38,9 @@ public sealed class AppConfig
     /// <summary>Restore the launcher's last size/position on show (validated on-screen first).</summary>
     public bool RememberWindow { get; set; } = true;
 
+    /// <summary>Verbose (Debug/Verbose) diagnostic logging. Off by default → Info+ only.</summary>
+    public bool VerboseLogging { get; set; } = false;
+
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
