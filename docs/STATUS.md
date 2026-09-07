@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `d6aa62b`.
+- **Current `main`:** `5e49979`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **455 passed, 0 failed, 0 skipped** after B05 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -15,13 +15,14 @@
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
-  11 ordered items with severity, acceptance criteria, and status. Clipboard trust-boundary work leads;
+  10 ordered items with severity, acceptance criteria, and status. Clipboard trust-boundary work leads;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B06 adaptive Settings/About | `5e49979` | 455/455; owner-monitor/DPI bounds, scrolling fixed actions, wrapped diagnostics | Complete |
 | B07 accessible button states | `5b70994` | 455/455; all button families; Light/Dark/High Contrast and arbitrary swatches | Complete |
 | B05 search relevance | `80cefa0` | 455/455; 21/21 focused; 4,000-response corpus averaged 7.26 ms/search | Complete |
 | B03 import plan integrity | `6aa1ae1` | 452/452; junction race, ZIP limits, malformed/traversal/device paths, stale-plan handling | Complete |
@@ -61,17 +62,15 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B04 and B06 P1:** clipboard sanitization and Settings/About layout.
+1. **B04 P1:** clipboard sanitization.
 2. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
 3. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
 4. **B16 P2:** sandboxed dynamic-variable scripts, only after its sanitizer, accessibility, and logging gates.
 
-**Known confirmed regressions/defects:** clipboard sanitization gaps and clipped
-Settings/About layout. Treat them as bugs, not optional polish.
+**Known confirmed regressions/defects:** clipboard sanitization gaps. Treat them as bugs, not optional polish.
 
-**Active worktrees:** B02, B03, B05, and B07 are merged. `bugfix/clipboard-sanitization` is in final security QA;
-`bugfix/settings-about-layout` passed headless layout/accessibility QA and is completing final integration;
-`feature/folder-trash` is implementing B08.
+**Active worktrees:** B02, B03, B05, B06, and B07 are merged. `bugfix/clipboard-sanitization` is correcting final
+security-QA findings; `feature/folder-trash` is implementing B08.
 Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
