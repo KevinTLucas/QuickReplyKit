@@ -63,7 +63,9 @@ public sealed class LibraryService : IDisposable
     public void LoadInitial()
     {
         lock (_gate) { if (_disposed) return; }
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         Reload();
+        Diagnostics.Diag.Info($"library scan: {Snapshot.AllResponses.Count} responses in {sw.ElapsedMilliseconds} ms");
         IsLoading = false;
         Action? handler;
         lock (_gate) { if (_disposed) return; handler = Updated; }
