@@ -91,6 +91,10 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   - Every change is on a concise, human-readable branch that names the work, such as
     `bugfix/backup-restore-integrity` or `feature/folder-trash`. Do not include an AI/vendor name, agent UUID,
     worktree identifier, or other generated session label in a branch name.
+  - **One branch/worktree owns one feature or fix.** Do not edit a different feature branch or mix unrelated work
+    into the same branch. Shared files may be touched only for the branch's own workflow. Before QA and again before
+    merge, audit `git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; every branch-only commit
+    and file must belong to that feature/fix. Ancestor commits already in `main` are inherited history, not branch work.
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
   - Commit messages end with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.

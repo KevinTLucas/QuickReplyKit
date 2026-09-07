@@ -6,13 +6,14 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `97e4ff8` (B01 fix plus branch-naming handoff); product merge `c596e29`.
+- **Current `main` before this process-doc update:** `97e4ff8`; product merge `c596e29`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **436 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
-- **Git:** every completed feature branch listed below is already an ancestor of `main`; there are no
-  unmerged feature commits. Several merged branches/worktrees remain locally and may be pruned later.
+- **Git:** completed feature branches listed below are ancestors of `main`. The only unmerged work is the isolated
+  B02 and B03 bugfix branches described under Active worktrees. Several fully merged historical branches/worktrees
+  remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   15 ordered items with severity, acceptance criteria, and status. Confirmed data-loss/import defects lead;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
@@ -73,7 +74,11 @@ library+config snapshots, protected oldest-backup restore, staged directory swap
 and extraction, legacy archive support, fail-closed import backup, and restart after config restore. First independent
 QA found and the branch now fixes a restored-library-path mismatch, incomplete confirmation text, unbounded extraction,
 and the standalone backup QA hook. Focused backup tests are green; a second independent QA pass remains before merge.
-`bugfix/import-integrity` contains the B03 planner and awaits separate security/UI QA.
+`bugfix/import-integrity` contains the committed B03 validated-plan implementation and awaits security/UI QA;
+`bugfix/dark-hover-contrast` and `bugfix/search-relevance` contain their isolated P1 fixes and await QA. Resume these
+exact worktrees rather than starting duplicates.
+Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
+work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
 ## Known Limits / Human Checks
 
