@@ -22,15 +22,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P2 - High-Value Enhancements
 
-### B12 - Discoverable Import and Export controls
-
-- **Severity:** P2
-- **Status:** Queued
-- **Impact:** The `...` control hides important sharing actions.
-- **Acceptance:** Replace it with a clearly labelled/icon-supported Import/Export entry point that exposes Import,
-  Export response/folder/library in context; remains compact at minimum width; accessible name/tooltip and keyboard
-  access are obvious; no duplicate or ambiguous commands.
-
 ### B14 - Complete diagnostics logging coverage
 
 - **Severity:** P2
