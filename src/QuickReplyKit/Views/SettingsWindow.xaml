@@ -97,8 +97,10 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0"
                        Text="Off = errors/info only. On = log every action (hotkey, search, paste, scan…) for troubleshooting. Rolling, ~50 MB max."/>
-            <Button Grid.Column="1" Content="Open logs folder" Style="{StaticResource ActionButton}"
-                    Click="OpenLogs_Click"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="About / Diagnostics…" Style="{StaticResource ActionButton}" Click="About_Click"/>
+                <Button Content="Open logs folder" Style="{StaticResource ActionButton}" Click="OpenLogs_Click"/>
+            </StackPanel>
         </Grid>
 
         <!-- Buttons -->

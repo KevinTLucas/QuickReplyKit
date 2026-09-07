@@ -30,6 +30,9 @@ public sealed class LibraryService : IDisposable
     /// </summary>
     public bool IsLoading { get; private set; }
 
+    /// <summary>Whether the library folder is being watched for live changes (diagnostics).</summary>
+    public bool IsWatching => _watcher != null;
+
     /// <summary>Raised after the library changed on disk and <see cref="Snapshot"/> was rebuilt.</summary>
     public event Action? Updated;
 

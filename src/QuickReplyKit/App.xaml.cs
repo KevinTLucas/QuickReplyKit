@@ -121,6 +121,10 @@ public partial class App : Application
             Dispatcher.BeginInvoke(new Action(() => Views.EditorWindow.OpenNew(
                 _launcher!, _config!.LibraryPath, new[] { "IXL", "IXL/Math", "Billing", "Onboarding" }, "IXL")));
 
+        if (e.Args.Any(a => a.Equals("--show-about", StringComparison.OrdinalIgnoreCase)))
+            Dispatcher.BeginInvoke(new Action(() =>
+                new Views.AboutWindow(_config!, _library!) { Owner = _launcher }.ShowDialog()));
+
         // Run the initial library scan in the background; it populates the (already-visible) launcher
         // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
         Task.Run(() => _library.LoadInitial());
