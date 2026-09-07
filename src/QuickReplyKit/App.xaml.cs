@@ -137,15 +137,6 @@ public partial class App : Application
                 dialog.ShowDialog();
             }));
 
-        if (e.Args.Any(a => a.Equals("--show-import-preview", StringComparison.OrdinalIgnoreCase)))
-            Dispatcher.BeginInvoke(new Action(() => Views.ImportPreviewWindow.Prompt(_launcher!, new[]
-            {
-                new ViewModels.ImportEntry("IXL/Welcome.json", ViewModels.ImportKind.New),
-                new ViewModels.ImportEntry("IXL/Licensing/No Campus License.json", ViewModels.ImportKind.Conflict),
-                new ViewModels.ImportEntry("General/Greeting.json", ViewModels.ImportKind.Identical),
-                new ViewModels.ImportEntry("Onboarding/First Steps.json", ViewModels.ImportKind.New),
-            })));
-
         if (e.Args.Any(a => a.Equals("--show-onboarding", StringComparison.OrdinalIgnoreCase)))
             Dispatcher.BeginInvoke(new Action(() => new Views.OnboardingWindow(_config.HotkeyGesture).ShowDialog()));
 
