@@ -54,6 +54,21 @@ public class LibraryScannerTests
     }
 
     [Fact]
+    public void Scan_LegacyFolderSidecar_IsInvisible()
+    {
+        using var t = new TempDir();
+        TestFiles.WriteResponse(t.Of("IXL", "Greeting.json"));
+        File.WriteAllText(t.Of("IXL", ".qrkfolder.json"), "{\"tags\":[\"legacy\"]}");
+
+        var snap = LibraryScanner.Scan(t.Path);
+
+        var response = Assert.Single(snap.AllResponses);
+        Assert.Equal("Greeting", response.Name);
+        Assert.Equal("IXL", response.CategoryPath);
+        Assert.True(File.Exists(t.Of("IXL", ".qrkfolder.json")));
+    }
+
+    [Fact]
     public void Scan_NonExistentRoot_ReturnsEmpty_CreatesNothing()
     {
         using var t = new TempDir();

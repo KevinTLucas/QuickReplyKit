@@ -46,6 +46,23 @@ public class LibraryWatcherAdversarialTests
     }
 
     [Fact]
+    public void LegacyFolderSidecarChanges_DoNotTriggerEvents()
+    {
+        using var t = new TempDir();
+        int events = 0;
+        string sidecar = t.Of(".qrkfolder.json");
+        using var w = new LibraryWatcher(t.Path, debounceMs: 150);
+        w.Changed += () => Interlocked.Increment(ref events);
+
+        File.WriteAllText(sidecar, "{\"tags\":[\"old\"]}");
+        File.WriteAllText(sidecar, "{\"tags\":[\"new\"]}");
+        File.Delete(sidecar);
+
+        Thread.Sleep(700);
+        Assert.Equal(0, events);
+    }
+
+    [Fact]
     public void Recovers_AfterRootDeletedAndRecreated()
     {
         using var t = new TempDir();

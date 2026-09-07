@@ -20,7 +20,7 @@ src/
     Library/                 LibraryScanner (parallel scan), LibraryWatcher (debounced), LibrarySeeder
     LibraryService.cs        coordinator: seed + scan (deferrable/off-thread) + watch; Search/FindByName/ToggleFavorite/MarkUsed
     Search/                  ResponseSearch (ranked, in-scope, lazy fuzzy, match spans), SearchHit
-    Storage/                 ResponseFile, AppConfig, RecentStore, ResponseManager, FolderMeta, TrashService,
+    Storage/                 ResponseFile, AppConfig, RecentStore, ResponseManager, TrashService,
                              ThemeResolver
     WindowPlacement.cs       monitor-aware launcher bounds validation
     Diagnostics/             rolling Logger + process-wide Diag facade
@@ -57,9 +57,9 @@ view-models, interop, and app wiring.
   { "schema": 1, "app": "IXL", "tags": ["licensing"], "html": "<p>…</p>", "favorite": false,
     "created": "…", "modified": "…" }
   ```
-- A folder may contain `.qrkfolder.json`, a `FolderMeta` sidecar holding folder tags. The scanner ignores it as a
-  response; direct folder copying preserves it. Export archives contain it, but current ZIP import incorrectly skips
-  it; that known gap is tracked in BACKLOG. Batch apply explicitly unions those tags into descendant response files.
+- Legacy libraries may contain `.qrkfolder.json` files from the retired folder-tag feature. They are inert: scanning,
+  watching, and importing ignore them, while direct folder copying/export and folder Trash may carry them as opaque
+  side files. QuickReplyKit never reads, writes, migrates, or deletes them on their own.
 - **App config**: `%APPDATA%\QuickReplyKit\config.json` (launcher hotkey, library path, paste mode, window bounds,
   theme, remember-window, verbose logging, Trash retention, onboarding flag, and **per-response instant-paste
   hotkeys** keyed by library-relative path). **Recent** is `%APPDATA%\QuickReplyKit\recent.json`; Favorites remain
@@ -111,8 +111,8 @@ view-models, interop, and app wiring.
   `AppConfig.Theme` = System/Light/Dark (System follows Windows). `App.xaml` owns one shared button template whose
   translucent hover/pressed layer preserves each button's base color; all view-local button styles inherit it.
   Per-Monitor-v2 DPI is enabled via `app.manifest`.
-- The editor uses a themed ComboBox template, standard text/highlight palettes, removable tag chips, and a visible
-  launcher Edit action. Category context actions edit folder tags and recursively batch-apply them.
+- The editor uses a themed ComboBox template, standard text/highlight palettes, removable response-tag chips, and a
+  visible launcher Edit action.
 - Import uses one immutable `ImportPlan` from `LibraryPorter.PlanImport`; the preview displays that exact plan and
   `LibraryPorter.Import(plan, decisions)` executes it. Entries are classified as New, Duplicate elsewhere, Identical,
   Conflict, Invalid, or Unsafe. New/duplicate/conflict rows have per-item actions plus an apply-to-all conflict choice;

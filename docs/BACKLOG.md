@@ -9,16 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P1 - Core Workflow And Major UI
 
-### B09 - Remove folder tags
-
-- **Severity:** P1 (requested product correction)
-- **Status:** Queued
-- **Impact:** Folder metadata adds complexity the user no longer wants. Folders should only organize or bulk-edit
-  contained responses; response tags remain.
-- **Acceptance:** Remove Folder tags and Apply folder tags controls; stop reading/writing/applying folder tags; remove
-  dead folder-tag model/tests/code; legacy `.qrkfolder.json` files are ignored safely and never appear as responses;
-  response tag chips and search remain; direct/ZIP sharing does not treat legacy sidecars as responses.
-
 ### B10 - Outlook-style folder-scoped search chip
 
 - **Severity:** P1

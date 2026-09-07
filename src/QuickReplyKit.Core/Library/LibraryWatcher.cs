@@ -11,6 +11,7 @@ namespace QuickReplyKit.Core.Library;
 /// </summary>
 public sealed class LibraryWatcher : IDisposable
 {
+    private const string LegacyFolderSidecar = ".qrkfolder.json";
     private readonly string _root;
     private readonly Timer _debounce;
     private readonly object _gate = new();
@@ -73,6 +74,9 @@ public sealed class LibraryWatcher : IDisposable
 
     private void OnChange(object sender, FileSystemEventArgs e)
     {
+        if (Path.GetFileName(e.Name ?? "").Equals(LegacyFolderSidecar, StringComparison.OrdinalIgnoreCase))
+            return;
+
         // *.json files and folders (no extension) are relevant; ignore other file noise.
         string ext = Path.GetExtension(e.Name ?? "");
         if (ext.Length == 0 || ext.Equals(".json", StringComparison.OrdinalIgnoreCase))

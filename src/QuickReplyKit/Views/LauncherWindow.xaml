@@ -32,9 +32,6 @@
 
         <!-- Nav category right-click menu (suppressed for the fixed Favorites/Recent/All nodes) -->
         <ContextMenu x:Key="NavContextMenu">
-            <MenuItem Header="Folder tags…" Click="MenuFolderTags_Click"/>
-            <MenuItem Header="Apply folder tags to responses…" Click="MenuApplyFolderTags_Click"/>
-            <Separator/>
             <MenuItem Header="Export folder…" Click="MenuExportFolder_Click"/>
             <Separator/>
             <MenuItem Header="_Delete folder…" Click="MenuDeleteFolder_Click"/>
