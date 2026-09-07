@@ -102,7 +102,9 @@ view-models, interop, and app wiring.
 - **Startup is non-blocking:** the window shows immediately in a "Loading library…" state; the initial scan runs
   on a background task (parallelized) and populates via the watcher's `Updated`→Dispatcher path.
 - **Theming:** `Themes/Light.xaml`/`Dark.xaml` swapped at runtime by `ThemeManager`; all views use `DynamicResource`.
-  `AppConfig.Theme` = System/Light/Dark (System follows Windows). Per-Monitor-v2 DPI via `app.manifest`.
+  `AppConfig.Theme` = System/Light/Dark (System follows Windows). `App.xaml` owns one shared button template whose
+  translucent hover/pressed layer preserves each button's base color; all view-local button styles inherit it.
+  Per-Monitor-v2 DPI is enabled via `app.manifest`.
 - The editor uses a themed ComboBox template, standard text/highlight palettes, removable tag chips, and a visible
   launcher Edit action. Category context actions edit folder tags and recursively batch-apply them.
 - Import uses one immutable `ImportPlan` from `LibraryPorter.PlanImport`; the preview displays that exact plan and

@@ -20,32 +20,22 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         </Style>
 
-        <Style x:Key="ToolButton" TargetType="Button">
+        <Style x:Key="ToolButton" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="MinWidth" Value="30"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="Margin" Value="0,0,4,0"/>
-            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontSize" Value="13"/>
         </Style>
 
-        <Style x:Key="ActionButton" TargetType="Button">
+        <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="16,7"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
             <Setter Property="MinWidth" Value="88"/>
-            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="{DynamicResource Accent}"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBg}"/>
             <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryButtonBg}"/>
         </Style>
     </Window.Resources>
 
@@ -106,13 +96,10 @@
             <Border.Resources>
                 <!-- Swatch: a small square whose fill IS the literal content colour it applies.
                      These are absolute (stored) colours, not theme chrome, so they are hardcoded. -->
-                <Style x:Key="Swatch" TargetType="Button">
+                <Style x:Key="Swatch" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
                     <Setter Property="Width" Value="20"/>
                     <Setter Property="Height" Value="20"/>
                     <Setter Property="Margin" Value="2"/>
-                    <Setter Property="Cursor" Value="Hand"/>
-                    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
-                    <Setter Property="BorderThickness" Value="1"/>
                 </Style>
             </Border.Resources>
             <WrapPanel Orientation="Horizontal">

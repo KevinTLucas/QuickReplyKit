@@ -3,6 +3,66 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
+        <!-- Shared button chrome. The translucent state layer preserves ordinary, primary,
+             destructive, icon, and content-swatch backgrounds in both themes. -->
+        <Style x:Key="ThemedButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4"/>
+                            <Border x:Name="State" Background="Transparent" CornerRadius="4"
+                                    IsHitTestVisible="False"/>
+                            <Border x:Name="StateOutlineOuter" BorderBrush="{DynamicResource ButtonOutlineOuter}"
+                                    BorderThickness="0" CornerRadius="4" IsHitTestVisible="False"/>
+                            <Border x:Name="StateOutlineInner" BorderBrush="{DynamicResource ButtonOutlineInner}"
+                                    BorderThickness="0" Margin="2" CornerRadius="2"
+                                    IsHitTestVisible="False"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="State" Property="Background"
+                                        Value="{DynamicResource ButtonHoverOverlay}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="StateOutlineOuter" Property="BorderThickness" Value="1"/>
+                                <Setter TargetName="StateOutlineInner" Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="StateOutlineOuter" Property="BorderThickness" Value="2"/>
+                                <Setter TargetName="StateOutlineInner" Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="State" Property="Background"
+                                        Value="{DynamicResource ButtonPressedOverlay}"/>
+                                <Setter TargetName="StateOutlineOuter" Property="BorderThickness" Value="3"/>
+                                <Setter TargetName="StateOutlineInner" Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ThemedButton}"/>
+
         <!-- App-wide themed ComboBox. The default WPF template paints its editable text area and
              popup with SystemColors, so in dark mode the field renders white-on-white and the
              dropdown items are near-black on dark. This template binds every part to the theme

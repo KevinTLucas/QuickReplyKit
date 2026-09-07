@@ -17,15 +17,10 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,3,0,0"/>
         </Style>
-        <Style x:Key="ActionButton" TargetType="Button">
+        <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
             <Setter Property="MinWidth" Value="80"/>
-            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style x:Key="Input" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource CardBg}"/>
