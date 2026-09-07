@@ -6,11 +6,12 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main` at this branch sync:** `afeabd5`.
+- **Current product baseline:** B01-B09 are merged; use `git rev-parse HEAD` for the current docs-inclusive tip.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **516 passed, 0 failed, 0 skipped** after B09 independent QA; the lower count removes retired folder-tag tests.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt successfully from green `main` after the latest
-  merge on 2026-09-07. It is the self-contained win-x64 single-file distribution; no external .NET install is needed.
+- **Portable publish:** B09's current self-contained build is at `publish/latest/QuickReplyKit.exe`. The canonical
+  `publish/QuickReplyKit.exe` was locked by the user's running instance and was deliberately not closed or replaced;
+  the next unlocked product publish promotes the latest build. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
