@@ -77,6 +77,8 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 
 ## Known Limits / Human Checks
 
+- **Current QA boundary:** the user has disabled Computer Use/UIAutomation/screenshot-based validation. Agents must
+  use headless tests and static UI review and must not move, focus, or close the user's live app or other windows.
 - A highlight with no explicit text color can be low contrast in dark mode, as in Word/Outlook. The editor's
   **Automatic (theme default)** text-color option restores inherited text color.
 - `--selftest-paste-rich` proves byte-correct CF_HTML on the clipboard; Win11 RichEdit does not import HTML, so it
@@ -96,5 +98,6 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
 4. Run build + tests; expect **455** green. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
-   both-theme screenshots, the four self-tests, a no-regression run, and a `--no-ff` merge.
+   headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
+   `--no-ff` merge. Do not drive or capture the user's desktop.
 6. Update this file, BACKLOG, README, and ARCHITECTURE as appropriate before considering the change done.

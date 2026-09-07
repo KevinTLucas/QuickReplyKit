@@ -58,16 +58,13 @@ dotnet run --project src/QuickReplyKit -- --show
 src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
 #   → must print:  PASTE=ok CLIPBOARD_RESTORED=ok
 ```
-**UI validation (WPF isn't browser-inspectable):** use the PowerShell helpers in `tools/`:
-- `tools/shoot.ps1 -Out <png> [-AppArgs "--show --size 780x520"] [-Wait 4]` — launch, screenshot the
-  window, kill it. Then **Read the PNG** to inspect. (`capture-window.ps1` = raw capture;
-  `make-icon.ps1` = regenerate `app.ico`.) Screenshots go under the session scratchpad, never the repo.
-- **Notepad QA hygiene (mandatory):** reuse one Notepad window/tab for repeated paste checks. Track every process or
-  tab the QA run creates and close it normally in cleanup (`finally` where applicable), choosing **Don't save** for
-  test content. Do not launch one fresh Notepad per iteration, and do not rely on `Stop-Process notepad` as routine
-  cleanup: Windows 11 Notepad session restore retains force-killed tabs and reopens them later. Before reporting QA
-  complete, verify no test-created Notepad tabs/windows or QuickReplyKit processes remain. Never close a pre-existing
-  user Notepad window unless the user explicitly asks.
+**Current QA boundary (mandatory):** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated
+mouse/keyboard input, or any other desktop-driving tool. The user keeps the live app on another monitor while work is
+underway. Validate with command-line build/tests, focused headless harnesses, self-test output, and static XAML/code
+review. Run a Windows paste self-test only when it will not disturb the user's desktop session.
+- **Notepad QA hygiene:** if a paste check is explicitly needed, reuse one QA-created Notepad window/tab and close it
+  normally in cleanup (`finally` where applicable), choosing **Don't save**. Never launch one Notepad per iteration,
+  use force-kill as normal cleanup, move/focus the user's windows, or close a pre-existing user Notepad window.
 
 ## Conventions & guardrails (do not violate without a note in STATUS.md)
 - **No third-party packages.** BCL / native WPF only — no NuGet for the app or runtime. (Win32 via
@@ -87,7 +84,7 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
 
 ## How we work (process)
 - **Phased delivery.** Work proceeds in numbered phases (see STATUS.md). Each phase: implement →
-  validate (build/test/screenshot/self-test) → **independent QA** → fix → merge.
+  validate (build/test/focused headless checks/static UI review) → **independent QA** → fix → merge.
 - **Subagents.** Implementation is done by a subagent; **QA/validation by a SEPARATE subagent**
   (independence catches the implementer's blind spots). Parallelize independent work with subagents —
   use **git worktree isolation** for agents that would otherwise collide on `bin/obj` or files.
@@ -124,7 +121,8 @@ the implementation against the acceptance text and leave any genuine gap in BACK
 - [`README.md`](README.md) — user-facing guide.
 - [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work and explicitly deferred future ideas
   (completed implementation and QA history is in STATUS and Git).
-- `tools/` — `shoot.ps1` (launch+screenshot+kill), `capture-window.ps1`, `make-icon.ps1`.
+- `tools/` — optional legacy screenshot helpers (do not use while the current no-desktop-automation directive is in
+  force) and `make-icon.ps1`.
 
 > Historical per-phase work orders (PHASE*, ROADMAP, V2-PLAN, UX-REVIEW) were removed once the work shipped — they'd
 > only bloat a fresh pickup. The build history lives in git; the docs above are the living, authoritative set.
