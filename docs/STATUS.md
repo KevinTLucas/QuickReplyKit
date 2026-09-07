@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main` product merge:** `c596e29` (B01 right-click crash fix).
+- **Current `main`:** `70e3b0b` (B01 fix plus handoff update); product merge `c596e29`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **436 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -67,6 +67,11 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 **Known confirmed regressions/defects:** backup restore correctness, import preview/import disagreement and preview
 containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
+
+**Active worktrees:** `bugfix/backup-restore-integrity` contains an uncommitted B02 implementation under review;
+`bugfix/import-integrity` contains an early uncommitted B03 planner. Their agents stopped at the current usage limit,
+so resume these exact worktrees rather than starting duplicate branches. Branch names must stay human-readable and
+must not contain AI/vendor names, agent IDs, or generated session labels.
 
 ## Known Limits / Human Checks
 

@@ -27,3 +27,5 @@ by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STAT
 **Golden rules (detailed in `CLAUDE.md`):** `main` is always green; each change on a branch → ponytail (BCL/native
 only, no NuGet) → separate-subagent QA → merge `--no-ff`; **update the handoff docs (STATUS.md first) on every change** —
 a change isn't done until code, tests, and docs are consistent. That discipline is what preserves continuity.
+Use concise, human-readable branch names that describe the feature or bug; never include an AI/vendor name, agent UUID,
+or generated worktree/session identifier.
