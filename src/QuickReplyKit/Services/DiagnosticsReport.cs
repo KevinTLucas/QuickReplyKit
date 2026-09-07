@@ -37,10 +37,10 @@ internal static class DiagnosticsReport
             : "unavailable");
         text.AppendLine();
         Row("Library folder", Redact(config.LibraryPath));
-        Row("Config file", Redact(AppPaths.ConfigPath));
-        Row("Logs folder", Redact(AppPaths.LogsDir));
+        Row("Config file", @"%APPDATA%\QuickReplyKit\config.json");
+        Row("Logs folder", @"%APPDATA%\QuickReplyKit\logs");
         Row("Backup folder", Redact(config.BackupPath));
-        Row("Trash folder", Redact(AppPaths.TrashDir));
+        Row("Trash folder", @"%APPDATA%\QuickReplyKit\trash");
         return text.ToString();
     }
 
@@ -56,7 +56,7 @@ internal static class DiagnosticsReport
             .TrimEnd(Path.DirectorySeparatorChar);
         if (normalized.Equals(profile, StringComparison.OrdinalIgnoreCase)) return "%USERPROFILE%";
         if (normalized.StartsWith(profile + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            return "%USERPROFILE%" + normalized[profile.Length..];
+            return @"%USERPROFILE%\[private path]";
 
         // Also hide 8.3 aliases such as C:\Users\KEVIN_~1, which GetFullPath does not expand.
         string root = Path.GetPathRoot(normalized) ?? "";
@@ -64,7 +64,7 @@ internal static class DiagnosticsReport
         if (normalized.StartsWith(usersPrefix, StringComparison.OrdinalIgnoreCase))
         {
             int remainder = normalized.IndexOf(Path.DirectorySeparatorChar, usersPrefix.Length);
-            return remainder < 0 ? "%USERPROFILE%" : "%USERPROFILE%" + normalized[remainder..];
+            return remainder < 0 ? "%USERPROFILE%" : @"%USERPROFILE%\[private path]";
         }
 
         return normalized.StartsWith("\\\\", StringComparison.Ordinal)

@@ -14,14 +14,15 @@ public class DiagnosticsReportTests
     {
         using var temp = new TempDir();
         string secret = "PRIVATE-" + Guid.NewGuid().ToString("N");
-        string libraryPath = temp.Of("library");
-        TestFiles.WriteResponse(Path.Combine(libraryPath, secret + ".json"), $"<p>{secret}</p>", secret);
-        File.WriteAllText(Path.Combine(libraryPath, "broken.json"), "{");
+        string scannedLibrary = temp.Of("library");
+        TestFiles.WriteResponse(Path.Combine(scannedLibrary, secret + ".json"), $"<p>{secret}</p>", secret);
+        File.WriteAllText(Path.Combine(scannedLibrary, "broken.json"), "{");
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         var config = new AppConfig
         {
-            LibraryPath = libraryPath,
-            BackupPath = temp.Of("backups"),
+            LibraryPath = Path.Combine(profile, secret, "Responses"),
+            BackupPath = @"\\server\" + secret + @"\backups",
             HotkeyGesture = "Ctrl+Alt+D",
             VerboseLogging = false,
             ResponseHotkeys =
@@ -30,7 +31,7 @@ public class DiagnosticsReportTests
                 new() { RelativePath = "missing.json", Gesture = "Ctrl+Alt+2" },
             },
         };
-        using var library = new LibraryService(libraryPath, recentPath: temp.Of("recent.json"), watch: false);
+        using var library = new LibraryService(scannedLibrary, recentPath: temp.Of("recent.json"), watch: false);
         var entries = new[]
         {
             new HotkeyService.Entry("Ctrl+Alt+D", true, null, false, true),
@@ -49,10 +50,9 @@ public class DiagnosticsReportTests
             Assert.Contains("Watcher               : not attached", report);
             Assert.Contains("Logging               : active (verbose)", report);
             Assert.Contains("Trash folder", report);
-            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            Assert.StartsWith("%USERPROFILE%", DiagnosticsReport.Redact(Path.Combine(profile, "Documents", "QRK")));
+            Assert.Equal(@"%USERPROFILE%\[private path]", DiagnosticsReport.Redact(Path.Combine(profile, "Documents", "QRK")));
             Assert.Equal("%USERPROFILE%", DiagnosticsReport.Redact(profile));
-            Assert.Equal("%USERPROFILE%\\AppData\\Local\\Temp\\QRK",
+            Assert.Equal(@"%USERPROFILE%\[private path]",
                 DiagnosticsReport.Redact(@"C:\Users\KEVIN_~1\AppData\Local\Temp\QRK"));
             Assert.Equal("[custom location]", DiagnosticsReport.Redact(@"D:\Customer Name\Shared Responses"));
             Assert.Equal("[network location]", DiagnosticsReport.Redact(@"\\server\customer\responses"));
