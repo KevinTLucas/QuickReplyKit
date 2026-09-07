@@ -41,6 +41,9 @@ public sealed class AppConfig
     /// <summary>Verbose (Debug/Verbose) diagnostic logging. Off by default → Info+ only.</summary>
     public bool VerboseLogging { get; set; } = false;
 
+    /// <summary>Set once the first-run onboarding has been shown, so it never pops again.</summary>
+    public bool OnboardingSeen { get; set; } = false;
+
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

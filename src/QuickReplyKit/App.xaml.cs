@@ -129,6 +129,17 @@ public partial class App : Application
             Dispatcher.BeginInvoke(new Action(() => new Views.BackupWindow(
                 _config!.LibraryPath, _library!, () => _vm!.OnLibraryUpdated()) { Owner = _launcher }.ShowDialog()));
 
+        if (e.Args.Any(a => a.Equals("--show-onboarding", StringComparison.OrdinalIgnoreCase)))
+            Dispatcher.BeginInvoke(new Action(() => new Views.OnboardingWindow(_config.HotkeyGesture).ShowDialog()));
+
+        // First-run intro (once): show the short onboarding, then remember it so it never pops again.
+        if (!_config.OnboardingSeen)
+        {
+            _config.OnboardingSeen = true;
+            _config.Save();
+            Dispatcher.BeginInvoke(new Action(() => new Views.OnboardingWindow(_config.HotkeyGesture).ShowDialog()));
+        }
+
         // Run the initial library scan in the background; it populates the (already-visible) launcher
         // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
         Task.Run(() => _library.LoadInitial());
