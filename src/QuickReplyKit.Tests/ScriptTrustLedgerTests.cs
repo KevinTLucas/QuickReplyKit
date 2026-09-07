@@ -1,6 +1,8 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using QuickReplyKit.Core;
 using QuickReplyKit.Core.Scripts;
 
 namespace QuickReplyKit.Tests;
@@ -95,5 +97,85 @@ public class ScriptTrustLedgerTests
         var blocked = ScriptTrustLedger.Open(Path.Combine(directoryAsFile, "trust.json")).Value!;
         Assert.False(blocked.Trust(Definition()).Success);
         Assert.False(blocked.IsTrusted(Definition()));
+    }
+
+    [Fact]
+    public void PublicOpen_IsAnchoredToAppDataAndPathOverloadIsNotPublic()
+    {
+        Assert.EndsWith(Path.Combine("QuickReplyKit", "script-trust.json"), AppPaths.ScriptTrustPath);
+        Assert.NotNull(typeof(ScriptTrustLedger).GetMethod(nameof(ScriptTrustLedger.Open), Type.EmptyTypes));
+        Assert.Null(typeof(ScriptTrustLedger).GetMethod(nameof(ScriptTrustLedger.Open), [typeof(string)]));
+    }
+
+    [Fact]
+    public void StaleWriters_MergeTrustAndCannotResurrectRevokedEntry()
+    {
+        using var temp = new TempDir();
+        string path = temp.Of("trust.json");
+        var first = ScriptTrustLedger.Open(path).Value!;
+        var stale = ScriptTrustLedger.Open(path).Value!;
+        var a = Definition();
+        var b = a with { Id = "second", Name = "Second" };
+
+        Assert.True(first.Trust(a).Success);
+        Assert.True(stale.Trust(b).Success);
+        Assert.True(first.Revoke(a.Id).Success);
+        Assert.True(stale.Trust(b with { Name = "Renamed" }).Success);
+
+        var current = ScriptTrustLedger.Open(path).Value!;
+        Assert.False(current.IsTrusted(a));
+        Assert.True(current.IsTrusted(b));
+        Assert.False(stale.IsTrusted(a));
+    }
+
+    [Theory]
+    [InlineData("{\"version\":1,\"version\":1,\"trusted\":{}}")]
+    [InlineData("{\"version\":1,\"trusted\":{},\"extra\":true}")]
+    [InlineData("{\"version\":1,\"trusted\":{},\"trusted\":{\"stable-id\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}}")]
+    [InlineData("{\"version\":1,\"trusted\":{\"stable-id\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"stable-id\":\"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\"}}")]
+    public void Open_DuplicateOrUnknownFieldsFailClosed(string json)
+    {
+        using var temp = new TempDir();
+        string path = temp.Of("trust.json");
+        File.WriteAllText(path, json);
+
+        var opened = ScriptTrustLedger.Open(path);
+
+        Assert.False(opened.Success);
+        Assert.Equal("[script trust error: invalid-ledger]", opened.Marker);
+        Assert.False(opened.Value!.IsTrusted(Definition()));
+    }
+
+    [Fact]
+    public void Open_RejectsOversizedLedgerBeforeReadingItsContents()
+    {
+        using var temp = new TempDir();
+        string path = temp.Of("trust.json");
+        using (var file = File.Create(path)) file.SetLength(ScriptTrustLedger.MaxFileBytes + 1L);
+
+        var opened = ScriptTrustLedger.Open(path);
+
+        Assert.False(opened.Success);
+        Assert.Equal("[script trust error: file-limit]", opened.Marker);
+    }
+
+    [Fact]
+    public void Open_RejectsEntryOverflowAndMutationDoesNotReplaceMalformedLedger()
+    {
+        using var temp = new TempDir();
+        string path = temp.Of("trust.json");
+        var trusted = Enumerable.Range(0, ScriptTrustLedger.MaxEntries + 1)
+            .ToDictionary(i => $"id-{i}", _ => new string('A', 64));
+        string json = JsonSerializer.Serialize(new { version = 1, trusted });
+        File.WriteAllText(path, json);
+
+        var opened = ScriptTrustLedger.Open(path);
+        string before = File.ReadAllText(path);
+        var mutation = opened.Value!.Trust(Definition());
+
+        Assert.False(opened.Success);
+        Assert.False(mutation.Success);
+        Assert.Equal(before, File.ReadAllText(path));
+        Assert.Empty(Directory.EnumerateFiles(temp.Path, "*.tmp"));
     }
 }

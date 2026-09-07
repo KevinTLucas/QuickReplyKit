@@ -73,4 +73,37 @@ public class ScriptDefinitionFileTests
         Assert.False(ScriptDefinitionFile.Load(temp.Of("script.json")).Success);
         Assert.False(ScriptDefinitionFile.Load(temp.Of("missing" + ScriptDefinitionFile.Extension)).Success);
     }
+
+    [Fact]
+    public void Load_RejectsOversizedFileBeforeReadingItsContents()
+    {
+        using var temp = new TempDir();
+        string path = temp.Of("huge" + ScriptDefinitionFile.Extension);
+        using (var file = File.Create(path)) file.SetLength(ScriptDefinitionFile.MaxFileBytes + 1L);
+
+        var result = ScriptDefinitionFile.Load(path);
+
+        Assert.False(result.Success);
+        Assert.Equal("[script definition error: file-limit]", result.Marker);
+    }
+
+    [Fact]
+    public void Save_MaximallyEscapedValidDefinitionAlwaysLoadsAndLeavesNoTempFile()
+    {
+        using var temp = new TempDir();
+        string path = temp.Of("large" + ScriptDefinitionFile.Extension);
+        string expression = "concat(" + string.Join(',', Enumerable.Repeat("\"" + new string('é', 1_000) + "\"", 4)) + ")";
+        var definition = new ScriptDefinition(
+            new string('é', ScriptDefinitionFile.MaxIdChars),
+            new string('é', ScriptDefinitionFile.MaxNameChars),
+            ScriptDefinitionFile.Language, true, expression);
+
+        var saved = ScriptDefinitionFile.Save(path, definition);
+        var loaded = ScriptDefinitionFile.Load(path);
+
+        Assert.True(saved.Success, saved.Error);
+        Assert.True(loaded.Success, loaded.Error);
+        Assert.Equal(definition, loaded.Value);
+        Assert.Empty(Directory.EnumerateFiles(temp.Path, "*.tmp"));
+    }
 }

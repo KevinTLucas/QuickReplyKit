@@ -9,6 +9,8 @@ namespace QuickReplyKit.Core.Scripts;
 /// literals, fixed clock context, comparisons/boolean operators, and a closed set of pure functions.
 /// It has no assignment, loops, user functions, members, reflection, I/O, process, environment,
 /// clipboard, UI, native, regex, response lookup, or dynamic evaluation capability.
+/// Operator precedence, highest to lowest, is parentheses/calls, <c>not</c>, comparisons,
+/// <c>and</c>, then <c>or</c>. Chained comparisons are not supported.
 /// </summary>
 public static class ScriptExpression
 {
@@ -29,7 +31,7 @@ public static class ScriptExpression
     {
         try
         {
-            _ = Parse(source, DefaultLimits);
+            Parse(source, DefaultLimits).ValidateType();
             return ScriptOperationResult.Ok();
         }
         catch (ScriptException ex)
@@ -410,11 +412,14 @@ public static class ScriptExpression
     private abstract class Node(int depth)
     {
         public int Depth { get; } = depth;
+        public abstract ValueKind ValidateType();
         public abstract Value Evaluate(EvaluationContext context);
     }
 
     private sealed class LiteralNode(Value value) : Node(1)
     {
+        public override ValueKind ValidateType() => value.Kind;
+
         public override Value Evaluate(EvaluationContext context)
         {
             context.Step();
@@ -424,6 +429,8 @@ public static class ScriptExpression
 
     private sealed class ContextNode(string name) : Node(1)
     {
+        public override ValueKind ValidateType() => name == "weekday" ? ValueKind.String : ValueKind.Integer;
+
         public override Value Evaluate(EvaluationContext context)
         {
             context.Step();
@@ -442,6 +449,12 @@ public static class ScriptExpression
 
     private sealed class NotNode(Node operand) : Node(operand.Depth + 1)
     {
+        public override ValueKind ValidateType()
+        {
+            RequireType(operand.ValidateType(), ValueKind.Boolean, "not requires a boolean argument.");
+            return ValueKind.Boolean;
+        }
+
         public override Value Evaluate(EvaluationContext context)
         {
             context.Step();
@@ -452,6 +465,23 @@ public static class ScriptExpression
     private sealed class BinaryNode(TokenKind operation, Node left, Node right)
         : Node(Math.Max(left.Depth, right.Depth) + 1)
     {
+        public override ValueKind ValidateType()
+        {
+            ValueKind a = left.ValidateType();
+            ValueKind b = right.ValidateType();
+            if (operation is TokenKind.And or TokenKind.Or)
+            {
+                string name = operation.ToString().ToLowerInvariant();
+                RequireType(a, ValueKind.Boolean, $"{name} requires boolean arguments.");
+                RequireType(b, ValueKind.Boolean, $"{name} requires boolean arguments.");
+            }
+            else if (a != b)
+                throw new ScriptException("type", "Comparisons require operands of the same type.");
+            else if (operation is not (TokenKind.Equal or TokenKind.NotEqual))
+                RequireType(a, ValueKind.Integer, "Ordering comparisons require integers.");
+            return ValueKind.Boolean;
+        }
+
         public override Value Evaluate(EvaluationContext context)
         {
             context.Step();
@@ -495,6 +525,16 @@ public static class ScriptExpression
     private sealed class CallNode(string name, IReadOnlyList<Node> arguments)
         : Node((arguments.Count == 0 ? 0 : arguments.Max(argument => argument.Depth)) + 1)
     {
+        public override ValueKind ValidateType() => name switch
+        {
+            "if" => ValidateIf(),
+            "concat" => ValidateConcat(),
+            "upper" or "lower" or "trim" => ValidateStrings(1, ValueKind.String),
+            "date" or "time" => ValidateStrings(0, ValueKind.String),
+            "contains" or "startsWith" or "endsWith" => ValidateStrings(2, ValueKind.Boolean),
+            _ => throw new ScriptException("denied-capability", $"Function '{name}' is not allowed."),
+        };
+
         public override Value Evaluate(EvaluationContext context)
         {
             context.Step();
@@ -519,6 +559,31 @@ public static class ScriptExpression
             RequireCount(3);
             bool condition = arguments[0].Evaluate(context).RequireBoolean("if");
             return arguments[condition ? 1 : 2].Evaluate(context);
+        }
+
+        private ValueKind ValidateIf()
+        {
+            RequireCount(3);
+            RequireType(arguments[0].ValidateType(), ValueKind.Boolean, "if requires a boolean condition.");
+            ValueKind whenTrue = arguments[1].ValidateType();
+            ValueKind whenFalse = arguments[2].ValidateType();
+            if (whenTrue != whenFalse)
+                throw new ScriptException("type", "if branches must have the same type.");
+            return whenTrue;
+        }
+
+        private ValueKind ValidateConcat()
+        {
+            foreach (Node argument in arguments) _ = argument.ValidateType();
+            return ValueKind.String;
+        }
+
+        private ValueKind ValidateStrings(int count, ValueKind result)
+        {
+            RequireCount(count);
+            foreach (Node argument in arguments)
+                RequireType(argument.ValidateType(), ValueKind.String, $"{name} requires string arguments.");
+            return result;
         }
 
         private string OneString(EvaluationContext context)
@@ -546,5 +611,10 @@ public static class ScriptExpression
             if (arguments.Count != count)
                 throw new ScriptException("argument-count", $"{name} requires {count} arguments.");
         }
+    }
+
+    private static void RequireType(ValueKind actual, ValueKind expected, string error)
+    {
+        if (actual != expected) throw new ScriptException("type", error);
     }
 }

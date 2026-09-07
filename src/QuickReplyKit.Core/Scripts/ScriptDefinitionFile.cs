@@ -10,7 +10,8 @@ public static class ScriptDefinitionFile
     public const string Language = "qrk-expr-1";
     public const int MaxIdChars = 128;
     public const int MaxNameChars = 128;
-    public const int MaxFileChars = 16_384;
+    public const int MaxFileChars = 32_768;
+    public const int MaxFileBytes = MaxFileChars * 4;
 
     private static readonly HashSet<string> Fields =
         ["id", "name", "language", "enabled", "expression"];
@@ -20,8 +21,6 @@ public static class ScriptDefinitionFile
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
     };
-
-    private sealed record Dto(string Id, string Name, string Language, bool Enabled, string Expression);
 
     public static ScriptValueResult<ScriptDefinition> Parse(string? json)
     {
@@ -76,7 +75,11 @@ public static class ScriptDefinitionFile
     {
         if (!HasExpectedExtension(path))
             return Fail("extension", $"Definitions must use the {Extension} extension.");
-        try { return Parse(File.ReadAllText(path)); }
+        try { return Parse(ScriptFile.ReadBounded(path, MaxFileBytes, MaxFileChars)); }
+        catch (InvalidDataException ex) when (ex.Message == "file-limit")
+        {
+            return Fail("file-limit", $"The definition exceeds {MaxFileChars} characters or {MaxFileBytes} bytes.");
+        }
         catch (Exception ex) { return Fail("read-failed", ex.Message); }
     }
 
@@ -90,11 +93,10 @@ public static class ScriptDefinitionFile
 
         try
         {
-            string? directory = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-            var dto = new Dto(definition.Id, definition.Name, definition.Language,
-                definition.Enabled, definition.Expression);
-            File.WriteAllText(path, JsonSerializer.Serialize(dto, WriteOptions));
+            string json = JsonSerializer.Serialize(definition, WriteOptions);
+            if (json.Length > MaxFileChars || System.Text.Encoding.UTF8.GetByteCount(json) > MaxFileBytes)
+                return ScriptOperationResult.Fail("definition ", "file-limit", "The serialized definition exceeds its storage limit.");
+            ScriptFile.WriteAtomic(path, json);
             return ScriptOperationResult.Ok();
         }
         catch (Exception ex)

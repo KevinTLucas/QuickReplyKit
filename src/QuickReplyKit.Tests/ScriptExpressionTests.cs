@@ -59,6 +59,42 @@ public class ScriptExpressionTests
         Assert.Equal("ok", result.Output);
     }
 
+    [Theory]
+    [InlineData("upper()")]
+    [InlineData("1 and true")]
+    [InlineData("contains(\"x\")")]
+    [InlineData("if(true, \"text\", 1)")]
+    [InlineData("if(true, \"ok\", upper(1))")]
+    public void Validate_RejectsStaticallyInvalidArityAndTypes(string expression)
+    {
+        Assert.False(ScriptExpression.Validate(expression).Success);
+    }
+
+    [Fact]
+    public void Validate_AcceptsWellTypedExpression()
+    {
+        Assert.True(ScriptExpression.Validate("if(hour < 12, upper(\"am\"), concat(\"p\", \"m\"))").Success);
+    }
+
+    [Theory]
+    [InlineData("not true == false", "true")]       // (not true) == false
+    [InlineData("true or false and false", "true")] // true or (false and false)
+    [InlineData("not false and false", "false")]    // (not false) and false
+    public void Operators_PrecedenceIsDocumentedAndStable(string expression, string expected)
+    {
+        Assert.True(ScriptExpression.Validate(expression).Success);
+        Assert.Equal(expected, ScriptExpression.Evaluate(expression, Now).Output);
+    }
+
+    [Fact]
+    public void Operators_NotBindsBeforeComparison()
+    {
+        var result = ScriptExpression.Validate("not 1 == 2");
+
+        Assert.False(result.Success);
+        Assert.Equal("[script error: type]", result.Marker);
+    }
+
     [Fact]
     public void Evaluate_HtmlEncodesOnlyAtOutputBoundary()
     {

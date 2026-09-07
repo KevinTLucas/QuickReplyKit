@@ -16,6 +16,9 @@ public static class AppPaths
     public static string ConfigPath => Path.Combine(AppDataDir, "config.json");
     public static string RecentPath => Path.Combine(AppDataDir, "recent.json");
 
+    /// <summary>Local-only approvals for sandboxed script definitions.</summary>
+    public static string ScriptTrustPath => Path.Combine(AppDataDir, "script-trust.json");
+
     /// <summary>Rolling diagnostic logs (see <c>Diagnostics.Logger</c>).</summary>
     public static string LogsDir => Path.Combine(AppDataDir, "logs");
 

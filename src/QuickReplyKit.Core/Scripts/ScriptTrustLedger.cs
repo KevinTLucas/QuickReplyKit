@@ -11,43 +11,37 @@ namespace QuickReplyKit.Core.Scripts;
 /// </summary>
 public sealed class ScriptTrustLedger
 {
-    private static readonly JsonSerializerOptions Options = new()
+    public const int MaxEntries = 512;
+    public const int MaxFileChars = 524_288;
+    public const int MaxFileBytes = MaxFileChars * 4;
+
+    private static readonly JsonSerializerOptions WriteOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
     };
 
     private readonly string _path;
-    private Dictionary<string, string> _trusted;
 
-    private sealed class Dto
-    {
-        public int Version { get; set; }
-        public Dictionary<string, string>? Trusted { get; set; }
-    }
+    private sealed record Dto(int Version, Dictionary<string, string> Trusted);
 
-    private ScriptTrustLedger(string path, Dictionary<string, string>? trusted = null)
-    {
-        _path = path;
-        _trusted = trusted ?? new(StringComparer.Ordinal);
-    }
+    private ScriptTrustLedger(string path) => _path = path;
 
-    public static ScriptValueResult<ScriptTrustLedger> Open(string path)
+    public static ScriptValueResult<ScriptTrustLedger> Open() => Open(AppPaths.ScriptTrustPath);
+
+    internal static ScriptValueResult<ScriptTrustLedger> Open(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
             return Fail(path ?? "", "path", "The trust ledger path must not be blank.");
 
         try
         {
-            if (!File.Exists(path)) return ScriptValueResult<ScriptTrustLedger>.Ok(new(path));
-
-            var dto = JsonSerializer.Deserialize<Dto>(File.ReadAllText(path), Options);
-            if (dto?.Version != 1 || dto.Trusted is null ||
-                dto.Trusted.Any(pair => string.IsNullOrWhiteSpace(pair.Key) || !ValidHash(pair.Value)))
-                return Fail(path, "invalid-ledger", "The trust ledger is malformed.");
-
-            return ScriptValueResult<ScriptTrustLedger>.Ok(
-                new(path, new Dictionary<string, string>(dto.Trusted, StringComparer.Ordinal)));
+            path = Path.GetFullPath(path);
+            using var held = Hold(path);
+            var loaded = Read(path);
+            return loaded.Success
+                ? ScriptValueResult<ScriptTrustLedger>.Ok(new(path))
+                : new(false, new(path), loaded.Marker, loaded.Error);
         }
         catch (Exception ex)
         {
@@ -57,13 +51,13 @@ public sealed class ScriptTrustLedger
 
     public bool IsTrusted(ScriptDefinition? definition)
     {
-        if (!ScriptDefinitionFile.Validate(definition).Success ||
-            !_trusted.TryGetValue(definition!.Id, out var hash)) return false;
-
+        if (!ScriptDefinitionFile.Validate(definition).Success) return false;
         try
         {
-            return CryptographicOperations.FixedTimeEquals(
-                Convert.FromHexString(hash), Convert.FromHexString(ComputeFingerprint(definition)));
+            using var held = Hold(_path);
+            var loaded = Read(_path);
+            if (!loaded.Success || !loaded.Value!.TryGetValue(definition!.Id, out string? hash)) return false;
+            return string.Equals(hash, ComputeFingerprint(definition), StringComparison.Ordinal);
         }
         catch { return false; }
     }
@@ -72,22 +66,14 @@ public sealed class ScriptTrustLedger
     {
         var validation = ScriptDefinitionFile.Validate(definition);
         if (!validation.Success) return validation;
-
-        var next = new Dictionary<string, string>(_trusted, StringComparer.Ordinal)
-        {
-            [definition.Id] = ComputeFingerprint(definition),
-        };
-        return Persist(next);
+        return Mutate(next => next[definition.Id] = ComputeFingerprint(definition));
     }
 
     public ScriptOperationResult Revoke(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
             return ScriptOperationResult.Fail("trust ", "id", "The id must not be blank.");
-
-        var next = new Dictionary<string, string>(_trusted, StringComparer.Ordinal);
-        next.Remove(id);
-        return Persist(next);
+        return Mutate(next => next.Remove(id));
     }
 
     public static string ComputeFingerprint(ScriptDefinition definition)
@@ -96,14 +82,23 @@ public sealed class ScriptTrustLedger
         return Convert.ToHexString(SHA256.HashData(bytes));
     }
 
-    private ScriptOperationResult Persist(Dictionary<string, string> next)
+    private ScriptOperationResult Mutate(Action<Dictionary<string, string>> change)
     {
         try
         {
-            string? directory = Path.GetDirectoryName(_path);
-            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new Dto { Version = 1, Trusted = next }, Options));
-            _trusted = next;
+            using var held = Hold(_path);
+            var loaded = Read(_path);
+            if (!loaded.Success) return new(false, loaded.Marker, loaded.Error);
+
+            var next = loaded.Value!;
+            change(next);
+            if (next.Count > MaxEntries)
+                return ScriptOperationResult.Fail("trust ", "entry-limit", $"The trust ledger exceeds {MaxEntries} entries.");
+
+            string json = JsonSerializer.Serialize(new Dto(1, next), WriteOptions);
+            if (json.Length > MaxFileChars || Encoding.UTF8.GetByteCount(json) > MaxFileBytes)
+                return ScriptOperationResult.Fail("trust ", "file-limit", "The trust ledger exceeds its storage limit.");
+            ScriptFile.WriteAtomic(_path, json);
             return ScriptOperationResult.Ok();
         }
         catch (Exception ex)
@@ -112,8 +107,79 @@ public sealed class ScriptTrustLedger
         }
     }
 
+    private static ScriptValueResult<Dictionary<string, string>> Read(string path)
+    {
+        if (!File.Exists(path))
+            return ScriptValueResult<Dictionary<string, string>>.Ok(new(StringComparer.Ordinal));
+
+        try
+        {
+            string json = ScriptFile.ReadBounded(path, MaxFileBytes, MaxFileChars);
+            using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 4 });
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return Invalid("The trust ledger must be a JSON object.");
+
+            var top = document.RootElement.EnumerateObject().ToList();
+            if (top.Count != 2 || top.Select(p => p.Name).Distinct(StringComparer.Ordinal).Count() != 2 ||
+                top.Any(p => p.Name is not ("version" or "trusted")))
+                return Invalid("The trust ledger contains missing, duplicate, or unknown fields.");
+            if (!document.RootElement.TryGetProperty("version", out var version) ||
+                !version.TryGetInt32(out int value) || value != 1 ||
+                !document.RootElement.TryGetProperty("trusted", out var trusted) ||
+                trusted.ValueKind != JsonValueKind.Object)
+                return Invalid("The trust ledger schema is invalid.");
+
+            var result = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var entry in trusted.EnumerateObject())
+            {
+                if (result.Count >= MaxEntries || !ValidId(entry.Name) ||
+                    entry.Value.ValueKind != JsonValueKind.String || !ValidHash(entry.Value.GetString()) ||
+                    !result.TryAdd(entry.Name, entry.Value.GetString()!))
+                    return Invalid("The trust ledger contains invalid or duplicate entries.");
+            }
+            return ScriptValueResult<Dictionary<string, string>>.Ok(result);
+        }
+        catch (InvalidDataException ex) when (ex.Message == "file-limit")
+        {
+            return ScriptValueResult<Dictionary<string, string>>.Fail("trust ", "file-limit",
+                "The trust ledger exceeds its storage limit.");
+        }
+        catch (JsonException ex)
+        {
+            return Invalid(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return ScriptValueResult<Dictionary<string, string>>.Fail("trust ", "read-failed", ex.Message);
+        }
+    }
+
+    private static IDisposable Hold(string path)
+    {
+        string key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path.ToUpperInvariant())));
+        var mutex = new Mutex(false, "Local\\QuickReplyKit.ScriptTrust." + key);
+        try { mutex.WaitOne(); }
+        catch (AbandonedMutexException) { }
+        return new HeldMutex(mutex);
+    }
+
+    private sealed class HeldMutex(Mutex mutex) : IDisposable
+    {
+        public void Dispose()
+        {
+            try { mutex.ReleaseMutex(); }
+            finally { mutex.Dispose(); }
+        }
+    }
+
+    private static bool ValidId(string id) =>
+        !string.IsNullOrWhiteSpace(id) && id.Length <= ScriptDefinitionFile.MaxIdChars && !id.Any(char.IsControl);
+
     private static bool ValidHash(string? hash) =>
         hash is { Length: 64 } && hash.All(Uri.IsHexDigit);
+
+    private static ScriptValueResult<Dictionary<string, string>> Invalid(string error) =>
+        ScriptValueResult<Dictionary<string, string>>.Fail("trust ", "invalid-ledger", error);
 
     private static ScriptValueResult<ScriptTrustLedger> Fail(string path, string code, string error) =>
         new(false, new ScriptTrustLedger(path), $"[script trust error: {code}]", error);
