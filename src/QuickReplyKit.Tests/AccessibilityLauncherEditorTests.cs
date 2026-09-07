@@ -1,3 +1,4 @@
+using System.IO;
 using System.Xml.Linq;
 
 namespace QuickReplyKit.Tests;
@@ -17,7 +18,8 @@ public class AccessibilityLauncherEditorTests
             Assert.False(string.IsNullOrWhiteSpace((string?)Named(launcher, name).Attribute("AutomationProperties.Name")));
 
         Assert.Contains(launcher.Descendants(), e => e.Name.LocalName == "TextBlock" &&
-            (string?)e.Attribute("AutomationProperties.LiveSetting") == "Polite");
+            (string?)e.Attribute("AutomationProperties.LiveSetting") == "Polite" &&
+            e.Attributes().Any(a => a.Name.LocalName == "LiveRegion.Content"));
         var favorite = launcher.Descendants().Single(e => e.Name.LocalName == "ToggleButton" &&
             (string?)e.Attribute("Command") == "{Binding ToggleFavoriteCommand}");
         Assert.Equal("{Binding IsFavorite, Mode=OneWay}", (string?)favorite.Attribute("IsChecked"));
@@ -34,6 +36,10 @@ public class AccessibilityLauncherEditorTests
         Assert.True(Named(editor, "TextColorButton").Descendants().Count(e => e.Name.LocalName == "MenuItem") >= 9);
         Assert.True(Named(editor, "HighlightButton").Descendants().Count(e => e.Name.LocalName == "MenuItem") >= 7);
         Assert.Equal("Assertive", (string?)Named(editor, "ErrorText").Attribute("AutomationProperties.LiveSetting"));
+        Assert.NotNull(Named(editor, "ErrorText").Attributes().SingleOrDefault(a => a.Name.LocalName == "LiveRegion.Content"));
+
+        string behavior = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Views/LiveRegion.cs"));
+        Assert.Contains("RaiseAutomationEvent(AutomationEvents.LiveRegionChanged)", behavior, StringComparison.Ordinal);
     }
 
     private static XDocument Load(string path) => XDocument.Load(TestFiles.RepoAsset(path));

@@ -294,6 +294,7 @@
 
                     <TextBlock Text="{Binding EmptyStateText}" TextWrapping="Wrap" TextAlignment="Center"
                                AutomationProperties.LiveSetting="Polite"
+                               views:LiveRegion.Content="{Binding EmptyStateText}"
                                Foreground="{DynamicResource TextMuted}" MaxWidth="240"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Visibility="{Binding IsEmptyState, Converter={StaticResource BoolVis}}"/>
@@ -313,6 +314,7 @@
                         <StackPanel>
                             <TextBlock Text="↳ contains variables — resolved on insert"
                                        AutomationProperties.LiveSetting="Polite"
+                                       views:LiveRegion.Content="{Binding Visibility, RelativeSource={RelativeSource Self}}"
                                        Foreground="{DynamicResource TextMuted}" FontStyle="Italic"
                                        FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
                                        Visibility="{Binding SelectionHasVariables, Converter={StaticResource BoolVis}}"/>
@@ -332,6 +334,7 @@
                                         AutomationProperties.Name="Edit response"/>
                                 <TextBlock Text="{Binding CopiedHint}" Foreground="{DynamicResource Accent}"
                                            AutomationProperties.LiveSetting="Polite"
+                                           views:LiveRegion.Content="{Binding CopiedHint}"
                                            FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                            Visibility="{Binding HasCopiedHint, Converter={StaticResource BoolVis}}"/>
                             </StackPanel>

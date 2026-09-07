@@ -34,8 +34,12 @@ public class AccessibilityDialogTests
     [InlineData("SettingsWindow.xaml", "HotkeyError", "Assertive")]
     [InlineData("SettingsWindow.xaml", "BackupPathError", "Assertive")]
     [InlineData("TrashWindow.xaml", "EmptyHint", "Polite")]
-    public void ChangingDialogStatus_IsALiveRegion(string file, string name, string setting) =>
-        Assert.Equal(setting, (string?)Named(Load(file), name).Attribute("AutomationProperties.LiveSetting"));
+    public void ChangingDialogStatus_IsALiveRegion(string file, string name, string setting)
+    {
+        var element = Named(Load(file), name);
+        Assert.Equal(setting, (string?)element.Attribute("AutomationProperties.LiveSetting"));
+        Assert.Contains(element.Attributes(), a => a.Name.LocalName == "LiveRegion.Content");
+    }
 
     [Fact]
     public void Dialogs_HaveSafeKeyboardDefaults()
@@ -47,6 +51,11 @@ public class AccessibilityDialogTests
         Assert.Equal("True", (string?)Named(Load("OnboardingWindow.xaml"), "NextButton").Attribute("IsDefault"));
         Assert.Contains("buttons.Length == 1", File.ReadAllText(TestFiles.RepoAsset(
             "src/QuickReplyKit/Views/ConfirmDialog.xaml.cs")), StringComparison.Ordinal);
+
+        var import = Load("ImportPreviewWindow.xaml").Root!;
+        Assert.Equal("CanResizeWithGrip", (string?)import.Attribute("ResizeMode"));
+        Assert.True(double.Parse((string)import.Attribute("Width")!) <= 600);
+        Assert.True(double.Parse((string)import.Attribute("MinWidth")!) <= 420);
     }
 
     private static XDocument Load(string file) => XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/" + file));
