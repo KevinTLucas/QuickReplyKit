@@ -171,8 +171,10 @@ box — press any combination to see what it's bound to — plus a filter over t
   be restored to its exact original path unless a file or folder now occupies that location. Folder deletion first
   creates a required rolling backup and fails without changing the library if that backup cannot be written.
   Permanent delete and Empty Trash require confirmation; retention applies to both response and folder items.
-- Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and never include response
-  bodies. Enable verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable environment
+- Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and record structured workflow
+  stages, counts, timings, modes, and safe crash frames. They exclude search text, response names/tags/content,
+  template token names, clipboard data, hotkey values, window handles, user paths, and exception messages. Enable
+  verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable environment
   summary with version, OS/runtime, library/count/watcher state, hotkey, config path, and log path.
 - First launch shows a short three-card introduction to the hotkey, search, and paste workflow.
 

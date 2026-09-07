@@ -30,6 +30,7 @@ public static class LibraryPorter
     public static void Export(ResponseItem item, string destPath)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        Diag.Verbose("LibraryPorter", "Export", "start kind=response");
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destPath))!);

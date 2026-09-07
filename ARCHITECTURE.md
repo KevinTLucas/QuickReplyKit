@@ -141,8 +141,11 @@ view-models, interop, and app wiring.
   payload. Old response-only metadata remains readable. Restore recreates the exact original hierarchy, refuses
   overwrite/path escape/reparse traversal, and leaves conflicts in Trash; delete-forever and startup retention purge
   apply to both item types.
-- `Logger` uses one background writer, level gating, and size rollover (about 10 MB x 5 files). AppDomain,
-  Dispatcher, and unobserved-task exceptions are recorded but not silently swallowed. Logs omit response bodies.
+- `Logger` uses one background writer, level gating, source/category metadata, and size rollover (about 10 MB x 5
+  files). Normal events summarize lifecycle, scans, import/export, watcher state, themes, hotkeys, and paste outcomes;
+  verbose events add bounded stage/count/timing detail. Crash records retain exception types, HRESULTs, and path-free
+  method frames. Logs exclude queries, response/template/clipboard content, hotkey values, HWNDs, paths, and exception
+  messages; the sink also flattens control characters to prevent forged log lines.
 - First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
   copyable, read-only environment snapshot. Settings links to hotkeys, backups, Trash, logs, and diagnostics.
 - Accessibility is defined in XAML at the control boundary: Automation names/help, polite/assertive live regions,
@@ -151,8 +154,8 @@ view-models, interop, and app wiring.
 ## Known completion boundaries
 
 The implemented paths above are merged and tested. The remaining contract gaps are intentionally explicit in
-[`docs/BACKLOG.md`](docs/BACKLOG.md): full accessibility; complete diagnostic logging;
-refreshing About with current hotkey, watcher, backup, and Trash state; and the security-gated computed-variable DSL.
+[`docs/BACKLOG.md`](docs/BACKLOG.md): refreshing About with current hotkey, watcher, backup, Trash, and logger state;
+and the security-gated computed-variable DSL.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,

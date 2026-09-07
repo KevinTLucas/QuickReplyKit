@@ -6,11 +6,11 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `9763625` (B11 feature tip; merge commit follows); use `git rev-parse HEAD` for the
+- **Current product merge:** `7d0ce16` (B14 feature tip plus QA fixes; merge commit follows); use `git rev-parse HEAD` for the
   docs-inclusive tip.
-- **Current product baseline:** B01-B13 are complete.
+- **Current product baseline:** B01-B14 are complete.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
-- **Tests:** **559 passed** after B11 independent QA; build remains clean.
+- **Tests:** **563 passed** after B14 independent correctness and privacy QA; build remains clean.
 - **Portable publish:** the current self-contained build is at `publish/latest/QuickReplyKit.exe` and is rebuilt after
   every product merge. The canonical
   `publish/QuickReplyKit.exe` was locked by the user's running instance and was deliberately not closed or replaced;
@@ -21,12 +21,13 @@
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains
-  3 ordered items with severity, acceptance criteria, and status. Sandboxed scripting remains deliberately last.
+  2 ordered items with severity, acceptance criteria, and status. Sandboxed scripting remains deliberately last.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B14 complete diagnostics coverage | `7d0ce16` | 563/563 integrated; 19/19 focused; separate correctness/privacy QA; safe stack frames and no export rescan | Complete |
 | B11 full accessibility pass | `9763625` | 559/559 integrated; 22/22 focused; separate test and static QA; live-region and 200%-DPI blockers fixed | Complete |
 | B12 discoverable Import/Export | `4e490f4` | 537/537 integrated; focused XAML contract; static keyboard/theme/compact review | Complete |
 | B13 configurable backup location | `73090b1`, `7792fb5` | 536/536 integrated; 31/31 focused; invalid, nested, unavailable, migration and restore paths | Complete |
@@ -41,7 +42,7 @@
 | B02 transactional backup restore | `c6fdda8` | 443/443; rollback/oldest restore 40 repeated runs; all self-tests 3 rounds; both themes | Complete |
 | B01 repeated right-click crash | `c596e29` | 436/436; 150 rapid cycles per theme; actions usable; log delta clean | Complete |
 | #1 dark-mode Category ComboBox + original #6 right-click fix | `d562052` | 6/6 QA; both themes; original reentrancy path survived 80 rapid clicks | Original fix; later Run crash closed by B01 |
-| #7 rolling diagnostics/logging | `8f74aa9` | 9/9 feature QA; rollover, levels, crash channels, no response-body logging | Partial: requested workflow coverage remains |
+| #7 rolling diagnostics/logging | `8f74aa9` | 9/9 feature QA; rollover, levels, crash channels, no response-body logging | Foundation; completed by B14 |
 | #2 editor palettes + #3 visible Edit action | `20d808c` | 6/6 QA; both themes; edit opens pre-filled | Complete |
 | #13 About / Diagnostics screen | `23468f7` | Both themes; values, copy, and folder actions checked | Partial: see open work |
 | #10 rolling backups + Restore Library | `f303524` | 9/9 feature QA; extraction guard and pre-import backup checked | Partial: restore bug found in audit |
@@ -75,12 +76,12 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B14-B15 P2:** logging and diagnostics completion.
-2. **B16 P2:** sandboxed dynamic-variable scripts, only after its logging gate.
+1. **B15 P2:** complete the About / Diagnostics support snapshot.
+2. **B16 P2:** implement the security-gated computed-variable DSL.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B13 are complete. A stale interrupted historical hotkey worktree remains quarantined and is
+**Active worktrees:** B01-B14 are complete. A stale interrupted historical hotkey worktree remains quarantined and is
 not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
@@ -106,7 +107,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **559** green after B11. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **563** green after B14. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. Do not drive or capture the user's desktop.

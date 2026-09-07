@@ -19,8 +19,8 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** B01-B13 are complete and green at 559 tests. The app is launchable, but the
-backlog is **not empty**: diagnostics coverage/status and sandboxed scripts remain. Read `docs/STATUS.md` for current
+**Current state (audited 2026-09-07):** B01-B14 are complete and green at 563 tests. The app is launchable, but the
+backlog is **not empty**: the About/Diagnostics status refresh and sandboxed scripts remain. Read `docs/STATUS.md` for current
 evidence and `docs/BACKLOG.md` for the exact next item.
 
 **Golden rules (detailed in `CLAUDE.md`):** `main` is always green; each change on a branch → ponytail (BCL/native

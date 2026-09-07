@@ -15,6 +15,30 @@ public sealed class DiagnosticsCollection;
 public class DiagnosticsCoverageTests
 {
     [Fact]
+    public void WatcherDelivery_IsRecordedWithoutAPath()
+    {
+        using var temp = new TempDir();
+        string library = temp.Of("library");
+        string logs = temp.Of("logs");
+        Directory.CreateDirectory(library);
+        using var delivered = new ManualResetEventSlim();
+
+        Diag.Init(logs, verbose: true);
+        try
+        {
+            using var watcher = new LibraryWatcher(library, 50);
+            watcher.Changed += delivered.Set;
+            File.WriteAllText(Path.Combine(library, "change.json"), "{}");
+            Assert.True(delivered.Wait(TimeSpan.FromSeconds(5)));
+        }
+        finally { Diag.Shutdown(); }
+
+        string text = File.ReadAllText(Path.Combine(logs, "quickreplykit.log"));
+        Assert.Contains("[LibraryWatcher/Watcher] activity delivered=true", text);
+        Assert.DoesNotContain(library, text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void UiAndPasteWorkflows_KeepRequiredStageEvents()
     {
         string paste = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Services/InsertService.cs"));
