@@ -1,6 +1,8 @@
 using System.IO;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Win32;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Scripts;
@@ -14,6 +16,7 @@ public partial class ScriptManagerWindow : Window
     private ScriptCatalogItem? _selected;
     private bool _loading;
     private bool _dirty;
+    private bool _allowClose;
 
     public ScriptManagerWindow(LibraryService library, Action onLibraryChanged)
     {
@@ -31,15 +34,37 @@ public partial class ScriptManagerWindow : Window
 
     private void RefreshList(string? selectPath = null)
     {
+        _loading = true;
         ScriptList.ItemsSource = _model.Items;
-        ScriptList.SelectedItem = selectPath is null ? _model.Items.FirstOrDefault() : _model.Items.FirstOrDefault(x =>
+        var item = selectPath is null ? _model.Items.FirstOrDefault() : _model.Items.FirstOrDefault(x =>
             string.Equals(x.FullPath, selectPath, StringComparison.OrdinalIgnoreCase));
-        if (ScriptList.SelectedItem is null) NewDraft();
+        ScriptList.SelectedItem = item;
+        _loading = false;
+        if (item is null) NewDraft();
+        else Load(item);
     }
 
     private void ScriptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ScriptList.SelectedItem is not ScriptCatalogItem item) return;
+        if (_loading || ScriptList.SelectedItem is not ScriptCatalogItem item) return;
+        string requestedPath = item.FullPath;
+        if (!TryLeaveDraft())
+        {
+            _loading = true;
+            ScriptList.SelectedItem = _selected;
+            _loading = false;
+            return;
+        }
+        item = _model.Items.FirstOrDefault(x =>
+            string.Equals(x.FullPath, requestedPath, StringComparison.OrdinalIgnoreCase)) ?? item;
+        _loading = true;
+        ScriptList.SelectedItem = item;
+        _loading = false;
+        Load(item);
+    }
+
+    private void Load(ScriptCatalogItem item)
+    {
         _selected = item;
         _loading = true;
         NameBox.Text = item.Definition?.Name ?? item.Name;
@@ -52,7 +77,10 @@ public partial class ScriptManagerWindow : Window
         UpdateButtons();
     }
 
-    private void New_Click(object sender, RoutedEventArgs e) => NewDraft();
+    private void New_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryLeaveDraft()) NewDraft();
+    }
 
     private void NewDraft()
     {
@@ -63,7 +91,7 @@ public partial class ScriptManagerWindow : Window
         ExpressionBox.Text = "\"Hello\"";
         EnabledCheck.IsChecked = true;
         _loading = false;
-        _dirty = true;
+        _dirty = false;
         TrustState.Text = "New · not saved or trusted";
         ShowStatus("Write an expression, then Validate or Save & trust.");
         UpdateButtons();
@@ -87,23 +115,64 @@ public partial class ScriptManagerWindow : Window
     private void Save_Click(object sender, RoutedEventArgs e) => Save(trust: false);
     private void SaveTrust_Click(object sender, RoutedEventArgs e) => Save(trust: true);
 
-    private void Save(bool trust)
+    private bool Save(bool trust)
     {
         var result = _model.Save(_selected, NameBox.Text, ExpressionBox.Text,
             EnabledCheck.IsChecked == true, trust);
-        if (!result.Success) { ShowStatus(result.Error ?? "The script could not be saved.", true); return; }
+        if (!result.Success) { ShowStatus(result.Error ?? "The script could not be saved.", true); return false; }
         _dirty = false;
         RefreshList(result.Item?.FullPath);
         ShowStatus(trust ? "Saved, reloaded, and trusted." : "Saved. This script was not newly trusted.");
+        return true;
     }
 
     private void Trust_Click(object sender, RoutedEventArgs e)
     {
-        if (_selected is null || _dirty) return;
-        var result = _model.Trust(_selected);
-        if (!result.Success) { ShowStatus(result.Error ?? "The script could not be trusted.", true); return; }
+        if (_selected?.Definition is not { } reviewed || _dirty) return;
+        var result = _model.Trust(_selected, reviewed);
+        if (!result.Success)
+        {
+            if (result.Item is not null) RefreshList(result.Item.FullPath);
+            ShowStatus(result.Error ?? "The script could not be trusted.", true);
+            return;
+        }
         RefreshList(result.Item?.FullPath);
         ShowStatus("This exact saved source is trusted.");
+    }
+
+    private bool TryLeaveDraft() => CanLeaveDraft(_dirty,
+        () => ConfirmDialog.AskUnsavedDraft(this), () => Save(trust: false));
+
+    internal static bool CanLeaveDraft(bool dirty, Func<UnsavedDraftChoice> prompt, Func<bool> save)
+    {
+        if (!dirty) return true;
+        return prompt() switch
+        {
+            UnsavedDraftChoice.Save => save(),
+            UnsavedDraftChoice.Discard => true,
+            _ => false,
+        };
+    }
+
+    private void Close_Click(object sender, RoutedEventArgs e)
+    {
+        if (!TryLeaveDraft()) return;
+        _allowClose = true;
+        Close();
+    }
+
+    private void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        if (_allowClose) return;
+        if (!TryLeaveDraft()) e.Cancel = true;
+        else _allowClose = true;
+    }
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape) return;
+        e.Handled = true;
+        Close_Click(sender, e);
     }
 
     private void Delete_Click(object sender, RoutedEventArgs e)

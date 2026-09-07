@@ -5,7 +5,7 @@
         Title="Scripts" Width="780" Height="580" MinWidth="560" MinHeight="420"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip" ShowInTaskbar="False"
         Background="{DynamicResource WindowBg}" Foreground="{DynamicResource TextPrimary}"
-        FontFamily="Segoe UI">
+        FontFamily="Segoe UI" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <Style x:Key="Btn" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="11,5"/>
@@ -129,7 +129,8 @@
                         Click="Delete_Click"/>
                 <Button x:Name="ExportButton" Content="Export…" Style="{StaticResource Btn}" Click="Export_Click"/>
             </WrapPanel>
-            <Button Grid.Column="1" Content="Close" Style="{StaticResource Btn}" IsCancel="True" IsDefault="True"/>
+            <Button Grid.Column="1" Content="Close" Style="{StaticResource Btn}" IsDefault="True"
+                    Click="Close_Click"/>
         </Grid>
     </Grid>
 </Window>

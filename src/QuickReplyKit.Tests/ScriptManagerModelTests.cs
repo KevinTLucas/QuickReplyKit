@@ -58,7 +58,7 @@ public class ScriptManagerModelTests
         model.Reload();
         var saved = model.Save(null, "Clock", "time()", false, false).Item!;
 
-        var trusted = model.Trust(saved);
+        var trusted = model.Trust(saved, saved.Definition!);
         Assert.True(trusted.Success, trusted.Error);
         Assert.True(trusted.Item!.IsTrusted);
 
@@ -67,6 +67,77 @@ public class ScriptManagerModelTests
         Assert.False(File.Exists(saved.FullPath));
         Assert.False(trust.IsTrusted(saved.Definition));
         Assert.Equal(3, changes);
+    }
+
+    [Fact]
+    public void Trust_RefusesSourceChangedAfterReview_ThenRequiresFreshApproval()
+    {
+        using var temp = new TempDir();
+        var trust = OpenTrust(temp.Of("trust.json"));
+        var model = new ScriptManagerModel(temp.Of("library"), trust, () => { });
+        model.Reload();
+        var reviewed = model.Save(null, "Greeting", "\"reviewed\"", true, false).Item!;
+        var changed = reviewed.Definition! with { Expression = "\"changed on disk\"" };
+        Assert.True(ScriptDefinitionFile.Save(reviewed.FullPath, changed).Success);
+
+        var refused = model.Trust(reviewed, reviewed.Definition!);
+
+        Assert.False(refused.Success);
+        Assert.Contains("changed on disk", refused.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(changed, refused.Item!.Definition);
+        Assert.False(trust.IsTrusted(changed));
+
+        var approved = model.Trust(refused.Item, refused.Item.Definition!);
+        Assert.True(approved.Success, approved.Error);
+        Assert.True(trust.IsTrusted(changed));
+    }
+
+    [Fact]
+    public void DraftGuard_CleanDraftDoesNotPrompt()
+    {
+        int prompts = 0, saves = 0;
+
+        bool proceed = Views.ScriptManagerWindow.CanLeaveDraft(false,
+            () => { prompts++; return Views.UnsavedDraftChoice.Cancel; },
+            () => { saves++; return false; });
+
+        Assert.True(proceed);
+        Assert.Equal(0, prompts);
+        Assert.Equal(0, saves);
+    }
+
+    [Theory]
+    [InlineData(1, true, true)]
+    [InlineData(2, false, false)]
+    [InlineData(0, true, true)]
+    [InlineData(0, false, false)]
+    public void DraftGuard_RespectsChoiceAndFailedSave(int choiceValue, bool saveSucceeds, bool expected)
+    {
+        var choice = (Views.UnsavedDraftChoice)choiceValue;
+        int saves = 0;
+
+        bool proceed = Views.ScriptManagerWindow.CanLeaveDraft(true, () => choice,
+            () => { saves++; return saveSucceeds; });
+
+        Assert.Equal(expected, proceed);
+        Assert.Equal(choice == Views.UnsavedDraftChoice.Save ? 1 : 0, saves);
+    }
+
+    [Fact]
+    public void DraftGuard_IsWiredToSelectionNewCloseAndEscape()
+    {
+        string code = File.ReadAllText(TestFiles.RepoAsset(
+            "src/QuickReplyKit/Views/ScriptManagerWindow.xaml.cs"));
+        string xaml = File.ReadAllText(TestFiles.RepoAsset(
+            "src/QuickReplyKit/Views/ScriptManagerWindow.xaml"));
+
+        Assert.Contains("ScriptList_SelectionChanged", code, StringComparison.Ordinal);
+        Assert.Contains("if (!TryLeaveDraft())", code, StringComparison.Ordinal);
+        Assert.Contains("if (TryLeaveDraft()) NewDraft();", code, StringComparison.Ordinal);
+        Assert.Contains("private void Window_Closing", code, StringComparison.Ordinal);
+        Assert.Contains("private void Window_PreviewKeyDown", code, StringComparison.Ordinal);
+        Assert.Contains("Closing=\"Window_Closing\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("PreviewKeyDown=\"Window_PreviewKeyDown\"", xaml, StringComparison.Ordinal);
     }
 
     [Fact]

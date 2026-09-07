@@ -67,10 +67,20 @@ internal sealed class ScriptManagerModel
             string.Equals(x.FullPath, path, StringComparison.OrdinalIgnoreCase)));
     }
 
-    public ScriptManagerResult Trust(ScriptCatalogItem item)
+    public ScriptManagerResult Trust(ScriptCatalogItem item, ScriptDefinition reviewed)
     {
         var loaded = ScriptDefinitionFile.Load(item.FullPath);
-        if (!loaded.Success) return new(false, loaded.Error);
+        if (!loaded.Success)
+        {
+            Reload();
+            return new(false, loaded.Error, Find(item.FullPath));
+        }
+        if (loaded.Value != reviewed)
+        {
+            Reload();
+            return new(false, "The script changed on disk. Review the refreshed source, then trust it again.",
+                Find(item.FullPath));
+        }
         var result = _trust.Trust(loaded.Value!);
         if (!result.Success) return new(false, result.Error);
         _changed();
