@@ -68,6 +68,6 @@ public partial class AboutWindow : Window
             Directory.CreateDirectory(path);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
         }
-        catch (Exception ex) { Diag.Warn("About: open folder failed: " + ex.Message); }
+        catch (Exception ex) { Diag.Warn("AboutWindow", "Action", "open folder failed", ex); }
     }
 }

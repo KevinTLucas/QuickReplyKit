@@ -46,22 +46,40 @@ public sealed class Logger : IDisposable
         _worker.Start();
     }
 
-    public void Log(LogLevel level, string message, Exception? ex = null)
+    public void Log(LogLevel level, string source, string category, string message, Exception? ex = null)
     {
         if (!_enabled || level > Threshold) return;
-        var sb = new StringBuilder(message.Length + 48);
+        var sb = new StringBuilder(message.Length + source.Length + category.Length + 96);
         sb.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"))
           .Append(" [").Append(Name(level)).Append("] [T")
-          .Append(Environment.CurrentManagedThreadId).Append("] ").Append(message);
-        if (ex != null) sb.Append(Environment.NewLine).Append(ex);
+          .Append(Environment.CurrentManagedThreadId).Append("] [")
+          .Append(OneLine(source)).Append('/').Append(OneLine(category)).Append("] ").Append(OneLine(message));
+        if (ex != null)
+            AppendException(sb, ex);
         try { _queue.Add(sb.ToString()); } catch (InvalidOperationException) { /* completed */ }
     }
 
-    public void Error(string m, Exception? ex = null) => Log(LogLevel.Error, m, ex);
-    public void Warn(string m) => Log(LogLevel.Warn, m);
-    public void Info(string m) => Log(LogLevel.Info, m);
-    public void Debug(string m) => Log(LogLevel.Debug, m);
-    public void Verbose(string m) => Log(LogLevel.Verbose, m);
+    private static string OneLine(string value) =>
+        value.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ');
+
+    private static void AppendException(StringBuilder sb, Exception exception)
+    {
+        for (Exception? ex = exception; ex is not null; ex = ex.InnerException)
+            sb.Append(" exceptionType=").Append(ex.GetType().FullName)
+              .Append(" hresult=0x").Append(ex.HResult.ToString("X8"));
+
+        // Preserve actionable method frames without exception messages or source-file paths.
+        string stack = new System.Diagnostics.StackTrace(exception, false).ToString();
+        if (stack.Length > 0) sb.Append(" stack=").Append(OneLine(stack));
+    }
+
+    public void Error(string source, string category, string message, Exception? ex = null) =>
+        Log(LogLevel.Error, source, category, message, ex);
+    public void Warn(string source, string category, string message, Exception? ex = null) =>
+        Log(LogLevel.Warn, source, category, message, ex);
+    public void Info(string source, string category, string message) => Log(LogLevel.Info, source, category, message);
+    public void Debug(string source, string category, string message) => Log(LogLevel.Debug, source, category, message);
+    public void Verbose(string source, string category, string message) => Log(LogLevel.Verbose, source, category, message);
 
     private static string Name(LogLevel l) => l switch
     {

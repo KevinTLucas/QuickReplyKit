@@ -61,7 +61,7 @@ internal static class ClipboardBackup
     }
 
     /// <summary>Put the snapshot back; if there was nothing, clear our content so we leave nothing behind.</summary>
-    public static void Restore(DataObject? snapshot)
+    public static bool Restore(DataObject? snapshot)
     {
         for (int attempt = 0; attempt < 5; attempt++)
         {
@@ -69,7 +69,7 @@ internal static class ClipboardBackup
             {
                 if (snapshot is null) Clipboard.Clear();
                 else Clipboard.SetDataObject(snapshot, copy: true);
-                return;
+                return true;
             }
             catch when (attempt < 4)
             {
@@ -77,8 +77,9 @@ internal static class ClipboardBackup
             }
             catch
             {
-                return;   // give up quietly; never crash the insert
+                return false;   // give up quietly; never crash the insert
             }
         }
+        return false;
     }
 }

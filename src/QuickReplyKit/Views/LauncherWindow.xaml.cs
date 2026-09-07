@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
 using QuickReplyKit.Core;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.ImportExport;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Core.Text;
@@ -198,7 +199,10 @@ public partial class LauncherWindow : Window
             if (Clipboard.ContainsText())
                 return (Clipboard.GetText(), false);
         }
-        catch { /* clipboard busy/locked — start empty */ }
+        catch (Exception ex)
+        {
+            Diag.Warn("LauncherWindow", "Action", "read clipboard failed", ex);
+        }
         return ("", false);
     }
 
@@ -298,7 +302,7 @@ public partial class LauncherWindow : Window
     {
         if (_vm.SelectedItem is not { } item || string.IsNullOrEmpty(item.FullPath)) return;
         try { Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{item.FullPath}\"") { UseShellExecute = true }); }
-        catch { /* best effort */ }
+        catch (Exception ex) { Diag.Warn("LauncherWindow", "Action", "open response folder failed", ex); }
     }
 
     private void MenuDelete_Click(object sender, RoutedEventArgs e)
@@ -315,6 +319,7 @@ public partial class LauncherWindow : Window
         }
         catch (Exception ex)
         {
+            Diag.Warn("LauncherWindow", "Action", "delete response failed", ex);
             ConfirmDialog.Info(this, "Response not deleted", ex.Message);
         }
     }
@@ -387,6 +392,7 @@ public partial class LauncherWindow : Window
         }
         catch (Exception ex)
         {
+            Diag.Warn("LauncherWindow", "Action", "delete folder failed", ex);
             ConfirmDialog.Info(this, "Folder not deleted", ex.Message);
         }
     }
@@ -431,6 +437,7 @@ public partial class LauncherWindow : Window
         try { plan = LibraryPorter.PlanImport(_vm.LibraryRoot, source, target); }
         catch (Exception ex)
         {
+            Diag.Warn("LauncherWindow", "Action", "import preview failed", ex);
             ConfirmDialog.Info(this, "Can't read that file", "Import preview failed:\n" + ex.Message);
             return;
         }
@@ -446,6 +453,7 @@ public partial class LauncherWindow : Window
         try { LibraryBackup.CreateRequired(_vm.LibraryRoot, _config.BackupPath, "before import"); }
         catch (IOException ex)
         {
+            Diag.Warn("LauncherWindow", "Action", "import backup failed", ex);
             ConfirmDialog.Info(this, "Import canceled", ex.Message);
             return;
         }

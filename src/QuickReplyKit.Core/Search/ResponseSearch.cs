@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 
 namespace QuickReplyKit.Core.Search;
@@ -38,13 +39,19 @@ public static class ResponseSearch
     /// <summary>Ranked search returning each hit with its name-match spans and optional body snippet.</summary>
     public static IReadOnlyList<SearchHit> Rank(IEnumerable<ResponseItem> items, string query, string? scope = null)
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var list = items as IReadOnlyList<ResponseItem> ?? items.ToList();
 
         if (string.IsNullOrWhiteSpace(query))
-            return list.Where(i => i.IsValid)
-                       .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
-                       .Select(i => new SearchHit(i, NoSpans, null))
-                       .ToList();
+        {
+            var unfiltered = list.Where(i => i.IsValid)
+                .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(i => new SearchHit(i, NoSpans, null))
+                .ToList();
+            Diag.Verbose("ResponseSearch", "Search",
+                $"complete candidates={list.Count} results={unfiltered.Count} tokens=0 fuzzyTokens=0 scoped={!string.IsNullOrEmpty(scope)} elapsedMs={sw.ElapsedMilliseconds}");
+            return unfiltered;
+        }
 
         string[] tokens = query
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
@@ -62,13 +69,16 @@ public static class ResponseSearch
         if (fuzzy != null)
             scored = ScorePass(list, tokens, fuzzy, scope, tokenHasExact: null);
 
-        return scored
+        var result = scored
             .OrderBy(s => s.Item.IsValid ? 0 : 1)   // valid before invalid
             .ThenBy(s => s.Total)                   // stronger field match
             .ThenBy(s => s.ScopeGroup)              // in-scope breaks relevance ties
             .ThenBy(s => s.Item.Name, StringComparer.OrdinalIgnoreCase)
             .Select(s => new SearchHit(s.Item, s.NameSpans, s.Snippet))
             .ToList();
+        Diag.Verbose("ResponseSearch", "Search",
+            $"complete candidates={list.Count} results={result.Count} tokens={tokens.Length} fuzzyTokens={fuzzy?.Count(x => x) ?? 0} scoped={!string.IsNullOrEmpty(scope)} elapsedMs={sw.ElapsedMilliseconds}");
+        return result;
     }
 
     private readonly record struct Scored(

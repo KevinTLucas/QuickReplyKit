@@ -58,8 +58,8 @@ public sealed class HotkeyService : IDisposable
 
         _entries = entries;
         int ok = entries.Count(e => e.Registered);
-        Diag.Info($"hotkeys: {ok}/{entries.Count} registered (launcher \"{_launcherGesture}\"" +
-                  $", {_config.ResponseHotkeys.Count} response binds)");
+        Diag.Info("HotkeyService", "Hotkey",
+            $"registration complete registered={ok} configured={entries.Count} responseBindings={_config.ResponseHotkeys.Count}");
     }
 
     private Entry RegisterOne(string gesture, bool isLauncher, string? relativePath, bool plain)
@@ -73,8 +73,8 @@ public sealed class HotkeyService : IDisposable
             ok = _registrar.Register(key, action);
         }
         if (!ok)
-            Diag.Warn($"hotkey NOT registered: \"{gesture}\" → {(isLauncher ? "launcher" : relativePath)} " +
-                      "(unparseable, in use by another app, or a duplicate combo)");
+            Diag.Warn("HotkeyService", "Hotkey",
+                $"registration failed target={(isLauncher ? "launcher" : "response")}");
         return new Entry(gesture, isLauncher, relativePath, plain, ok);
     }
 
@@ -100,11 +100,11 @@ public sealed class HotkeyService : IDisposable
         var item = _library.FindByRelativePath(relativePath);
         if (item is null)
         {
-            Diag.Warn($"instant-paste target gone: \"{relativePath}\"");
+            Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
             return;
         }
 
-        Diag.Verbose($"instant-paste {(plain ? "plain" : "rich")}: \"{item.Name}\"");
+        Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
         string html = TemplateEngine.Resolve(item.Html, n => _library.FindByName(n)?.Html, _now());
         var resolved = new ResponseItem { Html = html };
         if (plain) _insert.InsertPlain(resolved);

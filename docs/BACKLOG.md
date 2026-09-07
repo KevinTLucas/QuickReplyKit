@@ -9,19 +9,10 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P2 - High-Value Enhancements
 
-### B14 - Complete diagnostics logging coverage
-
-- **Severity:** P2
-- **Status:** Confirmed remaining gap; foundation shipped in `8f74aa9`
-- **Impact:** Existing rolling/crash logs omit source/category and several workflows needed for support diagnosis.
-- **Acceptance:** Add source/category metadata and verbose events for search, watcher, import/export, template resolve,
-  theme changes, context-menu failures, and each paste stage; continue excluding response bodies, clipboard content,
-  and customer data; keep async bounded rollover and normal/verbose toggle.
-
 ### B15 - Complete About / Diagnostics status
 
 - **Severity:** P2
-- **Status:** Confirmed remaining gap; foundation shipped in `23468f7`; coordinate with B13/B14
+- **Status:** Confirmed remaining gap; foundation shipped in `23468f7`; B13/B14 prerequisites complete
 - **Impact:** Support snapshot predates response hotkeys, backups, and Trash.
 - **Acceptance:** Report actual launcher registration, configured/registered/failed response-hotkey counts, library and
   watcher state, config/log/backup/Trash paths, version/OS/runtime, and logging mode; copyable and safe to attach; no
@@ -30,7 +21,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B16 - Sandboxed user scripts for dynamic variables
 
 - **Severity:** P2 feature; security-critical design
-- **Status:** Queued last after B04/B11/B14
+- **Status:** Queued last; B04/B11/B14 prerequisites complete
 - **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
 - **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
   scripts; persist definitions in a documented format; invoke them with explicit template syntax such as

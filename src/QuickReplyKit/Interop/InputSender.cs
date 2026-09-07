@@ -33,7 +33,7 @@ internal static class InputSender
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
-    public static void SendCtrlV()
+    public static bool SendCtrlV()
     {
         var inputs = new[]
         {
@@ -45,6 +45,7 @@ internal static class InputSender
         uint sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
         if (sent != inputs.Length)
             System.Diagnostics.Debug.WriteLine($"[QuickReplyKit] SendInput sent {sent}/{inputs.Length}, err={Marshal.GetLastWin32Error()}");
+        return sent == inputs.Length;
     }
 
     private static INPUT Key(ushort vk, bool down) => new()

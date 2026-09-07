@@ -1,4 +1,5 @@
 using System.IO;
+using QuickReplyKit.Core.Diagnostics;
 using Timer = System.Timers.Timer;
 
 namespace QuickReplyKit.Core.Library;
@@ -32,6 +33,7 @@ public sealed class LibraryWatcher : IDisposable
             lock (_gate)
             {
                 if (_disposed) return;
+                Diag.Verbose("LibraryWatcher", "Watcher", "activity delivered=true");
                 Changed?.Invoke();
             }
         };
@@ -40,6 +42,7 @@ public sealed class LibraryWatcher : IDisposable
 
     private void Start()
     {
+        Diag.Verbose("LibraryWatcher", "Watcher", "attach attempt=true");
         try
         {
             // A watcher needs an existing dir to attach to. Create the library folder only when its
@@ -49,7 +52,12 @@ public sealed class LibraryWatcher : IDisposable
             if (!Directory.Exists(_root))
             {
                 var parent = Path.GetDirectoryName(_root);
-                if (parent is null || !Directory.Exists(parent)) { _watcher = null; return; }
+                if (parent is null || !Directory.Exists(parent))
+                {
+                    _watcher = null;
+                    Diag.Warn("LibraryWatcher", "Watcher", "attach deferred rootAvailable=false");
+                    return;
+                }
                 Directory.CreateDirectory(_root);
             }
             var w = new FileSystemWatcher(_root)
@@ -64,11 +72,13 @@ public sealed class LibraryWatcher : IDisposable
             w.Error += OnError;
             w.EnableRaisingEvents = true;
             _watcher = w;
+            Diag.Info("LibraryWatcher", "Watcher", "attach complete attached=true");
         }
-        catch
+        catch (Exception ex)
         {
             // Root unavailable right now; a later Error/retry re-attaches.
             _watcher = null;
+            Diag.Warn("LibraryWatcher", "Watcher", "attach complete attached=false", ex);
         }
     }
 
@@ -80,12 +90,16 @@ public sealed class LibraryWatcher : IDisposable
         // *.json files and folders (no extension) are relevant; ignore other file noise.
         string ext = Path.GetExtension(e.Name ?? "");
         if (ext.Length == 0 || ext.Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            Diag.Verbose("LibraryWatcher", "Watcher", $"activity relevant=true changeType={e.ChangeType}");
             Trigger();
+        }
     }
 
     private void OnError(object sender, ErrorEventArgs e)
     {
         // Buffer overflow or the watched dir was removed — rebuild the watcher, then rescan.
+        Diag.Warn("LibraryWatcher", "Watcher", "recovery started=true", e.GetException());
         lock (_gate)
         {
             if (_disposed) return;
@@ -93,6 +107,7 @@ public sealed class LibraryWatcher : IDisposable
             _watcher = null;
             Start();
         }
+        Diag.Info("LibraryWatcher", "Watcher", $"recovery complete attached={_watcher is not null}");
         Trigger();
     }
 

@@ -76,7 +76,7 @@ public static class LibraryBackup
         }
 
         Prune(backupsDir);
-        Diag.Info($"backup created: {Path.GetFileName(dest)}" + (reason is null ? "" : $" ({reason})"));
+        Diag.Info("LibraryBackup", "Backup", $"create complete reasonProvided={reason is not null}");
         return dest;
     }
 
@@ -169,7 +169,7 @@ public static class LibraryBackup
             }
 
             try { if (Directory.Exists(rollback)) Directory.Delete(rollback, recursive: true); } catch { /* old copy */ }
-            Diag.Info($"library restored from {Path.GetFileName(backupZip)}");
+            Diag.Info("LibraryBackup", "Restore", "complete");
             return staged.Config is not null;
         }
         finally

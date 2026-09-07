@@ -159,7 +159,7 @@ public partial class App : Application
                 try
                 {
                     int n = TrashService.Purge(AppPaths.TrashDir, TimeSpan.FromDays(_config.TrashRetentionDays));
-                    if (n > 0) Diag.Info($"trash auto-purge removed {n} expired item(s)");
+                    if (n > 0) Diag.Info("App", "Trash", $"auto-purge complete removed={n}");
                 }
                 catch { /* best effort */ }
             });
@@ -183,16 +183,16 @@ public partial class App : Application
     private void InitLogging()
     {
         Diag.Init(AppPaths.LogsDir, _config.VerboseLogging);
-        Diag.Info($"===== session start | v{Version} | {Environment.OSVersion} | " +
-                  $"theme={_config.Theme} | verbose={_config.VerboseLogging} | library=\"{_config.LibraryPath}\" =====");
+        Diag.Info("App", "Lifecycle",
+            $"session start version={Version} os={Environment.OSVersion.Version} theme={_config.Theme} verbose={_config.VerboseLogging}");
 
         AppDomain.CurrentDomain.UnhandledException += (_, ev) =>
-            Diag.Error("Unhandled AppDomain exception (terminating=" + ev.IsTerminating + ")", ev.ExceptionObject as Exception);
+            Diag.Error("App", "Crash", $"unhandled AppDomain exception terminating={ev.IsTerminating}", ev.ExceptionObject as Exception);
         DispatcherUnhandledException += (_, ev) =>
-            Diag.Error("Unhandled Dispatcher exception", ev.Exception);
+            Diag.Error("App", "Crash", "unhandled Dispatcher exception", ev.Exception);
         TaskScheduler.UnobservedTaskException += (_, ev) =>
-            { Diag.Error("Unobserved task exception", ev.Exception); ev.SetObserved(); };
-        Exit += (_, _) => { Diag.Info("===== session end ====="); Diag.Shutdown(); };
+            { Diag.Error("App", "Crash", "unobserved task exception", ev.Exception); ev.SetObserved(); };
+        Exit += (_, _) => { Diag.Info("App", "Lifecycle", "session end"); Diag.Shutdown(); };
     }
 
     private void InitHotkey()
@@ -291,7 +291,7 @@ public partial class App : Application
 
     private void ShowLauncher()
     {
-        Diag.Verbose("show launcher");
+        Diag.Verbose("App", "Action", "show launcher");
         CaptureForegroundTarget();
         _launcher?.ShowLauncher();
     }
@@ -354,7 +354,7 @@ public partial class App : Application
             System.Diagnostics.Process.Start(
                 new System.Diagnostics.ProcessStartInfo(AppPaths.LogsDir) { UseShellExecute = true });
         }
-        catch (Exception ex) { Diag.Warn("OpenLogsFolder failed: " + ex.Message); }
+        catch (Exception ex) { Diag.Warn("App", "Action", "open logs folder failed", ex); }
     }
 
     /// <summary>Open the modal Settings dialog, owned by the launcher when it's visible.</summary>
@@ -408,6 +408,6 @@ public partial class App : Application
         base.OnExit(e);
         if (restart is not null)
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(restart, "--show") { UseShellExecute = true }); }
-            catch (Exception ex) { Diag.Error("could not restart after restore", ex); }
+            catch (Exception ex) { Diag.Error("App", "Action", "restart after restore failed", ex); }
     }
 }

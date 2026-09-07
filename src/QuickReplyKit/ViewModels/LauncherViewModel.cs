@@ -350,7 +350,7 @@ public sealed class LauncherViewModel : ViewModelBase
         if (item == null) return;
         var resolved = ResolvedCopy(item);
         bool plain = _config.DefaultPasteMode == PasteMode.PlainText;
-        Diag.Verbose($"insert {(plain ? "plain" : "rich")}: \"{item.Name}\"");
+        Diag.Verbose("LauncherViewModel", "Action", $"insert requested mode={(plain ? "plain" : "rich")}");
         if (plain) _insert.InsertPlain(resolved);
         else _insert.InsertRich(resolved);
         _library.MarkUsed(item);
@@ -361,7 +361,7 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        Diag.Verbose($"insert plain (shift): \"{item.Name}\"");
+        Diag.Verbose("LauncherViewModel", "Action", "insert requested mode=plain source=shortcut");
         _insert.InsertPlain(ResolvedCopy(item));
         _library.MarkUsed(item);
         RequestHide?.Invoke();
