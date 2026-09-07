@@ -10,6 +10,8 @@
 - **Current product baseline:** B01-B10 and B12-B13 are merged.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **537 passed** after B12 independent QA on the B13 baseline; build remains clean.
+- **B11 branch:** `feature/accessibility` builds clean and passes **559/559** after its launcher/editor and dialog
+  accessibility slices were integrated; independent QA is pending before merge.
 - **Portable publish:** B12's current self-contained build is at `publish/latest/QuickReplyKit.exe`. The canonical
   `publish/QuickReplyKit.exe` was locked by the user's running instance and was deliberately not closed or replaced;
   the next unlocked product publish promotes the latest build. No external .NET install is needed.
@@ -19,7 +21,7 @@
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains
-  4 ordered items with severity, acceptance criteria, and status. Accessibility is next; sandboxed scripting remains
+  4 ordered items with severity, acceptance criteria, and status. Accessibility is in QA; sandboxed scripting remains
   deliberately last.
 
 ## Merged And QA'd
@@ -73,14 +75,15 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B11 P1:** full accessibility pass.
+1. **B11 P1:** independently QA and merge the full accessibility pass.
 2. **B14-B15 P2:** logging and diagnostics completion.
 3. **B16 P2:** sandboxed dynamic-variable scripts, only after its accessibility and logging gates.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B10 and B12-B13 are complete. A stale interrupted historical hotkey worktree remains
-quarantined and is not an active source of changes.
+**Active worktrees:** B01-B10 and B12-B13 are complete. B11 is integrated on `feature/accessibility` and awaits
+independent QA. Its two completed slice branches contain no work outside B11. A stale interrupted historical hotkey
+worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B11 - Full accessibility pass
 
 - **Severity:** P1
-- **Status:** Queued
+- **Status:** QA - implementation complete on `feature/accessibility`; 559 tests pass; independent QA pending
 - **Impact:** New dialogs and workflows do not yet meet the requested keyboard, screen-reader, High Contrast, and
   non-color-only requirements.
 - **Acceptance:** Every action is mouse-free with predictable tab order, visible focus, defaults, and Escape; useful
