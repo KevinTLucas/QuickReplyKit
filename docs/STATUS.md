@@ -69,11 +69,11 @@ containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
 **Active worktrees:** `bugfix/backup-restore-integrity` now contains the integrated B02 implementation: versioned
-library+config snapshots, protected oldest-backup restore, staged directory swap with exact rollback, bounded retention,
-legacy archive support, fail-closed import backup, and restart after config restore. It builds cleanly; 438/442 tests
-pass in the restricted sandbox, with only the four registry-permission tests blocked. Independent normal-user QA,
-restore/restart UI validation, four self-tests, and screenshots remain before merge. `bugfix/import-integrity` contains
-an early uncommitted B03 planner; resume it rather than starting a duplicate branch.
+library+config snapshots, protected oldest-backup restore, staged directory swap with exact rollback, bounded retention
+and extraction, legacy archive support, fail-closed import backup, and restart after config restore. First independent
+QA found and the branch now fixes a restored-library-path mismatch, incomplete confirmation text, unbounded extraction,
+and the standalone backup QA hook. Focused backup tests are green; a second independent QA pass remains before merge.
+`bugfix/import-integrity` contains the B03 planner and awaits separate security/UI QA.
 
 ## Known Limits / Human Checks
 

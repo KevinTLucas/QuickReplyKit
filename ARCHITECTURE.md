@@ -108,10 +108,11 @@ view-models, interop, and app wiring.
   containment, and folder-sidecar import are known gaps tracked in BACKLOG.
 - `LibraryBackup` writes a versioned ZIP containing `library/`, `config.json` when present, and a manifest. Retention
   keeps at most 10 snapshots within count, 500 MB, and 90-day bounds while preserving at least the newest. Restore
-  first protects the selected archive, validates/extracts it beside the live library, snapshots the current state,
+  first protects the selected archive, validates and size-bounds extraction beside the live library, snapshots the current state,
   then swaps directories. A failed install rolls the exact original directory back; older library-only ZIPs remain
-  restorable without changing settings. A config restore suppresses the old launcher's final config save and restarts
-  QuickReplyKit so restored settings become authoritative. `TrashService` soft-deletes individual responses, refuses
+  restorable without changing settings. Restored config is retargeted to the actual restored library folder; the old
+  launcher's final config save is suppressed and QuickReplyKit restarts so restored settings become authoritative.
+  `TrashService` soft-deletes individual responses, refuses
   overwrite/path escape on restore, and purges expired entries at startup.
 - `Logger` uses one background writer, level gating, and size rollover (about 10 MB x 5 files). AppDomain,
   Dispatcher, and unobserved-task exceptions are recorded but not silently swallowed. Logs omit response bodies.

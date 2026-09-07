@@ -82,7 +82,7 @@ public class LibraryBackupTests
         var backups = t.Of("backups");
         var config = t.Of("config.json");
         TestFiles.WriteResponse(Path.Combine(lib, "Original.json"), html: "<p>oldest</p>");
-        File.WriteAllText(config, "old config");
+        File.WriteAllText(config, """{"theme":"Dark"}""");
 
         for (int i = 0; i < LibraryBackup.MaxKeep; i++)
         {
@@ -107,7 +107,7 @@ public class LibraryBackupTests
         var backups = t.Of("backups");
         var config = t.Of("config.json");
         TestFiles.WriteResponse(Path.Combine(lib, "Original.json"), html: "<p>v1</p>");
-        File.WriteAllText(config, """{"theme":"Dark","hotkey":"Ctrl+Alt+D"}""");
+        File.WriteAllText(config, """{"theme":"Dark","hotkeyGesture":"Ctrl+Alt+D","libraryPath":"C:\\OldLibrary"}""");
         var snapshot = LibraryBackup.Create(lib, backups, config, null)!;
 
         Directory.Delete(lib, recursive: true);
@@ -118,7 +118,10 @@ public class LibraryBackupTests
         Assert.True(File.Exists(Path.Combine(lib, "Original.json")));
         Assert.False(File.Exists(Path.Combine(lib, "Changed.json")));
         Assert.True(restoredConfig);
-        Assert.Equal("""{"theme":"Dark","hotkey":"Ctrl+Alt+D"}""", File.ReadAllText(config));
+        var restored = QuickReplyKit.Core.Storage.AppConfig.Load(config);
+        Assert.Equal(QuickReplyKit.Core.Storage.AppTheme.Dark, restored.Theme);
+        Assert.Equal("Ctrl+Alt+D", restored.HotkeyGesture);
+        Assert.Equal(Path.GetFullPath(lib), restored.LibraryPath);
     }
 
     [Fact]
@@ -153,13 +156,13 @@ public class LibraryBackupTests
         var config = t.Of("config.json");
 
         TestFiles.WriteResponse(Path.Combine(lib, "FromBackup.json"), html: "<p>backup</p>");
-        File.WriteAllText(config, "backup config");
+        File.WriteAllText(config, """{"theme":"Dark"}""");
         var snapshot = LibraryBackup.Create(lib, backups, config, null)!;
 
         Directory.Delete(lib, recursive: true);
         TestFiles.WriteResponse(Path.Combine(lib, "Current", "Keep.json"), html: "<p>exact original</p>");
         Directory.CreateDirectory(Path.Combine(lib, "Empty"));
-        File.WriteAllText(config, "current config");
+        File.WriteAllText(config, """{"theme":"Light"}""");
         var expected = SnapshotTree(lib);
 
         var ex = Assert.Throws<IOException>(() => LibraryBackup.Restore(
@@ -174,7 +177,7 @@ public class LibraryBackupTests
 
         Assert.Contains("original library was restored", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(expected, SnapshotTree(lib));
-        Assert.Equal("current config", File.ReadAllText(config));
+        Assert.Equal("""{"theme":"Light"}""", File.ReadAllText(config));
     }
 
     [Fact]
@@ -198,6 +201,33 @@ public class LibraryBackupTests
             LibraryBackup.Restore(zipPath, lib, t.Of("backups"), t.Of("config.json"), null));
         Assert.Equal(expected, SnapshotTree(lib));
         Assert.False(File.Exists(t.Of("escape.json")));
+    }
+
+    [Fact]
+    public void Restore_RejectsArchiveExpansionLimits_BeforeTouchingLiveLibrary()
+    {
+        using var t = new TempDir();
+        var zipPath = t.Of("large.zip");
+        using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            using (var writer = new StreamWriter(zip.CreateEntry("a.json").Open())) writer.Write("1234");
+            using (var writer = new StreamWriter(zip.CreateEntry("b.json").Open())) writer.Write("5678");
+        }
+        var lib = t.Of("lib");
+        TestFiles.WriteResponse(Path.Combine(lib, "Keep.json"));
+        string expected = SnapshotTree(lib);
+
+        Assert.Throws<InvalidDataException>(() => LibraryBackup.Restore(
+            zipPath, lib, t.Of("backups"), t.Of("config.json"), null,
+            maxEntries: 1, maxEntryBytes: 10, maxExpandedBytes: 20));
+        Assert.Throws<InvalidDataException>(() => LibraryBackup.Restore(
+            zipPath, lib, t.Of("backups"), t.Of("config.json"), null,
+            maxEntries: 10, maxEntryBytes: 3, maxExpandedBytes: 20));
+        Assert.Throws<InvalidDataException>(() => LibraryBackup.Restore(
+            zipPath, lib, t.Of("backups"), t.Of("config.json"), null,
+            maxEntries: 10, maxEntryBytes: 10, maxExpandedBytes: 7));
+
+        Assert.Equal(expected, SnapshotTree(lib));
     }
 
     [Fact]

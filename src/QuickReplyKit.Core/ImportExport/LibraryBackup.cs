@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using QuickReplyKit.Core.Diagnostics;
 
 namespace QuickReplyKit.Core.ImportExport;
@@ -14,6 +15,9 @@ public static class LibraryBackup
     public const int MaxKeep = 10;
     public const long MaxTotalBytes = 500L * 1024 * 1024;
     public static readonly TimeSpan MaxAge = TimeSpan.FromDays(90);
+    internal const int MaxArchiveEntries = 10_000;
+    internal const long MaxArchiveEntryBytes = 10L * 1024 * 1024;
+    internal const long MaxArchiveExpandedBytes = 500L * 1024 * 1024;
 
     private const int SnapshotSchema = 2;
     private const string Prefix = "qrk-backup-";
@@ -113,7 +117,8 @@ public static class LibraryBackup
         Restore(backupZip, libraryRoot, backupsDir, AppPaths.ConfigPath, null);
 
     internal static bool Restore(string backupZip, string libraryRoot, string backupsDir, string configPath,
-        Action<string, string>? installLibrary)
+        Action<string, string>? installLibrary, int maxEntries = MaxArchiveEntries,
+        long maxEntryBytes = MaxArchiveEntryBytes, long maxExpandedBytes = MaxArchiveExpandedBytes)
     {
         if (!File.Exists(backupZip)) throw new FileNotFoundException("Backup not found", backupZip);
 
@@ -131,7 +136,8 @@ public static class LibraryBackup
         try
         {
             File.Copy(backupZip, protectedZip); // before CreateRequired can prune backupZip
-            var staged = ExtractAndValidate(protectedZip, work);
+            var staged = ExtractAndValidate(protectedZip, work, maxEntries, maxEntryBytes, maxExpandedBytes);
+            if (staged.Config is not null) RetargetConfig(staged.Config, libraryFull);
             CreateRequired(libraryFull, backupsDir, configPath, "pre-restore safety");
 
             try
@@ -171,21 +177,37 @@ public static class LibraryBackup
         }
     }
 
-    private static StagedSnapshot ExtractAndValidate(string archivePath, string work)
+    private static StagedSnapshot ExtractAndValidate(string archivePath, string work, int maxEntries,
+        long maxEntryBytes, long maxExpandedBytes)
     {
         string library = Path.Combine(work, "staged-library");
         string config = Path.Combine(work, ConfigEntry);
         Directory.CreateDirectory(library);
 
         using var zip = ZipFile.OpenRead(archivePath);
+        if (zip.Entries.Count > maxEntries)
+            throw new InvalidDataException($"Backup contains more than {maxEntries:N0} entries.");
+        long declaredBytes = 0;
+        foreach (var entry in zip.Entries)
+        {
+            if (entry.Length > maxEntryBytes)
+                throw new InvalidDataException($"Backup entry is too large: {entry.FullName}");
+            declaredBytes = checked(declaredBytes + entry.Length);
+            if (declaredBytes > maxExpandedBytes)
+                throw new InvalidDataException("Backup expands beyond the allowed size.");
+        }
+
+        long extractedBytes = 0;
         var manifests = zip.Entries.Where(e => e.FullName.Equals(ManifestEntry, StringComparison.Ordinal)).ToList();
         bool modern = manifests.Count > 0;
         bool wantsConfig = false;
         if (modern)
         {
             if (manifests.Count != 1) throw new InvalidDataException("Backup contains duplicate manifests.");
-            using var stream = manifests[0].Open();
-            var manifest = JsonSerializer.Deserialize<Manifest>(stream)
+            using var manifestBytes = new MemoryStream();
+            CopyBounded(manifests[0], manifestBytes, ref extractedBytes, maxEntryBytes, maxExpandedBytes);
+            manifestBytes.Position = 0;
+            var manifest = JsonSerializer.Deserialize<Manifest>(manifestBytes)
                 ?? throw new InvalidDataException("Backup manifest is invalid.");
             if (manifest.Schema != SnapshotSchema)
                 throw new InvalidDataException($"Backup schema {manifest.Schema} is not supported.");
@@ -232,7 +254,8 @@ public static class LibraryBackup
             else
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
-                entry.ExtractToFile(destination);
+                using var output = File.Create(destination);
+                CopyBounded(entry, output, ref extractedBytes, maxEntryBytes, maxExpandedBytes);
             }
         }
 
@@ -240,6 +263,36 @@ public static class LibraryBackup
         if (modern && wantsConfig != configFound)
             throw new InvalidDataException("Backup manifest and config content do not agree.");
         return new StagedSnapshot(library, configFound ? config : null);
+    }
+
+    private static void CopyBounded(ZipArchiveEntry entry, Stream output, ref long total,
+        long maxEntryBytes, long maxExpandedBytes)
+    {
+        using var input = entry.Open();
+        var buffer = new byte[81920];
+        long written = 0;
+        int read;
+        while ((read = input.Read(buffer)) > 0)
+        {
+            written += read;
+            total += read;
+            if (written > maxEntryBytes || total > maxExpandedBytes)
+                throw new InvalidDataException($"Backup entry expands beyond the allowed size: {entry.FullName}");
+            output.Write(buffer, 0, read);
+        }
+    }
+
+    private static void RetargetConfig(string configPath, string libraryRoot)
+    {
+        JsonObject config;
+        try
+        {
+            config = JsonNode.Parse(File.ReadAllText(configPath)) as JsonObject
+                ?? throw new InvalidDataException("Backup config is not a JSON object.");
+        }
+        catch (JsonException ex) { throw new InvalidDataException("Backup config is invalid.", ex); }
+        config["libraryPath"] = libraryRoot;
+        File.WriteAllText(configPath, config.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 
     private static string SafePath(string root, string relative)

@@ -12,12 +12,14 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B02 - Backup restore correctness and completeness
 
 - **Severity:** P0
-- **Status:** In progress on `bugfix/backup-restore-integrity`; implementation complete, independent QA pending
+- **Status:** QA findings fixed on `bugfix/backup-restore-integrity`; second independent QA pending
 - **Impact:** Restore can fail or leave a partially replaced library, creating data-loss risk.
 - **Acceptance:** Protect/copy the selected archive before pre-restore pruning; stage and swap with rollback rather
   than delete-then-copy; restoring the oldest retained backup works; forced replacement failure preserves the original
   library; snapshots include config while older library-only archives remain restorable; retention has count plus
-  size/age bounds; required backups fail closed with a clear message before risky operations.
+  size/age bounds; required backups fail closed with a clear message before risky operations; restored settings retain
+  the actual restore-target library path; confirmation discloses settings replacement/restart; archive entry count,
+  per-file bytes, and total expanded bytes are bounded.
 
 ### B03 - Import preview/import trust and integrity
 

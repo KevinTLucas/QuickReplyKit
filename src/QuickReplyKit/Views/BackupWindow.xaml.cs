@@ -59,7 +59,9 @@ public partial class BackupWindow : Window
         if (BackupList.SelectedItem is not Row row) return;
         bool ok = ConfirmDialog.Confirm(this, "Restore library",
             $"Replace your current library with the snapshot from {row.Info.Created:yyyy-MM-dd HH:mm:ss}?\n" +
-            "Your current library is snapshotted first, so you can undo this.",
+            "Your current library is snapshotted first, so you can undo this.\n\n" +
+            "Modern snapshots also replace local settings and restart QuickReplyKit. " +
+            "The restored library stays at its current location. Legacy snapshots replace only the library.",
             "Restore", destructive: true);
         if (!ok) return;
 

@@ -128,8 +128,14 @@ public partial class App : Application
                 new Views.AboutWindow(_config!, _library!) { Owner = _launcher }.ShowDialog()));
 
         if (e.Args.Any(a => a.Equals("--show-backup", StringComparison.OrdinalIgnoreCase)))
-            Dispatcher.BeginInvoke(new Action(() => new Views.BackupWindow(
-                _config!.LibraryPath, _library!, () => _vm!.OnLibraryUpdated()) { Owner = _launcher }.ShowDialog()));
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var dialog = new Views.BackupWindow(
+                    _config!.LibraryPath, _library!, () => _vm!.OnLibraryUpdated());
+                if (_launcher is { IsVisible: true }) dialog.Owner = _launcher;
+                else dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                dialog.ShowDialog();
+            }));
 
         if (e.Args.Any(a => a.Equals("--show-import-preview", StringComparison.OrdinalIgnoreCase)))
             Dispatcher.BeginInvoke(new Action(() => Views.ImportPreviewWindow.Prompt(_launcher!, new[]

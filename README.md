@@ -150,7 +150,8 @@ box — press any combination to see what it's bound to — plus a filter over t
   written, the import is canceled before it changes anything. You can create or restore a snapshot from
   **Settings → Back up / Restore Library…**. Current snapshots contain the response library and app settings;
   older library-only snapshots still work. Restore protects the selected archive, snapshots the current state, and
-  swaps the staged library into place with rollback on failure. QuickReplyKit restarts after restoring settings.
+  validates and swaps the staged library into place with rollback on failure. Restored settings keep the current
+  library location, and QuickReplyKit restarts after applying them. Backup extraction is bounded against oversized ZIPs.
 - Deleted responses move to **Settings → Trash…**, where they can be restored unless another response now occupies
   the original path. Permanent delete and Empty Trash require confirmation.
 - Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and never include response

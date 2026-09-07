@@ -19,7 +19,7 @@
     <StackPanel Margin="18,14,18,16">
         <TextBlock Text="Library snapshots" FontWeight="SemiBold" FontSize="14"/>
         <TextBlock Foreground="{DynamicResource TextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,8"
-                   Text="Snapshots are taken automatically before an import, and whenever you click “Back up now”. Restoring replaces your current library — but the current state is snapshotted first, so a restore is itself undoable."/>
+                   Text="Snapshots are taken automatically before an import, and whenever you click “Back up now”. Restoring replaces your current library after taking an undo snapshot. Modern snapshots also restore local settings and restart QuickReplyKit; legacy snapshots restore only the library."/>
         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
                 BorderThickness="1" CornerRadius="6">
             <ListBox x:Name="BackupList" Height="200" BorderThickness="0" Background="Transparent"
