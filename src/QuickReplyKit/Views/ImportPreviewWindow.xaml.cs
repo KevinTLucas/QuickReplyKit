@@ -1,60 +1,118 @@
 using System.Windows;
 using System.Windows.Media;
 using QuickReplyKit.Core.ImportExport;
-using QuickReplyKit.ViewModels;
 
 namespace QuickReplyKit.Views;
 
-/// <summary>
-/// Shows the pre-import diff (New / Identical / Conflict) and, when there are conflicts, the policy to
-/// apply to them. Returns the chosen <see cref="ConflictPolicy"/> via <see cref="Prompt"/>, or null on
-/// cancel. Identical entries are shown for transparency; the import treats them as no-ops.
-/// </summary>
+/// <summary>Reviews and edits the exact import plan that will be executed.</summary>
 public partial class ImportPreviewWindow : Window
 {
-    private sealed record Row(string Kind, string Dest, System.Windows.Media.Brush Badge);
+    private sealed record Choice(string Label, ImportAction Action);
 
-    public ConflictPolicy Policy { get; private set; } = ConflictPolicy.Skip;
+    private sealed class Row
+    {
+        public required ImportPlanEntry Entry { get; init; }
+        public required string Kind { get; init; }
+        public required System.Windows.Media.Brush Badge { get; init; }
+        public required IReadOnlyList<Choice> Choices { get; init; }
+        public ImportAction Action { get; set; }
+        public bool CanChoose => Choices.Count > 1;
+        public string Dest => Entry.DestinationPath;
+        public string Detail => Entry.Message ?? (Entry.MatchingExistingPath is { } match
+            ? $"Same content already exists at {match}" : "");
+    }
 
-    private ImportPreviewWindow(IReadOnlyList<ImportEntry> entries)
+    private readonly List<Row> _rows;
+    public IReadOnlyDictionary<int, ImportAction> Decisions =>
+        _rows.ToDictionary(r => r.Entry.Id, r => r.Action);
+
+    private ImportPreviewWindow(ImportPlan plan)
     {
         InitializeComponent();
+        _rows = plan.Entries.Select(MakeRow).ToList();
+        EntryList.ItemsSource = _rows;
 
-        int New = ImportPreview.Count(entries, ImportKind.New);
-        int changed = ImportPreview.Count(entries, ImportKind.Conflict);
-        int identical = ImportPreview.Count(entries, ImportKind.Identical);
-        Summary.Text = $"{New} new · {changed} changed · {identical} identical (skipped)";
-
-        EntryList.ItemsSource = entries.Select(e => new Row(
-            e.Kind switch { ImportKind.New => "NEW", ImportKind.Conflict => "CHANGED", _ => "IDENTICAL" },
-            e.Dest,
-            Hex(e.Kind switch { ImportKind.New => "#BBF7D0", ImportKind.Conflict => "#FDE68A", _ => "#E5E7EB" })))
-            .ToList();
-
-        ConflictPanel.Visibility = changed > 0 ? Visibility.Visible : Visibility.Collapsed;
-        ImportButton.IsEnabled = New > 0 || changed > 0;   // nothing to do if all identical
+        string Count(ImportClassification kind) => _rows.Count(r => r.Entry.Classification == kind).ToString();
+        Summary.Text = $"{Count(ImportClassification.New)} new · "
+            + $"{Count(ImportClassification.Conflict)} changed · "
+            + $"{Count(ImportClassification.DuplicateElsewhere)} duplicate · "
+            + $"{Count(ImportClassification.Identical)} identical · "
+            + $"{_rows.Count(r => r.Entry.Classification is ImportClassification.Invalid or ImportClassification.Unsafe)} skipped";
+        ConflictPanel.Visibility = _rows.Any(r => r.Entry.Classification == ImportClassification.Conflict)
+            ? Visibility.Visible : Visibility.Collapsed;
+        UpdateImportButton();
     }
 
-    /// <summary>Show the preview; returns the policy to import with, or null if cancelled.</summary>
-    public static ConflictPolicy? Prompt(Window owner, IReadOnlyList<ImportEntry> entries)
+    public static IReadOnlyDictionary<int, ImportAction>? Prompt(Window owner, ImportPlan plan)
     {
-        var dlg = new ImportPreviewWindow(entries) { Owner = owner };
-        if (dlg.ShowDialog() != true) return null;
-        return dlg.Policy;
+        var dialog = new ImportPreviewWindow(plan) { Owner = owner };
+        return dialog.ShowDialog() == true ? dialog.Decisions : null;
     }
 
-    private void Import_Click(object sender, RoutedEventArgs e)
+    private static Row MakeRow(ImportPlanEntry entry)
     {
-        Policy = PolicyOverwrite.IsChecked == true ? ConflictPolicy.Overwrite
-               : PolicyKeepBoth.IsChecked == true ? ConflictPolicy.KeepBoth
-               : ConflictPolicy.Skip;
-        DialogResult = true;
+        var choices = entry.Classification switch
+        {
+            ImportClassification.New or ImportClassification.DuplicateElsewhere => new[]
+            {
+                new Choice("Import", ImportAction.Import), new Choice("Skip", ImportAction.Skip),
+            },
+            ImportClassification.Conflict => new[]
+            {
+                new Choice("Skip", ImportAction.Skip), new Choice("Overwrite", ImportAction.Overwrite),
+                new Choice("Keep both", ImportAction.KeepBoth),
+            },
+            _ => new[] { new Choice("Skip", ImportAction.Skip) },
+        };
+        return new Row
+        {
+            Entry = entry,
+            Kind = entry.Classification switch
+            {
+                ImportClassification.DuplicateElsewhere => "DUPLICATE",
+                ImportClassification.Identical => "IDENTICAL",
+                ImportClassification.Conflict => "CHANGED",
+                ImportClassification.Invalid => "INVALID",
+                ImportClassification.Unsafe => "UNSAFE",
+                _ => "NEW",
+            },
+            Badge = Hex(entry.Classification switch
+            {
+                ImportClassification.New => "#BBF7D0",
+                ImportClassification.Conflict => "#FDE68A",
+                ImportClassification.Invalid or ImportClassification.Unsafe => "#FECACA",
+                _ => "#E5E7EB",
+            }),
+            Choices = choices,
+            Action = entry.DefaultAction,
+        };
     }
+
+    private void ApplyConflicts_Click(object sender, RoutedEventArgs e)
+    {
+        ImportAction action = PolicyOverwrite.IsChecked == true ? ImportAction.Overwrite
+            : PolicyKeepBoth.IsChecked == true ? ImportAction.KeepBoth : ImportAction.Skip;
+        foreach (var row in _rows.Where(r => r.Entry.Classification == ImportClassification.Conflict))
+            row.Action = action;
+        EntryList.Items.Refresh();
+        UpdateImportButton();
+    }
+
+    private void Action_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
+        UpdateImportButton();
+
+    private void UpdateImportButton()
+    {
+        if (ImportButton is not null) ImportButton.IsEnabled = _rows.Any(r => r.Action != ImportAction.Skip);
+    }
+
+    private void Import_Click(object sender, RoutedEventArgs e) => DialogResult = true;
 
     private static SolidColorBrush Hex(string hex)
     {
-        var b = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex)!);
-        b.Freeze();
-        return b;
+        var brush = new SolidColorBrush((System.Windows.Media.Color)
+            System.Windows.Media.ColorConverter.ConvertFromString(hex)!);
+        brush.Freeze();
+        return brush;
     }
 }

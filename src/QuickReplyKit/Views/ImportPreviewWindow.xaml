@@ -1,7 +1,7 @@
 <Window x:Class="QuickReplyKit.Views.ImportPreviewWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Import preview" SizeToContent="Height" Width="520" MaxHeight="600"
+        Title="Import preview" SizeToContent="Height" Width="680" MaxHeight="680"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         ShowInTaskbar="False" Background="{DynamicResource WindowBg}"
         Foreground="{DynamicResource TextPrimary}" FontFamily="Segoe UI">
@@ -32,16 +32,24 @@
                     <DataTemplate>
                         <Grid Margin="2,3">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="86"/>
+                                <ColumnDefinition Width="96"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="118"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Background="{Binding Badge}" CornerRadius="4" Padding="6,1"
                                     HorizontalAlignment="Left" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Kind}" Foreground="Black" FontSize="11" FontWeight="SemiBold"/>
                             </Border>
-                            <TextBlock Grid.Column="1" Text="{Binding Dest}" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"
-                                       ToolTip="{Binding Dest}" Margin="8,0,0,0"/>
+                            <StackPanel Grid.Column="1" Margin="8,0">
+                                <TextBlock Text="{Binding Dest}" Foreground="{DynamicResource TextPrimary}"
+                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Dest}"/>
+                                <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource TextMuted}"
+                                           FontSize="10" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding Choices}" DisplayMemberPath="Label"
+                                      SelectedValuePath="Action" SelectedValue="{Binding Action, Mode=TwoWay}"
+                                      IsEnabled="{Binding CanChoose}" SelectionChanged="Action_Changed"
+                                      MinWidth="108" HorizontalAlignment="Stretch"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -49,12 +57,14 @@
         </Border>
 
         <StackPanel x:Name="ConflictPanel" Margin="0,12,0,0" Visibility="Collapsed">
-            <TextBlock Text="For items that already exist (changed):" Foreground="{DynamicResource TextMuted}"
+            <TextBlock Text="Apply one choice to all changed items:" Foreground="{DynamicResource TextMuted}"
                        FontSize="12" Margin="0,0,0,4"/>
             <StackPanel Orientation="Horizontal">
                 <RadioButton x:Name="PolicySkip" Content="Skip (keep mine)" GroupName="P" IsChecked="True" Margin="0,0,16,0"/>
                 <RadioButton x:Name="PolicyOverwrite" Content="Overwrite (use theirs)" GroupName="P" Margin="0,0,16,0"/>
-                <RadioButton x:Name="PolicyKeepBoth" Content="Keep both" GroupName="P"/>
+                <RadioButton x:Name="PolicyKeepBoth" Content="Keep both" GroupName="P" Margin="0,0,12,0"/>
+                <Button Content="Apply" Style="{StaticResource Btn}" Margin="0" Padding="10,3"
+                        Click="ApplyConflicts_Click"/>
             </StackPanel>
         </StackPanel>
 

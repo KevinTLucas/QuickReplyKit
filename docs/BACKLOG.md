@@ -7,19 +7,6 @@ Priority is based on crash/core-workflow impact, data-loss or trust-boundary ris
 P3 = optional polish. **Status:** Confirmed, Investigating, Queued, In progress, QA, or Blocked. A shipped foundation
 may still have a Confirmed remaining gap; its merge is noted in the item.
 
-## P0 - Bugs First
-
-### B03 - Import preview/import trust and integrity
-
-- **Severity:** P0
-- **Status:** Confirmed by source audit
-- **Impact:** Preview and actual writes can disagree; crafted ZIP paths are probed before containment; invalid entries
-  are mislabelled; identical files may be overwritten or duplicated.
-- **Acceptance:** Preview performs canonical path containment before destination reads; invalid entries are explicitly
-  labelled and valid siblings remain importable; Identical is always a no-op; same-content duplicates at another path
-  are distinguished; per-item conflict choices work alongside apply-to-all; preview plan and import result agree in
-  adversarial mixed ZIP tests. Legacy `.qrkfolder.json` is ignored safely regardless of when B09 lands.
-
 ## P1 - Core Workflow And Major UI
 
 ### B04 - Sanitize Create from Clipboard content
@@ -34,17 +21,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
   sanitizer tests cover active content and URL schemes.
 
-### B05 - Search relevance correctness
-
-- **Severity:** P1
-- **Status:** Confirmed by user examples; investigation required
-- **Impact:** Core find-and-paste workflow returns unrelated results, including `rostering` matching testing content
-  and `Licensing` returning unrelated IXL responses.
-- **Acceptance:** Build a realistic regression corpus for names, body, tags, app, and category; reproduce both examples;
-  remove false positives without losing intended typo tolerance; exact/prefix/name/tag matches outrank body/fuzzy;
-  fuzzy fallback never admits unrelated terms when exact matches exist; selected-folder behavior is deterministic;
-  large-library search stays responsive and existing valid search cases remain green.
-
 ### B06 - Repair Settings layout and About area
 
 - **Severity:** P1
@@ -52,7 +28,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Impact:** Settings content, especially the About/Diagnostics area, is truncated or broken at real display scales.
 - **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
   and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;
-  screenshots and UI Automation verify every control remains reachable.
+  static layout review and automated tests verify every control remains reachable; desktop UI automation is disabled
+  at the user's request.
 
 ### B07 - Dark-mode button hover contrast
 
@@ -147,7 +124,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B16 - Sandboxed user scripts for dynamic variables
 
 - **Severity:** P2 feature; security-critical design
-- **Status:** Queued last after B03/B04/B11/B14
+- **Status:** Queued last after B04/B11/B14
 - **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
 - **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
   scripts; persist definitions in a documented format; invoke them with explicit template syntax such as

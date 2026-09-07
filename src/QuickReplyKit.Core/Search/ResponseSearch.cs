@@ -64,8 +64,8 @@ public static class ResponseSearch
 
         return scored
             .OrderBy(s => s.Item.IsValid ? 0 : 1)   // valid before invalid
-            .ThenBy(s => s.ScopeGroup)              // in-scope before the rest
             .ThenBy(s => s.Total)                   // stronger field match
+            .ThenBy(s => s.ScopeGroup)              // in-scope breaks relevance ties
             .ThenBy(s => s.Item.Name, StringComparer.OrdinalIgnoreCase)
             .Select(s => new SearchHit(s.Item, s.NameSpans, s.Snippet))
             .ToList();
@@ -197,10 +197,10 @@ public static class ResponseSearch
 
     private static bool FuzzyField(string text, string token)
     {
-        if (Subsequence(text, token)) return true;
         int max = token.Length < 6 ? 1 : 2;                 // ≤1 for short tokens, ≤2 for longer
         foreach (var word in text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
-            if (Math.Abs(word.Length - token.Length) <= max && Levenshtein(word, token, max) <= max)
+            if ((token.Length <= 4 && Subsequence(word, token)) ||
+                (Math.Abs(word.Length - token.Length) <= max && Levenshtein(word, token, max) <= max))
                 return true;
         return false;
     }
