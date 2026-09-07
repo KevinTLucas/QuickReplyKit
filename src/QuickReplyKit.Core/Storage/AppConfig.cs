@@ -41,6 +41,9 @@ public sealed class AppConfig
     /// <summary>Verbose (Debug/Verbose) diagnostic logging. Off by default → Info+ only.</summary>
     public bool VerboseLogging { get; set; } = false;
 
+    /// <summary>Days a deleted response stays in the app Trash before auto-purge (0 = keep forever).</summary>
+    public int TrashRetentionDays { get; set; } = 30;
+
     /// <summary>Set once the first-run onboarding has been shown, so it never pops again.</summary>
     public bool OnboardingSeen { get; set; } = false;
 

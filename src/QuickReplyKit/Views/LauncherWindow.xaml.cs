@@ -250,11 +250,11 @@ public partial class LauncherWindow : Window
 
     private void MenuDelete_Click(object sender, RoutedEventArgs e)
     {
-        if (_vm.SelectedItem is not { } item) return;
+        if (_vm.SelectedItem is not { } item || string.IsNullOrEmpty(item.FullPath)) return;
         bool ok = ConfirmDialog.Confirm(this, "Delete response",
-            $"Delete “{item.Name}”?\nIt will be moved to the Recycle Bin, so you can restore it later.",
+            $"Delete “{item.Name}”?\nIt moves to the app's Trash — restore it any time from Settings → Trash.",
             "Delete", destructive: true);
-        if (ok) ResponseManager.Delete(item);
+        if (ok) TrashService.Trash(item.FullPath, _vm.LibraryRoot, AppPaths.TrashDir);
     }
 
     // --- Import / export ----------------------------------------------------
