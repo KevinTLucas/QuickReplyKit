@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B03 - Import preview/import trust and integrity
 
 - **Severity:** P0
-- **Status:** Confirmed by source audit
+- **Status:** Security re-QA passed on `bugfix/import-integrity`; current-main integration and final regression in progress
 - **Impact:** Preview and actual writes can disagree; crafted ZIP paths are probed before containment; invalid entries
   are mislabelled; identical files may be overwritten or duplicated.
 - **Acceptance:** Preview performs canonical path containment before destination reads; invalid entries are explicitly

@@ -161,9 +161,11 @@ box — press any combination to see what it's bound to — plus a filter over t
 
 ## Current limitations before broad rollout
 
-- In a mixed import, identical existing files still follow the selected batch conflict policy. Use **Skip** when you
-  do not want identical responses overwritten or copied; the preview/import alignment fix is tracked in the backlog.
-- Folder tags travel with direct folder copies and exports, but the current ZIP import skips their sidecar metadata.
+- Import preview classifies each response as New, Duplicate elsewhere, Changed, Identical, Invalid, or Unsafe. Choose
+  Skip, Overwrite, or Keep both per conflicting response, with apply-to-all for ordinary conflicts. Identical files are
+  always skipped; invalid or unsafe entries never block valid siblings. The accepted preview is the plan that executes,
+  and files changed after preview are reported stale rather than overwritten.
+- Legacy folder-tag sidecars are ignored during import and never appear as responses.
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the audited state and [`docs/BACKLOG.md`](docs/BACKLOG.md) for remaining work.
 

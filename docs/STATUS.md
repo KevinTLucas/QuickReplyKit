@@ -11,8 +11,8 @@
 - **Tests:** **443 passed, 0 failed, 0 skipped** after B02 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
-- **Git:** completed feature branches listed below are ancestors of `main`. The only unmerged work is the isolated
-  B02 and B03 bugfix branches described under Active worktrees. Several fully merged historical branches/worktrees
+- **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
+  human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   15 ordered items with severity, acceptance criteria, and status. Confirmed data-loss/import defects lead;
@@ -69,10 +69,11 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** B02 is complete and ready to merge; its worktree can be removed afterward.
-`bugfix/import-integrity` contains the committed B03 validated-plan implementation and awaits security/UI QA;
-`bugfix/dark-hover-contrast` and `bugfix/search-relevance` contain their isolated P1 fixes and await QA. Resume these
-exact worktrees rather than starting duplicates.
+**Active worktrees:** B02 is merged. `bugfix/import-integrity` passed security re-QA and is integrating current
+`main` before its final regression. `bugfix/clipboard-sanitization` is in second security QA;
+`bugfix/dark-hover-contrast` is in final accessibility QA; `bugfix/search-relevance` passed headless QA and needs
+current-main integration. `bugfix/settings-about-layout` awaits QA, and `feature/folder-trash` is paused cleanly
+before implementation. Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

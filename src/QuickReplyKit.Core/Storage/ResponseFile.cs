@@ -56,7 +56,35 @@ public static class ResponseFile
 
         try
         {
-            var root = JsonNode.Parse(File.ReadAllText(fullPath), NodeOptions, DocOptions);
+            return Parse(item, File.ReadAllText(fullPath));
+        }
+        catch (Exception ex)
+        {
+            return Invalidate(item, ex.Message);
+        }
+    }
+
+    /// <summary>Validate response JSON already held in memory without creating a temporary file.</summary>
+    public static bool Validate(ReadOnlySpan<byte> utf8, out string? error)
+    {
+        try
+        {
+            var item = Parse(new ResponseItem(), System.Text.Encoding.UTF8.GetString(utf8));
+            error = item.Error;
+            return item.IsValid;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    private static ResponseItem Parse(ResponseItem item, string json)
+    {
+        try
+        {
+            var root = JsonNode.Parse(json, NodeOptions, DocOptions);
             if (root is not JsonObject obj)
                 return Invalidate(item, "Not a QuickReplyKit response (not a JSON object).");
 

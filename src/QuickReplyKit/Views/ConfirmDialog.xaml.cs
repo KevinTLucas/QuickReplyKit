@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using QuickReplyKit.Core.ImportExport;
 
 namespace QuickReplyKit.Views;
 
@@ -56,24 +55,6 @@ public partial class ConfirmDialog : Window
     /// <summary>Single-button informational dialog (e.g. an import summary).</summary>
     public static void Info(Window owner, string title, string message) =>
         Show(owner, title, message, ("OK", false, true));
-
-    /// <summary>
-    /// Batch import conflict prompt. Returns the policy to apply to every colliding response,
-    /// or null if the user cancelled (dismissed the dialog).
-    /// </summary>
-    public static ConflictPolicy? AskImportConflict(Window owner, int count) =>
-        Show(owner, "Some responses already exist",
-            $"{count} of the responses you're importing already exist in the target folder.\n" +
-            "How should they be handled?",
-            ("Overwrite", true, false),
-            ("Keep both", false, true),
-            ("Skip", false, false)) switch
-        {
-            0 => ConflictPolicy.Overwrite,
-            1 => ConflictPolicy.KeepBoth,
-            2 => ConflictPolicy.Skip,
-            _ => null,
-        };
 
     /// <summary>Three-way name-collision prompt.</summary>
     public static ConflictChoice AskConflict(Window owner, string name) =>
