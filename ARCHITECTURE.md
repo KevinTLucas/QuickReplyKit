@@ -122,8 +122,9 @@ view-models, interop, and app wiring.
   visible launcher Edit action.
 - Import uses one immutable `ImportPlan` from `LibraryPorter.PlanImport`; the preview displays that exact plan and
   `LibraryPorter.Import(plan, decisions)` executes it. Entries are classified as New, Duplicate elsewhere, Identical,
-  Conflict, Invalid, or Unsafe. New/duplicate/conflict rows have per-item actions plus an apply-to-all conflict choice;
-  Identical/Invalid/Unsafe rows are locked to Skip. Planning validates canonical containment before destination reads,
+  Conflict, Invalid, or Unsafe. New/duplicate/conflict rows use explicit checkboxes; conflicts expose only per-row
+  Overwrite/Keep both choices, with Keep both as the safe selection default. Identical/Invalid/Unsafe rows are locked
+  to Skip. Bulk selection excludes entries marked for mandatory individual approval. Planning validates canonical containment before destination reads,
   ignores legacy `.qrkfolder.json`, rejects path aliases/reparse traversal and bounded-ZIP violations, and records
   source/destination fingerprints. Execution rechecks those fingerprints, reports stale entries without writing them,
   and atomically replaces individual files. Valid siblings continue when another entry is invalid, unsafe, stale, or

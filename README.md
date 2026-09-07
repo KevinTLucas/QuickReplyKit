@@ -185,9 +185,10 @@ box — press any combination to see what it's bound to — plus a filter over t
 
 ## Current limitations before broad rollout
 
-- Import preview classifies each response as New, Duplicate elsewhere, Changed, Identical, Invalid, or Unsafe. Choose
-  Skip, Overwrite, or Keep both per conflicting response, with apply-to-all for ordinary conflicts. Identical files are
-  always skipped; invalid or unsafe entries never block valid siblings. The accepted preview is the plan that executes,
+- Import preview classifies each response as New, Duplicate elsewhere, Changed, Identical, Invalid, or Unsafe. Check
+  only the responses you want, use Select all/Clear for ordinary files, and choose Overwrite or the safer Keep both
+  option per selected conflict. Identical, invalid, and unsafe files stay disabled. Select all never accepts
+  code-bearing definitions; those require individual review. The accepted preview is the exact plan that executes,
   and files changed after preview are reported stale rather than overwritten.
 - Legacy folder-tag sidecars are ignored during import and never appear as responses.
 
