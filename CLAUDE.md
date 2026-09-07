@@ -101,7 +101,8 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
     merge, audit `git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; every branch-only commit
     and file must belong to that feature/fix. Ancestor commits already in `main` are inherited history, not branch work.
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
-  - Commit messages end with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
+  - Commits use only the repository's configured local Git identity. Do not add `Co-Authored-By`, AI/vendor,
+    agent, or automation attribution trailers, and do not override `user.name` or `user.email` in commands.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.
 - **Definition of Done — the handoff MUST stay current (do this on every meaningful change):**
   1. **Update [`docs/STATUS.md`](docs/STATUS.md)** — the current-state board: `main` tip + test count, what
