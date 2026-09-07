@@ -145,6 +145,8 @@ view-models, interop, and app wiring.
   Dispatcher, and unobserved-task exceptions are recorded but not silently swallowed. Logs omit response bodies.
 - First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
   copyable, read-only environment snapshot. Settings links to hotkeys, backups, Trash, logs, and diagnostics.
+- Accessibility is defined in XAML at the control boundary: Automation names/help, polite/assertive live regions,
+  native keyboard menus, safe dialog defaults, visible focus, and theme/High Contrast resources.
 
 ## Known completion boundaries
 

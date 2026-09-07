@@ -7,19 +7,6 @@ Priority is based on crash/core-workflow impact, data-loss or trust-boundary ris
 P3 = optional polish. **Status:** Confirmed, Investigating, Queued, In progress, QA, or Blocked. A shipped foundation
 may still have a Confirmed remaining gap; its merge is noted in the item.
 
-## P1 - Core Workflow And Major UI
-
-### B11 - Full accessibility pass
-
-- **Severity:** P1
-- **Status:** Queued
-- **Impact:** New dialogs and workflows do not yet meet the requested keyboard, screen-reader, High Contrast, and
-  non-color-only requirements.
-- **Acceptance:** Every action is mouse-free with predictable tab order, visible focus, defaults, and Escape; useful
-  automation names/roles/states cover launcher, results, preview, editor, tags, import, backup, Trash, onboarding,
-  About, and hotkeys; High Contrast is usable; status never relies on color alone; ComboBox Slide animation is removed
-  or respects reduced motion; keyboard/UIA/both-theme/High-Contrast/DPI validation passes.
-
 ## P2 - High-Value Enhancements
 
 ### B14 - Complete diagnostics logging coverage

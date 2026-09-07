@@ -30,6 +30,35 @@
             <Setter Property="MinWidth" Value="72"/>
         </Style>
 
+        <Style x:Key="FavoriteToggle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource Favorite}"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Nav category right-click menu (suppressed for the fixed Favorites/Recent/All nodes) -->
         <ContextMenu x:Key="NavContextMenu">
             <MenuItem Header="Export folder…" Click="MenuExportFolder_Click"/>
@@ -84,6 +113,8 @@
                                  FontSize="15" VerticalAlignment="Center"
                                  VerticalContentAlignment="Center"
                                  Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="Search responses"
+                                 AutomationProperties.HelpText="Type to filter responses; use arrow keys to choose a result"
                                  PreviewKeyDown="SearchBox_PreviewKeyDown"/>
                         <TextBlock Text="Search responses…" IsHitTestVisible="False"
                                    VerticalAlignment="Center" FontSize="15"
@@ -146,6 +177,8 @@
             <Border Grid.Column="0" x:Name="NavBorder" Background="{DynamicResource CardBg}" CornerRadius="8"
                     BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                 <TreeView x:Name="NavTree" BorderThickness="0" Background="Transparent"
+                          AutomationProperties.Name="Response folders and views"
+                          AutomationProperties.HelpText="Choose All Responses, Favorites, Recent, or a folder"
                           Foreground="{DynamicResource TextPrimary}"
                           ItemsSource="{Binding NavRoots}"
                           SelectedItemChanged="NavTree_SelectedItemChanged"
@@ -182,6 +215,8 @@
                     BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                 <Grid>
                     <ListBox x:Name="ResultsList" TabIndex="1" BorderThickness="0" Background="Transparent"
+                             AutomationProperties.Name="Response results"
+                             AutomationProperties.HelpText="Use arrow keys to select; Enter pastes the selected response"
                              Foreground="{DynamicResource TextPrimary}"
                              ItemsSource="{Binding Results}"
                              SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
@@ -218,7 +253,8 @@
                         </ListBox.ContextMenu>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ResponseRowVm}">
-                                <Grid Margin="2,3">
+                                <Grid Margin="2,3" AutomationProperties.Name="{Binding Name}"
+                                      AutomationProperties.HelpText="{Binding Subtitle}">
                                     <Grid.Style>
                                         <!-- Invalid rows are muted (but the ⚠ stays legible). -->
                                         <Style TargetType="Grid">
@@ -245,12 +281,11 @@
                                                    Foreground="{DynamicResource TextMuted}"
                                                    TextTrimming="CharacterEllipsis" ToolTip="{Binding Subtitle}"/>
                                     </StackPanel>
-                                    <Button Grid.Column="2" Content="{Binding FavoriteGlyph}"
-                                            Command="{Binding ToggleFavoriteCommand}"
-                                            Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                            Foreground="{DynamicResource Favorite}" FontSize="15" Padding="6,0"
+                                    <ToggleButton Grid.Column="2" Content="{Binding FavoriteGlyph}"
+                                            Command="{Binding ToggleFavoriteCommand}" IsChecked="{Binding IsFavorite, Mode=OneWay}"
+                                            Style="{StaticResource FavoriteToggle}" FontSize="15"
                                             VerticalAlignment="Center" ToolTip="Toggle favorite"
-                                            AutomationProperties.Name="Toggle favorite"
+                                            AutomationProperties.Name="{Binding Name, StringFormat=Toggle favorite for {0}}"
                                             Visibility="{Binding IsValid, Converter={StaticResource BoolVis}}"/>
                                 </Grid>
                             </DataTemplate>
@@ -258,6 +293,8 @@
                     </ListBox>
 
                     <TextBlock Text="{Binding EmptyStateText}" TextWrapping="Wrap" TextAlignment="Center"
+                               AutomationProperties.LiveSetting="Polite"
+                               views:LiveRegion.Content="{Binding EmptyStateText}"
                                Foreground="{DynamicResource TextMuted}" MaxWidth="240"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Visibility="{Binding IsEmptyState, Converter={StaticResource BoolVis}}"/>
@@ -276,6 +313,8 @@
                             BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,10,0,0">
                         <StackPanel>
                             <TextBlock Text="↳ contains variables — resolved on insert"
+                                       AutomationProperties.LiveSetting="Polite"
+                                       views:LiveRegion.Content="{Binding Visibility, RelativeSource={RelativeSource Self}}"
                                        Foreground="{DynamicResource TextMuted}" FontStyle="Italic"
                                        FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
                                        Visibility="{Binding SelectionHasVariables, Converter={StaticResource BoolVis}}"/>
@@ -294,6 +333,8 @@
                                         ToolTip="Edit this response in the rich-text editor"
                                         AutomationProperties.Name="Edit response"/>
                                 <TextBlock Text="{Binding CopiedHint}" Foreground="{DynamicResource Accent}"
+                                           AutomationProperties.LiveSetting="Polite"
+                                           views:LiveRegion.Content="{Binding CopiedHint}"
                                            FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                            Visibility="{Binding HasCopiedHint, Converter={StaticResource BoolVis}}"/>
                             </StackPanel>
@@ -301,6 +342,8 @@
                     </Border>
 
                     <FlowDocumentScrollViewer x:Name="PreviewViewer" TabIndex="2"
+                                              AutomationProperties.Name="Response preview"
+                                              AutomationProperties.HelpText="Preview of the selected response as it will be inserted"
                                               Document="{Binding PreviewDocument}"
                                               Foreground="{DynamicResource TextPrimary}"
                                               Background="{DynamicResource CardBg}"

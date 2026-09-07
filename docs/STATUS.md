@@ -6,11 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `d12208e` (B12); use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B10 and B12-B13 are merged.
+- **Current product merge:** `9763625` (B11 feature tip; merge commit follows); use `git rev-parse HEAD` for the
+  docs-inclusive tip.
+- **Current product baseline:** B01-B13 are complete.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
-- **Tests:** **537 passed** after B12 independent QA on the B13 baseline; build remains clean.
-- **Portable publish:** B12's current self-contained build is at `publish/latest/QuickReplyKit.exe`. The canonical
+- **Tests:** **559 passed** after B11 independent QA; build remains clean.
+- **Portable publish:** the current self-contained build is at `publish/latest/QuickReplyKit.exe` and is rebuilt after
+  every product merge. The canonical
   `publish/QuickReplyKit.exe` was locked by the user's running instance and was deliberately not closed or replaced;
   the next unlocked product publish promotes the latest build. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -19,13 +21,13 @@
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains
-  4 ordered items with severity, acceptance criteria, and status. Accessibility is next; sandboxed scripting remains
-  deliberately last.
+  3 ordered items with severity, acceptance criteria, and status. Sandboxed scripting remains deliberately last.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B11 full accessibility pass | `9763625` | 559/559 integrated; 22/22 focused; separate test and static QA; live-region and 200%-DPI blockers fixed | Complete |
 | B12 discoverable Import/Export | `4e490f4` | 537/537 integrated; focused XAML contract; static keyboard/theme/compact review | Complete |
 | B13 configurable backup location | `73090b1`, `7792fb5` | 536/536 integrated; 31/31 focused; invalid, nested, unavailable, migration and restore paths | Complete |
 | B10 folder-scoped search chip | `b451f7d` | 524/524 full, 41/41 launcher VM, 10/10 focused; static theme/compact/accessibility review | Complete |
@@ -73,14 +75,13 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B11 P1:** full accessibility pass.
-2. **B14-B15 P2:** logging and diagnostics completion.
-3. **B16 P2:** sandboxed dynamic-variable scripts, only after its accessibility and logging gates.
+1. **B14-B15 P2:** logging and diagnostics completion.
+2. **B16 P2:** sandboxed dynamic-variable scripts, only after its logging gate.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B10 and B12-B13 are complete. A stale interrupted historical hotkey worktree remains
-quarantined and is not an active source of changes.
+**Active worktrees:** B01-B13 are complete. A stale interrupted historical hotkey worktree remains quarantined and is
+not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -105,7 +106,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **537** green after B12. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **559** green after B11. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. Do not drive or capture the user's desktop.

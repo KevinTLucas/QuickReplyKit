@@ -19,7 +19,8 @@
         </Style>
     </Window.Resources>
     <StackPanel Margin="18">
-        <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13" LineHeight="19"/>
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13" LineHeight="19"
+                   AutomationProperties.Name="Confirmation message"/>
         <StackPanel x:Name="ButtonBar" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,18,0,0"/>
     </StackPanel>
