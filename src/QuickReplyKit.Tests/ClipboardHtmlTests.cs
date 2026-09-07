@@ -202,6 +202,11 @@ public class ClipboardHtmlTests
             ClipboardHtml.Sanitize("<p title='x>y'>visible</p>"));
 
     [Fact]
+    public void Sanitize_DropsMalformedQuotedActiveBlock_WithoutLeakingItsContent() =>
+        Assert.Equal("<p>vafter</p>",
+            ClipboardHtml.Sanitize("<p>v<script data-x='>''>secret</script>after</p>"));
+
+    [Fact]
     public void Sanitize_KeepsSupportedFormattingAndDropsUnsupportedStyles() =>
         Assert.Equal("<p style=\"text-align:center\"><span style=\"color:#FF0000\"><b>x</b></span></p>",
             ClipboardHtml.Sanitize("<p style='text-align:center;position:fixed'><span style='color:red;left:0'><b>x</b></span></p>"));

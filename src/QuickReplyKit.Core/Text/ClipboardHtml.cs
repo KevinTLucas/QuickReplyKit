@@ -179,12 +179,24 @@ public static class ClipboardHtml
     internal static int TagEnd(string html, int from)
     {
         char quote = '\0';
+        bool awaitingValue = false;
         for (int i = from; i < html.Length; i++)
         {
             char c = html[i];
-            if (quote == '\0' && (c == '\'' || c == '"')) quote = c;
-            else if (c == quote) quote = '\0';
-            else if (c == '>' && quote == '\0') return i;
+            if (quote != '\0')
+            {
+                if (c == quote) quote = '\0';
+                continue;
+            }
+
+            if (c == '>') return i;
+            if (awaitingValue)
+            {
+                if (char.IsWhiteSpace(c)) continue;
+                if (c is '\'' or '"') quote = c;
+                awaitingValue = false;
+            }
+            else if (c == '=') awaitingValue = true;
         }
         return -1;
     }
