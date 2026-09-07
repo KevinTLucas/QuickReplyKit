@@ -145,9 +145,8 @@ view-models, interop, and app wiring.
 ## Known completion boundaries
 
 The implemented paths above are merged and tested. The remaining contract gaps are intentionally explicit in
-[`docs/BACKLOG.md`](docs/BACKLOG.md): full accessibility; backup-path configuration pending independent QA;
-complete logging and folder-tag scope controls; richer import review plus any future
-code-import gate; and refreshing About for actual launcher/response-hotkey state and backup/Trash paths.
+[`docs/BACKLOG.md`](docs/BACKLOG.md): full accessibility; clearer Import/Export controls; complete diagnostic logging;
+refreshing About with current hotkey, watcher, backup, and Trash state; and the security-gated computed-variable DSL.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,

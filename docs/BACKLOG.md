@@ -31,16 +31,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   Export response/folder/library in context; remains compact at minimum width; accessible name/tooltip and keyboard
   access are obvious; no duplicate or ambiguous commands.
 
-### B13 - Configurable backup-folder location
-
-- **Severity:** P2
-- **Status:** Implementation complete on `feature/configurable-backup-location`; independent QA pending
-- **Impact:** Enterprises may require backups on a managed/local/network path rather than `%APPDATA%`.
-- **Acceptance:** Settings shows current backup location with Change/Open/Reset; value persists; default remains app
-  data; path is validated and writable before save/use; unavailable paths fail clearly without blocking normal app
-  startup; backup/restore consistently use the configured path; About reports it; tests cover defaults, persistence,
-  migration, invalid/unavailable paths, and restore.
-
 ### B14 - Complete diagnostics logging coverage
 
 - **Severity:** P2
