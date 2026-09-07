@@ -6,22 +6,22 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Product-code baseline:** `main` at `a0615b2` (this handoff-audit branch changes documentation only).
+- **Current `main`:** `92709d0` before this backlog-planning branch.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **435 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** every completed feature branch listed below is already an ancestor of `main`; there are no
   unmerged feature commits. Several merged branches/worktrees remain locally and may be pruned later.
-- **State:** launchable and substantially feature-complete. Thirteen requested implementation items were
-  merged after independent QA, but seven original backlog items still have gaps in [`BACKLOG.md`](BACKLOG.md). Do not call
-  the entire backlog complete until those gaps are closed and independently validated.
+- **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
+  16 ordered items with severity, acceptance criteria, and status. Confirmed crash/data-loss/import defects lead;
+  sandboxed scripting is active but deliberately last behind its security prerequisites.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| #1 dark-mode Category ComboBox + #6 repeated-right-click crash | `d562052` | 6/6 QA; both themes; 80 rapid right-clicks | Complete |
+| #1 dark-mode Category ComboBox + original #6 right-click fix | `d562052` | 6/6 QA; both themes; original reentrancy path survived 80 rapid clicks | Crash reopened as B01 with a different logged cause |
 | #7 rolling diagnostics/logging | `8f74aa9` | 9/9 feature QA; rollover, levels, crash channels, no response-body logging | Partial: requested workflow coverage remains |
 | #2 editor palettes + #3 visible Edit action | `20d808c` | 6/6 QA; both themes; edit opens pre-filled | Complete |
 | #13 About / Diagnostics screen | `23468f7` | Both themes; values, copy, and folder actions checked | Partial: see open work |
@@ -54,27 +54,19 @@ file. The integrated result was rebuilt and retested during this audit: all 435 
 
 ## Remaining Work
 
-Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Current order:
+Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **P0 - Fix import integrity (#8/#9):** align preview and import so Identical means no-op; validate/label invalid
-   entries; add preview path containment; preserve folder-tag sidecars through ZIP import; finish duplicate/per-item decisions.
-2. **P0 - Fix backup restore correctness (#10):** restoring the oldest retained snapshot can prune the selected
-   file before it is opened, and replacement is delete-then-copy rather than atomic. Fix both with regression tests.
-3. **P1 - Accessibility pass (#14):** not started. Only the launcher's seven icon controls have explicit
-   automation names; newer dialogs and workflows still need full keyboard, screen-reader, high-contrast, focus,
-   and non-color-only validation.
-4. **P1 - Finish backup coverage (#10):** backups currently contain the library only and are automatic before
-   import. Add config to snapshots and back up before batch tagging and any future bulk/major destructive edit.
-5. **P2 - Finish Trash scope/settings (#11):** response soft-delete is complete. Folder/category deletion to
-   Trash and a Settings control for retention (currently config-only, default 30 days; 0 keeps forever) remain.
-6. **P2 - Complete logging coverage (#7):** add source/category metadata and verbose events for search, watcher,
-   import/export, template resolution, theme, and each paste stage without logging customer content.
-7. **P2 - Complete folder-tag UX (#8):** let the user choose direct children or recursive batch application.
-8. **P2 - Refresh About/Diagnostics (#13):** the screen predates response hotkeys. Add actual launcher registration
-   state, configured/registered/failed response-bind counts, and backup/Trash locations.
+1. **B01 P0:** reproduce and fix the user-reported repeated right-click crash, including log verification.
+2. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
+3. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
+4. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
+5. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
+6. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
+7. **B16 P2:** sandboxed dynamic-variable scripts, only after its import, sanitizer, accessibility, and logging gates.
 
-There are **no known open crash bugs** on `main`. The items above are incomplete requirements, not regressions in
-the currently shipped paths.
+**Known confirmed regressions/defects:** repeated right-click crash (user report), backup restore correctness,
+import preview/import disagreement and preview containment, search false positives, dark hover contrast, and clipped
+Settings/About layout. Treat them as bugs, not optional polish.
 
 ## Known Limits / Human Checks
 
