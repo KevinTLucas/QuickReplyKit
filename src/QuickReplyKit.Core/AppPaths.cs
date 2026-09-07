@@ -19,6 +19,9 @@ public static class AppPaths
     /// <summary>Rolling diagnostic logs (see <c>Diagnostics.Logger</c>).</summary>
     public static string LogsDir => Path.Combine(AppDataDir, "logs");
 
+    /// <summary>Rolling library snapshots for undo/restore (see <c>ImportExport.LibraryBackup</c>).</summary>
+    public static string BackupsDir => Path.Combine(AppDataDir, "backups");
+
     /// <summary>Default library root; the effective root is configurable in settings.</summary>
     public static string DefaultLibraryDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppName, "Library");

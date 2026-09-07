@@ -62,6 +62,9 @@
             <Button Grid.Column="2" Content="Open" Style="{StaticResource ActionButton}"
                     ToolTip="Open this folder in Explorer" Click="OpenLibrary_Click"/>
         </Grid>
+        <Button Content="Back up / Restore Library…" Style="{StaticResource ActionButton}"
+                HorizontalAlignment="Left" Margin="0,8,0,0" Click="Backup_Click"
+                ToolTip="Snapshot the library or roll back to an earlier snapshot"/>
 
         <!-- Default paste behaviour -->
         <TextBlock Text="Default paste behaviour" Style="{StaticResource SectionLabel}"/>
