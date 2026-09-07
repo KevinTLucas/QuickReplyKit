@@ -24,7 +24,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B06 - Repair Settings layout and About area
 
 - **Severity:** P1
-- **Status:** Implementation complete on `bugfix/settings-about-layout`; independent UI/accessibility QA pending
+- **Status:** Headless QA findings corrected on `bugfix/settings-about-layout`; independent re-QA pending
 - **Impact:** Settings content, especially the About/Diagnostics area, is truncated or broken at real display scales.
 - **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
   and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;

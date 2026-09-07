@@ -70,7 +70,8 @@ Settings/About layout. Treat them as bugs, not optional polish.
 
 **Active worktrees:** B02, B03, and B05 are merged. `bugfix/clipboard-sanitization` and
 `bugfix/dark-hover-contrast` are in final headless QA. `bugfix/settings-about-layout` contains only B06's
-resizable/scrolling Settings and About layouts and now awaits independent headless accessibility/layout QA.
+resizable/scrolling Settings and About layouts; its owner-monitor and diagnostics-wrapping QA findings are corrected
+and independent re-QA is pending.
 `feature/folder-trash` is paused cleanly before implementation. Resume these exact worktrees rather than starting
 duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
