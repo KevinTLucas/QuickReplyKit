@@ -12,7 +12,7 @@
         </Style>
     </Window.Resources>
     <StackPanel Margin="18,14,18,16">
-        <TextBlock Text="Deleted responses" FontWeight="SemiBold" FontSize="14"/>
+        <TextBlock Text="Deleted items" FontWeight="SemiBold" FontSize="14"/>
         <TextBlock x:Name="RetentionHint" Foreground="{DynamicResource TextMuted}" FontSize="11"
                    TextWrapping="Wrap" Margin="0,2,0,8"/>
         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
@@ -35,11 +35,15 @@
                    Text="Trash is empty." Visibility="Collapsed"/>
         <Grid Margin="0,14,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                <Button x:Name="RestoreButton" Content="Restore" Style="{StaticResource Btn}" Click="Restore_Click"/>
-                <Button x:Name="DeleteButton" Content="Delete forever" Style="{StaticResource Btn}" Click="DeleteForever_Click"/>
-                <Button x:Name="EmptyButton" Content="Empty trash" Style="{StaticResource Btn}" Click="Empty_Click"/>
+                <Button x:Name="RestoreButton" Content="_Restore" AutomationProperties.Name="Restore selected item"
+                        Style="{StaticResource Btn}" Click="Restore_Click"/>
+                <Button x:Name="DeleteButton" Content="_Delete forever" AutomationProperties.Name="Delete selected item forever"
+                        Style="{StaticResource Btn}" Click="DeleteForever_Click"/>
+                <Button x:Name="EmptyButton" Content="_Empty trash" AutomationProperties.Name="Empty trash"
+                        Style="{StaticResource Btn}" Click="Empty_Click"/>
             </StackPanel>
-            <Button Content="Close" Style="{StaticResource Btn}" Margin="0" HorizontalAlignment="Right" IsCancel="True"/>
+            <Button Content="_Close" AutomationProperties.Name="Close Trash" Style="{StaticResource Btn}"
+                    Margin="0" HorizontalAlignment="Right" IsCancel="True"/>
         </Grid>
     </StackPanel>
 </Window>

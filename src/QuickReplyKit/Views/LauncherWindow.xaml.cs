@@ -274,7 +274,16 @@ public partial class LauncherWindow : Window
         bool ok = ConfirmDialog.Confirm(this, "Delete response",
             $"Delete “{item.Name}”?\nIt moves to the app's Trash — restore it any time from Settings → Trash.",
             "Delete", destructive: true);
-        if (ok) TrashService.Trash(item.FullPath, _vm.LibraryRoot, AppPaths.TrashDir);
+        if (!ok) return;
+        try
+        {
+            TrashService.Trash(item.FullPath, _vm.LibraryRoot, AppPaths.TrashDir);
+            _vm.ReloadLibrary();
+        }
+        catch (Exception ex)
+        {
+            ConfirmDialog.Info(this, "Response not deleted", ex.Message);
+        }
     }
 
     // --- Import / export ----------------------------------------------------
@@ -354,6 +363,28 @@ public partial class LauncherWindow : Window
         };
         if (dlg.ShowDialog(this) == true)
             SaveZip(tmp => LibraryPorter.ExportFolder(_vm.LibraryRoot, nav.CategoryPath, tmp), dlg.FileName);
+    }
+
+    private void MenuDeleteFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedNav is not { Scope: NavScope.Category } nav) return;
+        int count = _vm.ResponseCountUnder(nav.CategoryPath);
+        bool ok = ConfirmDialog.Confirm(this, "Delete folder",
+            $"Delete folder “{nav.Title}” and its {count} nested response file(s), including valid and invalid responses?\n" +
+            "The complete folder moves to the app's Trash after a safety backup is created.",
+            "Delete folder", destructive: true);
+        if (!ok) return;
+
+        try
+        {
+            TrashService.TrashFolder(_vm.CategoryFullPath(nav.CategoryPath), _vm.LibraryRoot,
+                AppPaths.TrashDir, AppPaths.BackupsDir);
+            _vm.ReloadLibrary();
+        }
+        catch (Exception ex)
+        {
+            ConfirmDialog.Info(this, "Folder not deleted", ex.Message);
+        }
     }
 
     private void MenuExportLibrary_Click(object sender, RoutedEventArgs e) => ExportLibraryFlow();

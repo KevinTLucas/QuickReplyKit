@@ -605,6 +605,26 @@ public class LauncherViewModelTests
         });
     }
 
+    [Fact]
+    public void FolderDeleteHelpers_CountValidAndInvalidDescendants_AndReload()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);
+            using var svc = NewService(dir);
+            var vm = new LauncherViewModel(svc, new FakeInsertService(),
+                new AppConfig { LibraryPath = dir.Of("lib") });
+
+            Assert.Equal(dir.Of("lib", "Cat1"), vm.CategoryFullPath("Cat1"));
+            Assert.Equal(3, vm.ResponseCountUnder("Cat1"));
+
+            Directory.Delete(dir.Of("lib", "Cat1"), recursive: true);
+            vm.ReloadLibrary();
+            Assert.DoesNotContain(Flatten(vm.NavRoots), n => n.CategoryPath == "Cat1");
+        });
+    }
+
     // --- Template resolution (Phase 9) --------------------------------------
 
     /// <summary>9am fixed clock → {{greeting}} = "Good morning".</summary>

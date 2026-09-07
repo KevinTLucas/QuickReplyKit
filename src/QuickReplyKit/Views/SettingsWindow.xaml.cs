@@ -120,7 +120,8 @@ public partial class SettingsWindow : Window
         new BackupWindow(_config.LibraryPath, _library, _onLibraryChanged) { Owner = this }.ShowDialog();
 
     private void Trash_Click(object sender, RoutedEventArgs e) =>
-        new TrashWindow(_config.LibraryPath, _config.TrashRetentionDays, _onLibraryChanged) { Owner = this }.ShowDialog();
+        new TrashWindow(_config.LibraryPath, _config.TrashRetentionDays,
+            () => { _library.Reload(); _onLibraryChanged(); }) { Owner = this }.ShowDialog();
 
     private void ManageHotkeys_Click(object sender, RoutedEventArgs e) =>
         (Application.Current as App)?.OpenHotkeyManager();

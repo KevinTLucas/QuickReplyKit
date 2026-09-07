@@ -114,16 +114,16 @@ public sealed class LauncherViewModel : ViewModelBase
 
     // --- Folder tags (sidecar) ---------------------------------------------
 
-    private string FolderFullPath(string categoryPath) =>
+    public string CategoryFullPath(string categoryPath) =>
         string.IsNullOrEmpty(categoryPath) ? LibraryRoot
             : System.IO.Path.Combine(LibraryRoot, categoryPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
 
     public IReadOnlyList<string> FolderTags(string categoryPath) =>
-        FolderMeta.Load(FolderFullPath(categoryPath));
+        FolderMeta.Load(CategoryFullPath(categoryPath));
 
     public void SetFolderTags(string categoryPath, IReadOnlyList<string> tags)
     {
-        FolderMeta.Save(FolderFullPath(categoryPath), tags);
+        FolderMeta.Save(CategoryFullPath(categoryPath), tags);
         _library.Reload();
         OnLibraryUpdated();
     }
@@ -133,6 +133,18 @@ public sealed class LauncherViewModel : ViewModelBase
         _library.Snapshot.AllResponses.Where(r => r.IsValid && (recursive
             ? r.CategoryPath == categoryPath || r.CategoryPath.StartsWith(categoryPath + "/", StringComparison.OrdinalIgnoreCase)
             : r.CategoryPath == categoryPath)).ToList();
+
+    /// <summary>Valid and invalid response files below one category, for destructive confirmations.</summary>
+    public int ResponseCountUnder(string categoryPath) => _library.Snapshot.AllResponses.Count(r =>
+        r.CategoryPath == categoryPath ||
+        r.CategoryPath.StartsWith(categoryPath + "/", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Synchronously refresh after an explicit library mutation.</summary>
+    public void ReloadLibrary()
+    {
+        _library.Reload();
+        OnLibraryUpdated();
+    }
 
     /// <summary>Union the folder's tags into its responses; returns how many files changed.</summary>
     public int ApplyFolderTagsToResponses(string categoryPath, bool recursive)
