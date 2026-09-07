@@ -57,6 +57,9 @@ dotnet run --project src/QuickReplyKit -- --show
 # Paste engine end-to-end self-test (launches Notepad, pastes, checks clipboard restore):
 src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
 #   → must print:  PASTE=ok CLIPBOARD_RESTORED=ok
+# Refresh the user-distributable build after every successful main merge:
+dotnet publish src/QuickReplyKit -c Release -r win-x64 --self-contained true \
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o publish
 ```
 **Current QA boundary (mandatory):** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated
 mouse/keyboard input, or any other desktop-driving tool. The user keeps the live app on another monitor while work is
@@ -98,6 +101,8 @@ review. Run a Windows paste self-test only when it will not disturb the user's d
     merge, audit `git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; every branch-only commit
     and file must belong to that feature/fix. Ancestor commits already in `main` are inherited history, not branch work.
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
+  - After every merge to `main`, rerun the integrated build/tests and refresh `publish/QuickReplyKit.exe` from that
+    exact `main` tip with the canonical publish command above. Record the published tip in `docs/STATUS.md`.
   - Commits use only the repository's configured local Git identity. Do not add `Co-Authored-By`, AI/vendor,
     agent, or automation attribution trailers, and do not override `user.name` or `user.email` in commands.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.
@@ -108,6 +113,8 @@ review. Run a Windows paste self-test only when it will not disturb the user's d
   2. If behaviour, commands, features, or the design changed, update `README.md` (user-facing) and
      [`ARCHITECTURE.md`](ARCHITECTURE.md). If it changes future scope, update [`docs/BACKLOG.md`](docs/BACKLOG.md).
   3. New user-facing capability → add tests; keep `dotnet test` green. Never leave `main` un-green or docs stale.
+  4. After the merge is green, rebuild the self-contained portable exe from `main`; the distributable must never lag
+     behind merged code.
   A change isn't "done" until code + tests + these docs are all consistent.
 
 The audited baseline and exact expected test count live only in `docs/STATUS.md`; do not copy a changing test count
