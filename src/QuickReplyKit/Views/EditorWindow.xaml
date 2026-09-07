@@ -87,8 +87,16 @@
                 <TextBox x:Name="AppBox" Style="{StaticResource Field}"/>
             </StackPanel>
             <StackPanel Grid.Column="2">
-                <TextBlock Text="Tags (comma-separated)" Style="{StaticResource FieldLabel}"/>
-                <TextBox x:Name="TagsBox" Style="{StaticResource Field}"/>
+                <TextBlock Text="Tags (type + Enter)" Style="{StaticResource FieldLabel}"/>
+                <Border BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
+                        Background="{DynamicResource CardBg}" CornerRadius="3" Padding="3,2" MinHeight="28">
+                    <WrapPanel x:Name="TagsPanel" Orientation="Horizontal">
+                        <TextBox x:Name="TagInput" BorderThickness="0" Background="Transparent" MinWidth="70"
+                                 Foreground="{DynamicResource TextPrimary}" CaretBrush="{DynamicResource TextPrimary}"
+                                 VerticalContentAlignment="Center" FontSize="13" Margin="2,1"
+                                 PreviewKeyDown="TagInput_PreviewKeyDown" LostFocus="TagInput_LostFocus"/>
+                    </WrapPanel>
+                </Border>
             </StackPanel>
         </Grid>
 

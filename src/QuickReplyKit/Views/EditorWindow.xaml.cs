@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.VisualBasic.FileIO;
 using QuickReplyKit.Core.Model;
@@ -53,7 +54,7 @@ public partial class EditorWindow : Window
             Title = "Edit response";
             NameBox.Text = editing.Name;
             AppBox.Text = editing.App;
-            TagsBox.Text = string.Join(", ", editing.Tags);
+            foreach (var t in editing.Tags) AddTag(t);
         }
         else
         {
@@ -245,7 +246,8 @@ public partial class EditorWindow : Window
 
         string category = (CategoryBox.Text ?? "").Trim();
         string html = FlowDocumentToHtml.Convert(Body.Document);
-        var tags = ParseTags(TagsBox.Text);
+        CommitTagInput();                 // fold any half-typed tag into a chip first
+        var tags = CurrentTags();
         string app = (AppBox.Text ?? "").Trim();
 
         if (_editing == null)
@@ -341,8 +343,72 @@ public partial class EditorWindow : Window
             : $"{name} (2)";
     }
 
-    private static IReadOnlyList<string> ParseTags(string? raw) =>
-        (raw ?? "").Split(',').Select(t => t.Trim()).Where(t => t.Length > 0).ToList();
+    // --- Tag chips ----------------------------------------------------------
+    // Chips live in TagsPanel before the TagInput textbox; each Border.Tag holds its label.
+
+    // Muted chip palette (light/dark-agnostic — pastel bg reads on both themes with dark text).
+    private static readonly string[] ChipColors =
+        { "#DBEAFE", "#DCFCE7", "#FEF9C3", "#FCE7F3", "#FFEDD5", "#EDE9FE", "#CFFAFE", "#F3E8FF" };
+
+    private void TagInput_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Enter or Key.OemComma or Key.Tab)
+        {
+            if (CommitTagInput()) e.Handled = true;   // Tab still moves focus if nothing to commit
+        }
+        else if (e.Key == Key.Back && TagInput.Text.Length == 0)
+        {
+            RemoveLastChip();
+            e.Handled = true;
+        }
+    }
+
+    private void TagInput_LostFocus(object sender, RoutedEventArgs e) => CommitTagInput();
+
+    private bool CommitTagInput()
+    {
+        string text = TagInput.Text.Trim().TrimEnd(',');
+        if (text.Length == 0) return false;
+        TagInput.Clear();
+        AddTag(text);
+        return true;
+    }
+
+    private void AddTag(string tag)
+    {
+        tag = tag.Trim();
+        if (tag.Length == 0 || CurrentTags().Contains(tag, StringComparer.OrdinalIgnoreCase)) return;
+
+        var bg = Brush(ChipColors[StableHash(tag) % ChipColors.Length]);
+        var label = new TextBlock { Text = tag, Foreground = System.Windows.Media.Brushes.Black,
+            VerticalAlignment = VerticalAlignment.Center, FontSize = 12 };
+        var remove = new Button { Content = "✕", Margin = new Thickness(4, 0, 0, 0), Padding = new Thickness(2, 0, 2, 0),
+            Background = System.Windows.Media.Brushes.Transparent, BorderThickness = new Thickness(0),
+            Foreground = System.Windows.Media.Brushes.Black, Cursor = System.Windows.Input.Cursors.Hand, FontSize = 10 };
+        var panel = new StackPanel { Orientation = Orientation.Horizontal };
+        panel.Children.Add(label);
+        panel.Children.Add(remove);
+        var chip = new Border { Background = bg, CornerRadius = new CornerRadius(9),
+            Padding = new Thickness(7, 2, 5, 2), Margin = new Thickness(2), Child = panel, Tag = tag };
+        remove.Click += (_, _) => TagsPanel.Children.Remove(chip);
+
+        TagsPanel.Children.Insert(TagsPanel.Children.IndexOf(TagInput), chip);
+    }
+
+    private void RemoveLastChip()
+    {
+        for (int i = TagsPanel.Children.IndexOf(TagInput) - 1; i >= 0; i--)
+            if (TagsPanel.Children[i] is Border) { TagsPanel.Children.RemoveAt(i); return; }
+    }
+
+    private IReadOnlyList<string> CurrentTags() =>
+        TagsPanel.Children.OfType<Border>().Select(b => (string)b.Tag).ToList();
+
+    // Deterministic (process-stable) hash so a given tag always gets the same chip colour.
+    private static int StableHash(string s)
+    {
+        unchecked { int h = 17; foreach (char c in s.ToLowerInvariant()) h = h * 31 + c; return h & 0x7fffffff; }
+    }
 
     private void ShowError(string message)
     {
