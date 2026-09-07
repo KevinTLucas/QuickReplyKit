@@ -7,19 +7,6 @@ Priority is based on crash/core-workflow impact, data-loss or trust-boundary ris
 P3 = optional polish. **Status:** Confirmed, Investigating, Queued, In progress, QA, or Blocked. A shipped foundation
 may still have a Confirmed remaining gap; its merge is noted in the item.
 
-## P1 - Core Workflow And Major UI
-
-### B17 - Redesign import confirmation and selection
-
-- **Severity:** P1 core sharing workflow
-- **Status:** In progress on `feature/import-review-selection`; coordinate code-bearing rows with B16
-- **Impact:** The current import confirmation is hard to scan and control for a large shared folder.
-- **Acceptance:** Replace it with a clear scrollable list whose ordinary response rows have checkboxes, useful
-  New/Changed/Duplicate/Conflict status text, Select all/Clear actions, and a concise selected-count summary. Preserve
-  per-conflict Keep/Overwrite/Keep both decisions without clutter. Code-bearing dynamic-variable definitions must show
-  exact source and require explicit per-item acceptance; Select all and any bulk/yes-to-all action must never accept
-  code. Validate large mixed imports, resizing, keyboard use, both themes, High Contrast, and import-plan integrity.
-
 ## P2 - High-Value Enhancements
 
 ### B16 - Sandboxed user scripts for dynamic variables
