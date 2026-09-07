@@ -24,7 +24,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B06 - Repair Settings layout and About area
 
 - **Severity:** P1
-- **Status:** Headless QA findings corrected on `bugfix/settings-about-layout`; independent re-QA pending
+- **Status:** Headless layout/accessibility QA passed on `bugfix/settings-about-layout`; final integration pending
 - **Impact:** Settings content, especially the About/Diagnostics area, is truncated or broken at real display scales.
 - **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
   and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;
@@ -54,7 +54,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B10 - Outlook-style folder-scoped search chip
 
 - **Severity:** P1
-- **Status:** Queued; implement after B05
+- **Status:** Queued
 - **Impact:** Users need visible, predictable folder filtering while typing a global search.
 - **Acceptance:** Selecting a folder adds a removable chip in/adjacent to the search field and limits results to that
   folder subtree; selecting another folder replaces it; removing the chip or selecting All Responses returns global

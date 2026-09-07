@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `5b70994`.
+- **Current `main`:** `d6aa62b`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **455 passed, 0 failed, 0 skipped** after B05 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -70,9 +70,9 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 Settings/About layout. Treat them as bugs, not optional polish.
 
 **Active worktrees:** B02, B03, B05, and B07 are merged. `bugfix/clipboard-sanitization` is in final security QA;
-`bugfix/settings-about-layout` has corrected its owner-monitor and diagnostics-wrapping QA findings and awaits
-independent re-QA. `feature/folder-trash` is paused cleanly before implementation. Resume these exact worktrees rather
-than starting duplicates.
+`bugfix/settings-about-layout` passed headless layout/accessibility QA and is completing final integration;
+`feature/folder-trash` is implementing B08.
+Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
