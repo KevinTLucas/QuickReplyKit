@@ -56,7 +56,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B18 - Stronger selected-folder indication
 
 - **Severity:** P3 visual navigation polish
-- **Status:** Queued before B19
+- **Status:** In progress on `feature/selected-folder-indicator`; merges before B19
 - **Impact:** The selected folder in the left navigation is not always visually obvious at a glance.
 - **Acceptance:** Add a clear theme-safe selected state using existing resources plus a non-color cue so it remains
   understandable in High Contrast and to screen readers. Avoid relying on yellow alone. Validate deep folders,
