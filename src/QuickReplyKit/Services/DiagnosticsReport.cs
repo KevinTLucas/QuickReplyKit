@@ -46,9 +46,29 @@ internal static class DiagnosticsReport
 
     internal static string Redact(string path)
     {
-        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd(Path.DirectorySeparatorChar);
-        return path.StartsWith(profile + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-            ? "%USERPROFILE%" + path[profile.Length..]
-            : path;
+        if (string.IsNullOrWhiteSpace(path)) return "(not configured)";
+
+        string normalized;
+        try { normalized = Path.GetFullPath(path).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar); }
+        catch { return "[invalid location]"; }
+
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            .TrimEnd(Path.DirectorySeparatorChar);
+        if (normalized.Equals(profile, StringComparison.OrdinalIgnoreCase)) return "%USERPROFILE%";
+        if (normalized.StartsWith(profile + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            return "%USERPROFILE%" + normalized[profile.Length..];
+
+        // Also hide 8.3 aliases such as C:\Users\KEVIN_~1, which GetFullPath does not expand.
+        string root = Path.GetPathRoot(normalized) ?? "";
+        string usersPrefix = root + "Users" + Path.DirectorySeparatorChar;
+        if (normalized.StartsWith(usersPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            int remainder = normalized.IndexOf(Path.DirectorySeparatorChar, usersPrefix.Length);
+            return remainder < 0 ? "%USERPROFILE%" : "%USERPROFILE%" + normalized[remainder..];
+        }
+
+        return normalized.StartsWith("\\\\", StringComparison.Ordinal)
+            ? "[network location]"
+            : "[custom location]";
     }
 }

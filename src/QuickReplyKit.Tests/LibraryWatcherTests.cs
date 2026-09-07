@@ -72,4 +72,23 @@ public class LibraryWatcherTests
         Assert.False(w.IsAttached);
         w.Dispose(); // idempotent, no throw
     }
+
+    [Fact]
+    public void IsAttached_DoesNotWaitForChangedHandler()
+    {
+        using var t = new TempDir();
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        using var w = new LibraryWatcher(t.Path, debounceMs: 50);
+        w.Changed += () => { entered.Set(); release.Wait(5000); };
+        File.WriteAllText(t.Of("x.json"), "{\"schema\":1,\"html\":\"<p>x</p>\"}");
+        Assert.True(entered.Wait(5000));
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Assert.True(w.IsAttached);
+        sw.Stop();
+        release.Set();
+
+        Assert.True(sw.ElapsedMilliseconds < 100, $"status read blocked for {sw.ElapsedMilliseconds} ms");
+    }
 }

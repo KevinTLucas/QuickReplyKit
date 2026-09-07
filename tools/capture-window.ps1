@@ -1,6 +1,6 @@
 <#
 Capture a window (by title substring or process name) to a PNG so the WPF UI can be
-visually validated. Falls back to full-screen capture if no match is found.
+visually validated. A missing window fails closed; use -FullScreen explicitly when needed.
 
 Usage:
   powershell -NoProfile -ExecutionPolicy Bypass -File tools\capture-window.ps1 -TitleContains "QuickReplyKit" -Out out.png
@@ -48,7 +48,7 @@ public class WinCap {
 "@
 
 function Get-TargetHandle {
-  if ($TitleContains) {
+  if ($TitleContains -and -not $ProcessName) {
     $direct = [WinCap]::FindWindowContains($TitleContains)
     if ($direct -ne [IntPtr]::Zero) { return $direct }
   }
@@ -58,6 +58,13 @@ function Get-TargetHandle {
   if ($TitleContains) { $procs = $procs | Where-Object { $_.MainWindowTitle -like "*$TitleContains*" } }
   $p = $procs | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
   if ($p) { return $p.MainWindowHandle } else { return [IntPtr]::Zero }
+}
+
+if ($FullScreen -and ($TitleContains -or $ProcessName)) {
+  throw "Use -FullScreen by itself, without a window selector."
+}
+if (-not $FullScreen -and -not $TitleContains -and -not $ProcessName) {
+  throw "Specify -TitleContains, -ProcessName, or -FullScreen."
 }
 
 $bounds = $null

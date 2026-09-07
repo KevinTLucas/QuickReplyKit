@@ -110,7 +110,12 @@ public sealed class Logger : IDisposable
                 if (_queue.Count == 0) _writer.Flush();   // batch flushes; always flush when caught up
                 if (_written >= _maxBytes) Roll();
             }
-            catch { /* best effort — never let logging throw */ }
+            catch
+            {
+                _enabled = false;
+                try { _writer.Dispose(); } catch { /* best effort */ }
+                _writer = null;
+            }
         }
         try { _writer?.Flush(); _writer?.Dispose(); } catch { /* shutting down */ }
     }

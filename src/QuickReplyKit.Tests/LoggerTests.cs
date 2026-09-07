@@ -86,6 +86,19 @@ public class LoggerTests
     }
 
     [Fact]
+    public void RolloverFailure_MarksLoggerUnavailable()
+    {
+        var dir = TempDir();
+        Directory.CreateDirectory(Path.Combine(dir, "quickreplykit.1.log"));
+        var log = new Logger(dir, LogLevel.Info, maxBytes: 1, maxFiles: 2);
+        log.Info("Test", "Filesystem", "force rollover");
+
+        Assert.True(SpinWait.SpinUntil(() => !log.IsEnabled, 5000));
+        log.Dispose();
+        Directory.Delete(dir, true);
+    }
+
+    [Fact]
     public void StructuredMetadata_AndSafeException_AreWrittenWithoutExceptionMessage()
     {
         var dir = TempDir();

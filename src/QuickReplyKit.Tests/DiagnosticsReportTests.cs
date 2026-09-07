@@ -51,6 +51,11 @@ public class DiagnosticsReportTests
             Assert.Contains("Trash folder", report);
             string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             Assert.StartsWith("%USERPROFILE%", DiagnosticsReport.Redact(Path.Combine(profile, "Documents", "QRK")));
+            Assert.Equal("%USERPROFILE%", DiagnosticsReport.Redact(profile));
+            Assert.Equal("%USERPROFILE%\\AppData\\Local\\Temp\\QRK",
+                DiagnosticsReport.Redact(@"C:\Users\KEVIN_~1\AppData\Local\Temp\QRK"));
+            Assert.Equal("[custom location]", DiagnosticsReport.Redact(@"D:\Customer Name\Shared Responses"));
+            Assert.Equal("[network location]", DiagnosticsReport.Redact(@"\\server\customer\responses"));
             Assert.DoesNotContain(secret, report, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("Ctrl+Alt+1", report);
             Assert.DoesNotContain("Ctrl+Alt+2", report);

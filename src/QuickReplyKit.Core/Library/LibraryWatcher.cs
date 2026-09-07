@@ -17,14 +17,12 @@ public sealed class LibraryWatcher : IDisposable
     private readonly Timer _debounce;
     private readonly object _gate = new();
     private FileSystemWatcher? _watcher;
+    private volatile bool _attached;
     private bool _disposed;
 
     public event Action? Changed;
 
-    public bool IsAttached
-    {
-        get { lock (_gate) return !_disposed && _watcher is not null; }
-    }
+    public bool IsAttached => _attached;
 
     public LibraryWatcher(string libraryRoot, int debounceMs = 250)
     {
@@ -60,6 +58,7 @@ public sealed class LibraryWatcher : IDisposable
                 if (parent is null || !Directory.Exists(parent))
                 {
                     _watcher = null;
+                    _attached = false;
                     Diag.Warn("LibraryWatcher", "Watcher", "attach deferred rootAvailable=false");
                     return;
                 }
@@ -77,12 +76,14 @@ public sealed class LibraryWatcher : IDisposable
             w.Error += OnError;
             w.EnableRaisingEvents = true;
             _watcher = w;
+            _attached = true;
             Diag.Info("LibraryWatcher", "Watcher", "attach complete attached=true");
         }
         catch (Exception ex)
         {
             // Root unavailable right now; a later Error/retry re-attaches.
             _watcher = null;
+            _attached = false;
             Diag.Warn("LibraryWatcher", "Watcher", "attach complete attached=false", ex);
         }
     }
@@ -110,6 +111,7 @@ public sealed class LibraryWatcher : IDisposable
             if (_disposed) return;
             try { _watcher?.Dispose(); } catch { /* ignore */ }
             _watcher = null;
+            _attached = false;
             Start();
         }
         Diag.Info("LibraryWatcher", "Watcher", $"recovery complete attached={_watcher is not null}");
@@ -136,6 +138,7 @@ public sealed class LibraryWatcher : IDisposable
             _debounce.Dispose();   // inside the lock: no debounced Changed can fire after this
             watcher = _watcher;
             _watcher = null;
+            _attached = false;
         }
         try { watcher?.Dispose(); } catch { /* ignore */ }
     }
