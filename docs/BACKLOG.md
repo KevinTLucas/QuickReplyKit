@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B17 - Redesign import confirmation and selection
 
 - **Severity:** P1 core sharing workflow
-- **Status:** Next; coordinate code-bearing rows with B16
+- **Status:** In progress on `feature/import-review-selection`; coordinate code-bearing rows with B16
 - **Impact:** The current import confirmation is hard to scan and control for a large shared folder.
 - **Acceptance:** Replace it with a clear scrollable list whose ordinary response rows have checkboxes, useful
   New/Changed/Duplicate/Conflict status text, Select all/Clear actions, and a concise selected-count summary. Preserve
@@ -25,7 +25,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B16 - Sandboxed user scripts for dynamic variables
 
 - **Severity:** P2 feature; security-critical design
-- **Status:** Queued after B17; B04/B11/B14 prerequisites complete
+- **Status:** Core engine in progress on `feature/sandboxed-script-engine`; UI/import integration follows B17
 - **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
 - **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
   scripts; persist definitions in a documented format; invoke them with explicit template syntax such as
