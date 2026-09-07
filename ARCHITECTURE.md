@@ -96,6 +96,9 @@ view-models, interop, and app wiring.
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
+- Search ANDs whitespace tokens across name, response tags, app, category, and body. Field relevance ranks before
+  folder tie-breaking, while literal body matches remain searchable. Typo fallback uses bounded per-word edit
+  distance, with subsequence matching only for short abbreviations; long tokens never join across words.
 - **Startup is non-blocking:** the window shows immediately in a "Loading library…" state; the initial scan runs
   on a background task (parallelized) and populates via the watcher's `Updated`→Dispatcher path.
 - **Theming:** `Themes/Light.xaml`/`Dark.xaml` swapped at runtime by `ThemeManager`; all views use `DynamicResource`.

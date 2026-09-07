@@ -59,7 +59,8 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
+1. **B04, B06, B07 P1:** clipboard sanitization, Settings/About layout, and dark hover contrast. B05 search relevance
+   passed independent correctness/performance QA and is completing current-main integration.
 2. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
 3. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
 4. **B16 P2:** sandboxed dynamic-variable scripts, only after its sanitizer, accessibility, and logging gates.
@@ -73,6 +74,9 @@ needs current-main integration. `bugfix/settings-about-layout` awaits QA, and `f
 before implementation. Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
+`bugfix/search-relevance` contains only B05 search scoring plus regression tests/docs: relevance outranks folder
+tie-breaking, and long fuzzy tokens cannot span words. Literal body matches remain searchable; B10 supplies explicit
+folder-only filtering.
 
 ## Known Limits / Human Checks
 

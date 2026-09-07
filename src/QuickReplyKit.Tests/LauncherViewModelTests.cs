@@ -231,7 +231,7 @@ public class LauncherViewModelTests
     }
 
     [Fact]
-    public void Search_WithSelectedCategory_RanksInScopeHitsFirst()
+    public void Search_RelevanceOutranksScope_AndScopeBreaksTies()
     {
         Sta(() =>
         {
@@ -244,10 +244,8 @@ public class LauncherViewModelTests
             vm.Query = "a";                                // matches all four names; scope reorders
 
             var names = vm.Results.Select(r => r.Name).ToArray();
-            // Cat1 items (Beta, Gamma) come first even though Alpha is a name-prefix match.
-            Assert.Equal(new[] { "Beta", "Gamma" }, names.Take(2).ToArray());
-            Assert.Contains("Alpha", names);               // still globally present
-            Assert.Contains("Delta", names);
+            // Alpha's prefix match wins; Cat1 then breaks the tie among contains matches.
+            Assert.Equal(new[] { "Alpha", "Beta", "Gamma", "Delta" }, names);
         });
     }
 
