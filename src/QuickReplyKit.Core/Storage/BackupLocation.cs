@@ -5,7 +5,7 @@ namespace QuickReplyKit.Core.Storage;
 /// <summary>Validation shared by Settings and every backup operation.</summary>
 public static class BackupLocation
 {
-    public static string EnsureWritable(string? path)
+    public static string EnsureWritable(string? path, string? libraryRoot = null)
     {
         if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path))
             throw new IOException("The backup folder must be an absolute path.");
@@ -18,6 +18,15 @@ public static class BackupLocation
         }
 
         if (File.Exists(full)) throw new IOException("The backup folder path points to a file.");
+
+        if (!string.IsNullOrWhiteSpace(libraryRoot))
+        {
+            string library = Path.GetFullPath(libraryRoot);
+            string relative = Path.GetRelativePath(library, full);
+            if (relative == "." || (!Path.IsPathRooted(relative) && relative != ".." &&
+                !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)))
+                throw new IOException("The backup folder must be outside the response library.");
+        }
 
         string probe = Path.Combine(full, ".qrk-write-test-" + Guid.NewGuid().ToString("N"));
         try

@@ -38,7 +38,7 @@ public static class LibraryBackup
 
     internal static string? Create(string libraryRoot, string backupsDir, string configPath, string? reason)
     {
-        backupsDir = BackupLocation.EnsureWritable(backupsDir);
+        backupsDir = BackupLocation.EnsureWritable(backupsDir, libraryRoot);
         if (!Directory.Exists(libraryRoot) || !Directory.EnumerateFileSystemEntries(libraryRoot).Any())
             return null;
 
@@ -121,7 +121,7 @@ public static class LibraryBackup
         Action<string, string>? installLibrary, int maxEntries = MaxArchiveEntries,
         long maxEntryBytes = MaxArchiveEntryBytes, long maxExpandedBytes = MaxArchiveExpandedBytes)
     {
-        backupsDir = BackupLocation.EnsureWritable(backupsDir);
+        backupsDir = BackupLocation.EnsureWritable(backupsDir, libraryRoot);
         if (!File.Exists(backupZip)) throw new FileNotFoundException("Backup not found", backupZip);
 
         string libraryFull = Path.GetFullPath(libraryRoot);

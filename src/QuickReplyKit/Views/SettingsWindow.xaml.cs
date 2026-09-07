@@ -137,7 +137,7 @@ public partial class SettingsWindow : Window
     {
         try
         {
-            _backupPath = BackupLocation.EnsureWritable(_backupPath);
+            _backupPath = BackupLocation.EnsureWritable(_backupPath, _libraryPath);
             BackupPathBox.Text = _backupPath;
             HideBackupPathError();
             Process.Start(new ProcessStartInfo(_backupPath) { UseShellExecute = true });
@@ -173,7 +173,7 @@ public partial class SettingsWindow : Window
     {
         try
         {
-            _backupPath = BackupLocation.EnsureWritable(_backupPath);
+            _backupPath = BackupLocation.EnsureWritable(_backupPath, _libraryPath);
             BackupPathBox.Text = _backupPath;
             HideBackupPathError();
         }

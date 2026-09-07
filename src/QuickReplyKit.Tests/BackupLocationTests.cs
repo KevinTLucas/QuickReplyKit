@@ -41,6 +41,46 @@ public class BackupLocationTests
         Assert.Throws<IOException>(() => LibraryBackup.List(blocked));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("backups")]
+    [InlineData("nested/backups")]
+    public void EnsureWritable_RejectsLibraryOrDescendant(string relative)
+    {
+        using var t = new TempDir();
+        string library = t.Of("library");
+        Directory.CreateDirectory(library);
+        string backups = string.IsNullOrEmpty(relative) ? library : Path.Combine(library, relative);
+
+        var ex = Assert.Throws<IOException>(() => BackupLocation.EnsureWritable(backups, library));
+
+        Assert.Contains("outside", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(Directory.Exists(Path.Combine(library, "backups")));
+    }
+
+    [Fact]
+    public void EnsureWritable_AllowsSiblingOfLibrary()
+    {
+        using var t = new TempDir();
+        string library = t.Of("library");
+        string backups = t.Of("backups");
+
+        Assert.Equal(Path.GetFullPath(backups), BackupLocation.EnsureWritable(backups, library));
+    }
+
+    [Fact]
+    public void Create_RejectsBackupFolderInsideLibrary()
+    {
+        using var t = new TempDir();
+        string library = t.Of("library");
+        TestFiles.WriteResponse(Path.Combine(library, "Response.json"));
+
+        var ex = Assert.Throws<IOException>(() =>
+            LibraryBackup.Create(library, Path.Combine(library, "backups"), t.Of("config.json"), "test"));
+
+        Assert.Contains("outside", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void CustomLocation_IsUsedForCreateListAndRestore()
     {
