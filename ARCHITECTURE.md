@@ -110,10 +110,14 @@ view-models, interop, and app wiring.
   source/destination fingerprints. Execution rechecks those fingerprints, reports stale entries without writing them,
   and atomically replaces individual files. Valid siblings continue when another entry is invalid, unsafe, stale, or
   fails. A required rolling backup is created after the user accepts the plan and before any write.
-- `LibraryBackup` keeps 10 library-only zip snapshots. Restore extracts to a temporary directory, then replaces the
-  library after taking a pre-restore snapshot. The oldest-snapshot pruning bug and non-atomic replacement are tracked
-  in BACKLOG. `TrashService` soft-deletes individual responses, refuses overwrite/path escape on restore, and purges
-  expired entries at startup.
+- `LibraryBackup` writes a versioned ZIP containing `library/`, `config.json` when present, and a manifest. Retention
+  keeps at most 10 snapshots within count, 500 MB, and 90-day bounds while preserving at least the newest. Restore
+  first protects the selected archive, validates and size-bounds extraction beside the live library, snapshots the current state,
+  then swaps directories. A failed install rolls the exact original directory back; older library-only ZIPs remain
+  restorable without changing settings. Restored config is retargeted to the actual restored library folder; the old
+  launcher's final config save is suppressed and QuickReplyKit restarts so restored settings become authoritative.
+  `TrashService` soft-deletes individual responses, refuses
+  overwrite/path escape on restore, and purges expired entries at startup.
 - `Logger` uses one background writer, level gating, and size rollover (about 10 MB x 5 files). AppDomain,
   Dispatcher, and unobserved-task exceptions are recorded but not silently swallowed. Logs omit response bodies.
 - First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
