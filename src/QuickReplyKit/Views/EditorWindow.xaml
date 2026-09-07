@@ -189,16 +189,23 @@
                        Placement="Bottom" PlacementTarget="{Binding ElementName=TextColorButton}">
                     <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
                             BorderThickness="1" CornerRadius="6" Padding="6">
-                        <WrapPanel Width="140" Orientation="Horizontal">
-                            <Button Style="{StaticResource Swatch}" Background="#111111" Tag="#111111" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#6B7280" Tag="#6B7280" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#DC2626" Tag="#DC2626" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#EA580C" Tag="#EA580C" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#16A34A" Tag="#16A34A" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#0891B2" Tag="#0891B2" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#2563EB" Tag="#2563EB" Click="TextSwatch_Click"/>
-                            <Button Style="{StaticResource Swatch}" Background="#7C3AED" Tag="#7C3AED" Click="TextSwatch_Click"/>
-                        </WrapPanel>
+                        <StackPanel Width="140">
+                            <WrapPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource Swatch}" Background="#111111" Tag="#111111" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#6B7280" Tag="#6B7280" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#DC2626" Tag="#DC2626" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#EA580C" Tag="#EA580C" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#16A34A" Tag="#16A34A" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#0891B2" Tag="#0891B2" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#2563EB" Tag="#2563EB" Click="TextSwatch_Click"/>
+                                <Button Style="{StaticResource Swatch}" Background="#7C3AED" Tag="#7C3AED" Click="TextSwatch_Click"/>
+                            </WrapPanel>
+                            <!-- Clears the explicit colour so the text follows the theme (readable in dark). -->
+                            <Button Content="Automatic (theme default)" HorizontalAlignment="Left" Margin="2,4,0,0"
+                                    Padding="8,2" Cursor="Hand" Tag="auto" Click="TextSwatch_Click" FontSize="11"
+                                    Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextPrimary}"
+                                    BorderBrush="{DynamicResource CardBorder}"/>
+                        </StackPanel>
                     </Border>
                 </Popup>
 

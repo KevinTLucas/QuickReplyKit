@@ -130,8 +130,11 @@ public partial class EditorWindow : Window
 
     private void TextSwatch_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string hex })
-            Body.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brush(hex));
+        if (sender is Button { Tag: string tag })
+        {
+            if (tag == "auto") ClearForeground(Body.Selection);   // → inherits theme colour
+            else Body.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brush(tag));
+        }
         TextColorPopup.IsOpen = false;
         Body.Focus();
     }
@@ -143,6 +146,18 @@ public partial class EditorWindow : Window
                 tag == "none" ? System.Windows.Media.Brushes.Transparent : Brush(tag));
         HighlightPopup.IsOpen = false;
         Body.Focus();
+    }
+
+    // Clear an explicit text colour over the selection so it inherits the theme (WPF has no direct
+    // "clear property over range": re-apply the current colour to split runs at the selection edges,
+    // then ClearValue the now-fully-selected runs). UnsetValue via ApplyPropertyValue throws.
+    private static void ClearForeground(TextSelection sel)
+    {
+        if (sel.GetPropertyValue(TextElement.ForegroundProperty) is System.Windows.Media.Brush b)
+            sel.ApplyPropertyValue(TextElement.ForegroundProperty, b);
+        for (var p = sel.Start; p != null && p.CompareTo(sel.End) < 0;
+             p = p.GetNextContextPosition(LogicalDirection.Forward))
+            (p.Parent as Run)?.ClearValue(TextElement.ForegroundProperty);
     }
 
     private static SolidColorBrush Brush(string hex)
