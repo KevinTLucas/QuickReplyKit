@@ -335,9 +335,13 @@ public partial class LauncherWindow : Window
         if (_vm.SelectedNav?.Scope != NavScope.Category) e.Handled = true;
     }
 
-    private void OverflowButton_Click(object sender, RoutedEventArgs e)
+    private void ImportExportButton_Click(object sender, RoutedEventArgs e)
     {
-        if (OverflowButton.ContextMenu is { } m) { m.PlacementTarget = OverflowButton; m.IsOpen = true; }
+        if (ImportExportButton.ContextMenu is { } m)
+        {
+            m.PlacementTarget = ImportExportButton;
+            m.IsOpen = true;
+        }
     }
 
     private void MenuExportResponse_Click(object sender, RoutedEventArgs e)

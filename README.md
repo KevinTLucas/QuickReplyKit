@@ -112,7 +112,8 @@ Responses can contain `{{…}}` tokens that are filled in **when you insert** (a
 
 - **Copy folders/files** directly into your library — the folder hierarchy and responses appear
   automatically (no restart; the app watches the library for changes).
-- Or use **Import… / Export…** (single response, a folder, or the whole library as a `.zip`). Import
+- Use the launcher's labelled **⇄ Import / Export** menu to import responses or export the full library. Export one
+  response from its result context menu, or export one folder from its folder context menu. Import
   first shows a read-only New/Changed/Identical preview; changed paths can be skipped, overwritten,
   or kept as a second copy. Invalid content never blocks valid responses.
 

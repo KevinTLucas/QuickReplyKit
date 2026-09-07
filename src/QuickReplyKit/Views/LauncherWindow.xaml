@@ -108,13 +108,21 @@
                 <Button Grid.Column="4" x:Name="NewFromClipboardButton" Content="📋" Style="{StaticResource IconButton}"
                         AutomationProperties.Name="New response from clipboard"
                         ToolTip="New response from clipboard" Click="NewFromClipboardButton_Click"/>
-                <Button Grid.Column="5" x:Name="OverflowButton" Content="⋯" Style="{StaticResource IconButton}"
-                        FontSize="18" AutomationProperties.Name="Import / export"
-                        ToolTip="Import / export" Click="OverflowButton_Click">
+                <Button Grid.Column="5" x:Name="ImportExportButton" Style="{StaticResource IconButton}"
+                        Padding="6,2" AutomationProperties.Name="Import and export responses"
+                        ToolTip="Import responses or export the full library"
+                        Click="ImportExportButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⇄" FontSize="16" Margin="0,0,4,0"
+                                   Foreground="{DynamicResource Accent}"/>
+                        <AccessText Text="_Import / Export" FontSize="12"
+                                    Foreground="{DynamicResource TextPrimary}"
+                                    VerticalAlignment="Center"/>
+                    </StackPanel>
                     <Button.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Import…" Click="MenuImport_Click"/>
-                            <MenuItem Header="Export library…" Click="MenuExportLibrary_Click"/>
+                            <MenuItem Header="_Import responses…" Click="MenuImport_Click"/>
+                            <MenuItem Header="Export _full library…" Click="MenuExportLibrary_Click"/>
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>

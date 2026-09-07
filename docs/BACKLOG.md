@@ -25,7 +25,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B12 - Discoverable Import and Export controls
 
 - **Severity:** P2
-- **Status:** Queued
+- **Status:** QA — implemented on `feature/discoverable-import-export`; not merged or published
 - **Impact:** The `...` control hides important sharing actions.
 - **Acceptance:** Replace it with a clearly labelled/icon-supported Import/Export entry point that exposes Import,
   Export response/folder/library in context; remains compact at minimum width; accessible name/tooltip and keyboard

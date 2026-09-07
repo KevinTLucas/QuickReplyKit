@@ -102,6 +102,9 @@ view-models, interop, and app wiring.
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
+- The labelled **Import / Export** toolbar menu exposes response import and full-library export. Exporting one response
+  or one folder remains in the corresponding result/folder context menu, so each command's scope is explicit without
+  duplicating actions across menus.
 - Search ANDs whitespace tokens across name, response tags, app, category, and body. A selected category supplies the
   candidate set before ranking, limited to that folder subtree; Favorites and Recent likewise search only their own
   collections, while All Responses is global. The removable category chip preserves the query when cleared. Typo

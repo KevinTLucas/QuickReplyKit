@@ -71,13 +71,17 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
 1. **B11 P1:** full accessibility pass.
-2. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
+2. **B12-B15 P2:** B12's clearer Import/Export UI is implemented and awaiting independent QA; configurable backup
+   path, logging, and diagnostics completion remain active.
 3. **B16 P2:** sandboxed dynamic-variable scripts, only after its accessibility and logging gates.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B10 are complete. B13 is being implemented independently on
-`feature/configurable-backup-location`. A stale
+**Active worktrees:** B01-B10 are complete. B12 is implemented on `feature/discoverable-import-export` and awaits
+independent QA before merge/publish. Its launcher toolbar now has a labelled, keyboard-accessible Import / Export
+menu for importing responses or exporting the full library; response and folder exports remain only in their relevant
+context menus. The branch builds with 0 warnings/errors and passes 525/525 tests, including its focused XAML contract
+test. B13 is being implemented independently on `feature/configurable-backup-location`. A stale
 interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
