@@ -3,7 +3,6 @@ using System.IO.Compression;
 using System.Text;
 using QuickReplyKit.Core.ImportExport;
 using QuickReplyKit.Core.Storage;
-using QuickReplyKit.ViewModels;
 
 namespace QuickReplyKit.Tests;
 
@@ -90,7 +89,8 @@ public class Phase5QaTests
         string zip = stage.Of("IXL.zip");
         LibraryPorter.ExportFolder(lib.Path, "IXL", zip);
 
-        int predicted = ImportCoordinator.CountConflicts(lib.Path, zip, target);
+        int predicted = LibraryPorter.PlanImport(lib.Path, zip, target).Entries
+            .Count(e => e.Classification == ImportClassification.Conflict);
         var r = LibraryPorter.Import(lib.Path, zip, target, ConflictPolicy.Skip);
 
         Assert.Equal(0, predicted);
@@ -109,7 +109,8 @@ public class Phase5QaTests
         string zip = stage.Of("upd.zip");
         LibraryPorter.ExportFolder(stage.Of("src"), "IXL", zip);
 
-        int predicted = ImportCoordinator.CountConflicts(lib.Path, zip, "IXL");
+        int predicted = LibraryPorter.PlanImport(lib.Path, zip, "IXL").Entries
+            .Count(e => e.Classification == ImportClassification.Conflict);
         var r = LibraryPorter.Import(lib.Path, zip, "IXL", ConflictPolicy.Overwrite);
 
         Assert.Equal(1, predicted);
@@ -130,7 +131,8 @@ public class Phase5QaTests
         string zip = stage.Of("kb.zip");
         LibraryPorter.ExportFolder(stage.Of("src"), "IXL", zip);
 
-        int predicted = ImportCoordinator.CountConflicts(lib.Path, zip, "IXL");
+        int predicted = LibraryPorter.PlanImport(lib.Path, zip, "IXL").Entries
+            .Count(e => e.Classification == ImportClassification.Conflict);
         var r = LibraryPorter.Import(lib.Path, zip, "IXL", ConflictPolicy.KeepBoth);
 
         Assert.Equal(1, predicted);                 // only Top.json collides
