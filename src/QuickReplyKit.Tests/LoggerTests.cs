@@ -90,13 +90,19 @@ public class LoggerTests
         string canary = "PRIVATE-" + Guid.NewGuid().ToString("N");
         var log = new Logger(dir, LogLevel.Info);
 
-        log.Error("PasteEngine", "Clipboard", "restore failed", new IOException(canary));
+        Exception exception;
+        try { throw new IOException(canary, new InvalidDataException(canary)); }
+        catch (Exception ex) { exception = ex; }
+        log.Error("PasteEngine\r\nFORGED", "Clipboard\nFORGED", "restore failed\nFORGED", exception);
         var text = ReadActive(log, dir);
 
-        Assert.Contains("[PasteEngine/Clipboard] restore failed", text);
+        Assert.Contains("[PasteEngine  FORGED/Clipboard FORGED] restore failed FORGED", text);
         Assert.Contains("exceptionType=System.IO.IOException", text);
+        Assert.Contains("exceptionType=System.IO.InvalidDataException", text);
         Assert.Contains("hresult=0x", text);
+        Assert.Contains("QuickReplyKit.Tests.LoggerTests", text);
         Assert.DoesNotContain(canary, text);
+        Assert.DoesNotContain("\nFORGED", text);
         Directory.Delete(dir, true);
     }
 }

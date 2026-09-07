@@ -49,15 +49,28 @@ public sealed class Logger : IDisposable
     public void Log(LogLevel level, string source, string category, string message, Exception? ex = null)
     {
         if (!_enabled || level > Threshold) return;
-        var sb = new StringBuilder(message.Length + source.Length + category.Length + 64);
+        var sb = new StringBuilder(message.Length + source.Length + category.Length + 96);
         sb.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"))
           .Append(" [").Append(Name(level)).Append("] [T")
           .Append(Environment.CurrentManagedThreadId).Append("] [")
-          .Append(source).Append('/').Append(category).Append("] ").Append(message);
+          .Append(OneLine(source)).Append('/').Append(OneLine(category)).Append("] ").Append(OneLine(message));
         if (ex != null)
+            AppendException(sb, ex);
+        try { _queue.Add(sb.ToString()); } catch (InvalidOperationException) { /* completed */ }
+    }
+
+    private static string OneLine(string value) =>
+        value.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ');
+
+    private static void AppendException(StringBuilder sb, Exception exception)
+    {
+        for (Exception? ex = exception; ex is not null; ex = ex.InnerException)
             sb.Append(" exceptionType=").Append(ex.GetType().FullName)
               .Append(" hresult=0x").Append(ex.HResult.ToString("X8"));
-        try { _queue.Add(sb.ToString()); } catch (InvalidOperationException) { /* completed */ }
+
+        // Preserve actionable method frames without exception messages or source-file paths.
+        string stack = new System.Diagnostics.StackTrace(exception, false).ToString();
+        if (stack.Length > 0) sb.Append(" stack=").Append(OneLine(stack));
     }
 
     public void Error(string source, string category, string message, Exception? ex = null) =>

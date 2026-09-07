@@ -15,6 +15,23 @@ public sealed class DiagnosticsCollection;
 public class DiagnosticsCoverageTests
 {
     [Fact]
+    public void UiAndPasteWorkflows_KeepRequiredStageEvents()
+    {
+        string paste = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Services/InsertService.cs"));
+        foreach (string stage in new[] { "target present=", "snapshot captured=", "focus result=",
+                     "transientWrite=", "input send=", "clipboard restore=", "completion result=" })
+            Assert.Contains(stage, paste, StringComparison.Ordinal);
+
+        string theme = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Services/ThemeManager.cs"));
+        Assert.Contains("\"ThemeManager\", \"Theme\"", theme, StringComparison.Ordinal);
+
+        string actions = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Views/LauncherWindow.xaml.cs"));
+        foreach (string failure in new[] { "read clipboard failed", "open response folder failed",
+                     "delete response failed", "delete folder failed", "import preview failed", "import backup failed" })
+            Assert.Contains(failure, actions, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void WorkflowLogs_ContainMetrics_ButNeverSensitiveCanary()
     {
         using var temp = new TempDir();

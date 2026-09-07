@@ -58,6 +58,7 @@ public static class LibraryPorter
     public static ImportPlan PlanImport(string libraryRoot, string sourcePath, string targetCategory)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        Diag.Verbose("LibraryPorter", "ImportPlan", "start");
         try
         {
             var plan = BuildImportPlan(libraryRoot, sourcePath, targetCategory);
@@ -161,6 +162,7 @@ public static class LibraryPorter
     public static ImportResult Import(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        Diag.Verbose("LibraryPorter", "ImportExecution", $"start entries={plan.Entries.Count}");
         try
         {
             var result = ExecuteImport(plan, decisions);
@@ -522,13 +524,12 @@ public static class LibraryPorter
     private static void ExportZip(string kind, string sourceDir, string destZip)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        Diag.Verbose("LibraryPorter", "Export", $"start kind={kind}");
         try
         {
             ZipDirectory(sourceDir, destZip);
-            using var archive = ZipFile.OpenRead(destZip);
-            var files = archive.Entries.Where(e => e.Name.Length > 0).ToList();
             Diag.Info("LibraryPorter", "Export",
-                $"complete kind={kind} entries={files.Count} bytes={files.Sum(e => e.Length)} elapsedMs={sw.ElapsedMilliseconds}");
+                $"complete kind={kind} bytes={new FileInfo(destZip).Length} elapsedMs={sw.ElapsedMilliseconds}");
         }
         catch (Exception ex)
         {
