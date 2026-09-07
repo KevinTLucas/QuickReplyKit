@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `5e49979`.
+- **Current `main`:** `7099522` (headless-QA policy merge).
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **455 passed, 0 failed, 0 skipped** after B05 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -17,6 +17,8 @@
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   10 ordered items with severity, acceptance criteria, and status. Clipboard trust-boundary work leads;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
+- **B08 branch:** `feature/folder-trash` contains product commit `5755331`, is integrated with current `main`, builds
+  cleanly, and passes **468/468** headless tests. It is not merged: independent folder-Trash QA is still required.
 
 ## Merged And QA'd
 
@@ -63,14 +65,15 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
 1. **B04 P1:** clipboard sanitization.
-2. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
-3. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
-4. **B16 P2:** sandboxed dynamic-variable scripts, only after its sanitizer, accessibility, and logging gates.
+2. **B08 P1:** independently QA folder Trash, then merge only if its security/data-safety checks remain green.
+3. **B09-B11 P1:** remove folder tags, scoped-search chip, and full accessibility.
+4. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
+5. **B16 P2:** sandboxed dynamic-variable scripts, only after its sanitizer, accessibility, and logging gates.
 
 **Known confirmed regressions/defects:** clipboard sanitization gaps. Treat them as bugs, not optional polish.
 
 **Active worktrees:** B02, B03, B05, B06, and B07 are merged. `bugfix/clipboard-sanitization` is correcting final
-security-QA findings; `feature/folder-trash` is implementing B08.
+security-QA findings; `feature/folder-trash` has completed B08 implementation and awaits independent headless QA.
 Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
@@ -96,7 +99,8 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **455** green. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **455** green on `main` or **468** on the pending B08 branch. Registry tests need normal
+   current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. Do not drive or capture the user's desktop.

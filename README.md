@@ -89,7 +89,8 @@ From the launcher you can, via the `+` / clipboard buttons and the right-click m
 - **Folder tags** — right-click a category to store tags with that folder, then batch-apply them to
   every response below it. The metadata travels when the folder is copied.
 - **Instant-paste hotkey** — right-click a response to bind a global rich/plain paste shortcut.
-- **Delete** — with confirmation, into QuickReplyKit's recoverable in-app Trash.
+- **Delete** — with confirmation, into QuickReplyKit's recoverable in-app Trash. Right-click a category to delete
+  and later restore its complete folder tree, including nested responses and side files.
 
 ## Templates: variables & reusable sections
 
@@ -132,7 +133,7 @@ Open from the ⚙ button or the tray. You can set:
 - **Launch at startup**.
 - **Keyboard shortcuts…** — opens the shortcuts manager (see below).
 - **Back up / Restore Library…** — create or restore one of the 10 rolling library-and-settings snapshots.
-- **Trash…** — restore deleted responses, remove one permanently, or empty Trash. Deleted responses
+- **Trash…** — restore deleted responses or folders, remove one permanently, or empty Trash. Deleted items
   are kept for 30 days by default.
 - **Diagnostics** — enable verbose logging, open the rolling logs folder, or open About / Diagnostics.
 
@@ -156,8 +157,10 @@ box — press any combination to see what it's bound to — plus a filter over t
   older library-only snapshots still work. Restore protects the selected archive, snapshots the current state, and
   validates and swaps the staged library into place with rollback on failure. Restored settings keep the current
   library location, and QuickReplyKit restarts after applying them. Backup extraction is bounded against oversized ZIPs.
-- Deleted responses move to **Settings → Trash…**, where they can be restored unless another response now occupies
-  the original path. Permanent delete and Empty Trash require confirmation.
+- Deleted responses and category folders move to **Settings → Trash…**, where each item is labeled by type and can
+  be restored to its exact original path unless a file or folder now occupies that location. Folder deletion first
+  creates a required rolling backup and fails without changing the library if that backup cannot be written.
+  Permanent delete and Empty Trash require confirmation; retention applies to both response and folder items.
 - Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and never include response
   bodies. Enable verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable environment
   summary with version, OS/runtime, library/count/watcher state, hotkey, config path, and log path.

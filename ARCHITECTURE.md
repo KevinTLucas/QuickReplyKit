@@ -124,8 +124,11 @@ view-models, interop, and app wiring.
   then swaps directories. A failed install rolls the exact original directory back; older library-only ZIPs remain
   restorable without changing settings. Restored config is retargeted to the actual restored library folder; the old
   launcher's final config save is suppressed and QuickReplyKit restarts so restored settings become authoritative.
-  `TrashService` soft-deletes individual responses, refuses
-  overwrite/path escape on restore, and purges expired entries at startup.
+  `TrashService` soft-deletes individual responses and complete category subtrees. Folder deletion validates the
+  library tree, requires a `LibraryBackup` snapshot, and moves every nested response/side file as one typed Trash
+  payload. Old response-only metadata remains readable. Restore recreates the exact original hierarchy, refuses
+  overwrite/path escape/reparse traversal, and leaves conflicts in Trash; delete-forever and startup retention purge
+  apply to both item types.
 - `Logger` uses one background writer, level gating, and size rollover (about 10 MB x 5 files). AppDomain,
   Dispatcher, and unobserved-task exceptions are recorded but not silently swallowed. Logs omit response bodies.
 - First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
@@ -134,11 +137,12 @@ view-models, interop, and app wiring.
 ## Known completion boundaries
 
 The implemented paths above are merged and tested. The remaining contract gaps are intentionally explicit in
-[`docs/BACKLOG.md`](docs/BACKLOG.md): import/backup correctness; full accessibility; backup coverage/retention;
-folder Trash and retention UI; complete logging and folder-tag scope controls; richer import review plus any future
+[`docs/BACKLOG.md`](docs/BACKLOG.md): clipboard sanitization; full accessibility; backup-path configuration;
+complete logging and folder-tag scope controls; richer import review plus any future
 code-import gate; and refreshing About for actual launcher/response-hotkey state and backup/Trash paths.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
-  `-ui`, `-foreground`). UI is validated with `tools/shoot.ps1` screenshots (read the PNG). Two human spot-checks
-  remain: a live hotkey paste into a third-party app, and confirming pasted text is absent from Win+V history.
+  `-ui`, `-foreground`). Current user direction requires headless tests and static XAML review only: do not drive,
+  move, focus, or capture desktop windows. Two manual spot-checks remain: a live hotkey paste into a third-party app,
+  and confirming pasted text is absent from Win+V history.
