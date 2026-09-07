@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `92709d0` before this backlog-planning branch.
+- **Current `main`:** `10fb6fa`; B01 fix is on the active branch below.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **435 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -67,6 +67,11 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 **Known confirmed regressions/defects:** repeated right-click crash (user report), backup restore correctness,
 import preview/import disagreement and preview containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
+
+**Active branch:** `codex/fix-right-click-content-element` (B01). The production log proved the reopened crash is
+not the old context-menu `IsOpen` re-entrancy: `FindAncestor` received a highlighted `Run` and incorrectly passed it
+to `VisualTreeHelper`. The shared walker now handles WPF `ContentElement` and visual/logical parents; a direct
+regression test passes. Full independent UI stress/log QA is still required before merge.
 
 ## Known Limits / Human Checks
 
