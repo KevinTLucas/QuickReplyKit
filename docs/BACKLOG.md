@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B01 - Repeated right-click crash
 
 - **Severity:** P0
-- **Status:** In progress on `codex/fix-right-click-content-element`; independent QA pending
+- **Status:** QA passed on `codex/fix-right-click-content-element`; pending merge
 - **Impact:** Crashes the app during normal response management. A prior fix (`d562052`) covered one re-entrancy path,
   but the user reports the crash still occurs.
 - **Evidence/root cause:** The real rolling log contains two crashes at 00:23 and 00:27: a highlighted-name
