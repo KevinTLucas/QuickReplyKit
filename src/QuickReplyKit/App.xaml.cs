@@ -149,6 +149,22 @@ public partial class App : Application
             Dispatcher.BeginInvoke(new Action(() => new Views.OnboardingWindow(_config.HotkeyGesture).ShowDialog()));
         }
 
+        if (e.Args.Any(a => a.Equals("--show-trash", StringComparison.OrdinalIgnoreCase)))
+            Dispatcher.BeginInvoke(new Action(() => new Views.TrashWindow(
+                _config!.LibraryPath, _config.TrashRetentionDays, () => _vm!.OnLibraryUpdated()) { Owner = _launcher }.ShowDialog()));
+
+        // Auto-purge expired Trash in the background (retention 0 = keep forever).
+        if (_config.TrashRetentionDays > 0)
+            Task.Run(() =>
+            {
+                try
+                {
+                    int n = TrashService.Purge(AppPaths.TrashDir, TimeSpan.FromDays(_config.TrashRetentionDays));
+                    if (n > 0) Diag.Info($"trash auto-purge removed {n} expired item(s)");
+                }
+                catch { /* best effort */ }
+            });
+
         // Run the initial library scan in the background; it populates the (already-visible) launcher
         // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
         Task.Run(() => _library.LoadInitial());
