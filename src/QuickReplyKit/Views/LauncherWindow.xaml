@@ -263,6 +263,10 @@
                                         Command="{Binding PastePlainCommand}" ToolTip="Shift+Enter — paste as plain text"/>
                                 <Button Content="Copy" TabIndex="5" Style="{StaticResource ActionButton}"
                                         Command="{Binding CopyCommand}" ToolTip="Ctrl+C — copy to clipboard"/>
+                                <Button Content="✎ Edit" TabIndex="6" Style="{StaticResource ActionButton}"
+                                        Click="MenuEdit_Click" IsEnabled="{Binding HasValidSelection}"
+                                        ToolTip="Edit this response in the rich-text editor"
+                                        AutomationProperties.Name="Edit response"/>
                                 <TextBlock Text="{Binding CopiedHint}" Foreground="{DynamicResource Accent}"
                                            FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                            Visibility="{Binding HasCopiedHint, Converter={StaticResource BoolVis}}"/>

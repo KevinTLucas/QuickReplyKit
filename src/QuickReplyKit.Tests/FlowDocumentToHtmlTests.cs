@@ -112,6 +112,30 @@ public class FlowDocumentToHtmlTests
         });
     }
 
+    // "Automatic (theme default)" in the editor clears the explicit foreground via UnsetValue so the
+    // text inherits the theme colour (readable in dark). Verify the clear reaches the serialized HTML.
+    [Fact]
+    public void ApplyUnsetForeground_ClearsColor_ForAutomaticThemeDefault()
+    {
+        Sta(() =>
+        {
+            var rtb = new System.Windows.Controls.RichTextBox
+            {
+                Document = new FlowDocument(new Paragraph(new Run("hi"))),
+            };
+            rtb.SelectAll();
+            rtb.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Red);
+            Assert.Contains("color:#FF0000", FlowDocumentToHtml.Convert(rtb.Document));
+
+            // Same technique EditorWindow.ClearForeground uses (UnsetValue throws): split then clear.
+            rtb.SelectAll();
+            for (var p = rtb.Selection.Start; p != null && p.CompareTo(rtb.Selection.End) < 0;
+                 p = p.GetNextContextPosition(LogicalDirection.Forward))
+                (p.Parent as Run)?.ClearValue(TextElement.ForegroundProperty);
+            Assert.DoesNotContain("color:", FlowDocumentToHtml.Convert(rtb.Document));
+        });
+    }
+
     [Fact]
     public void Convert_NormalSize_EmitsNoFontSpan()
     {
