@@ -9,16 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P1 - Core Workflow And Major UI
 
-### B10 - Outlook-style folder-scoped search chip
-
-- **Severity:** P1
-- **Status:** Queued
-- **Impact:** Users need visible, predictable folder filtering while typing a global search.
-- **Acceptance:** Selecting a folder adds a removable chip in/adjacent to the search field and limits results to that
-  folder subtree; selecting another folder replaces it; removing the chip or selecting All Responses returns global
-  scope; Favorites/Recent behavior is explicit; chip is keyboard-removable and screen-reader named; empty/fuzzy/body
-  searches honor scope; compact resizing does not overlap controls.
-
 ### B11 - Full accessibility pass
 
 - **Severity:** P1
