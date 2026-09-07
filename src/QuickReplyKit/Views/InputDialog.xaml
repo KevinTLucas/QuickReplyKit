@@ -16,9 +16,11 @@
     <StackPanel Margin="16">
         <TextBlock x:Name="PromptLabel" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="13"/>
         <ComboBox x:Name="Input" IsEditable="True" StaysOpenOnEdit="True" FontSize="14"
+                  AutomationProperties.Name="{Binding Text, ElementName=PromptLabel}"
                   Padding="6,4" Foreground="{DynamicResource TextPrimary}"
                   Background="{DynamicResource CardBg}" Loaded="Input_Loaded"/>
         <TextBlock x:Name="ErrorText" Foreground="{DynamicResource Error}" FontSize="12" Margin="0,6,0,0"
+                   AutomationProperties.LiveSetting="Assertive"
                    TextWrapping="Wrap" Visibility="Collapsed"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="OK" Style="{StaticResource ActionButton}" IsDefault="True"

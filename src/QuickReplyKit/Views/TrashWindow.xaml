@@ -18,6 +18,8 @@
         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
                 BorderThickness="1" CornerRadius="6">
             <ListBox x:Name="TrashList" Height="240" BorderThickness="0" Background="Transparent"
+                     AutomationProperties.Name="Deleted responses and folders"
+                     AutomationProperties.HelpText="Select an item to restore or permanently delete"
                      Foreground="{DynamicResource TextPrimary}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
@@ -32,6 +34,7 @@
             </ListBox>
         </Border>
         <TextBlock x:Name="EmptyHint" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="2,6,0,0"
+                   AutomationProperties.LiveSetting="Polite"
                    Text="Trash is empty." Visibility="Collapsed"/>
         <Grid Margin="0,14,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
@@ -43,7 +46,7 @@
                         Style="{StaticResource Btn}" Click="Empty_Click"/>
             </StackPanel>
             <Button Content="_Close" AutomationProperties.Name="Close Trash" Style="{StaticResource Btn}"
-                    Margin="0" HorizontalAlignment="Right" IsCancel="True"/>
+                    Margin="0" HorizontalAlignment="Right" IsCancel="True" IsDefault="True"/>
         </Grid>
     </StackPanel>
 </Window>

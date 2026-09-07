@@ -18,15 +18,18 @@
         <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
                 BorderThickness="1" CornerRadius="6">
             <ListBox x:Name="BackupList" Height="200" BorderThickness="0" Background="Transparent"
+                     AutomationProperties.Name="Library snapshots"
+                     AutomationProperties.HelpText="Select a snapshot to restore"
                      Foreground="{DynamicResource TextPrimary}" DisplayMemberPath="Display"/>
         </Border>
         <TextBlock x:Name="EmptyHint" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="2,6,0,0"
+                   AutomationProperties.LiveSetting="Polite"
                    Text="No snapshots yet." Visibility="Collapsed"/>
         <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
             <Button Content="Back up now" Style="{StaticResource Btn}" Click="BackupNow_Click"/>
             <Button x:Name="RestoreButton" Content="Restore selected" Style="{StaticResource Btn}" Click="Restore_Click"/>
             <Button Content="Open folder" Style="{StaticResource Btn}" Click="OpenFolder_Click"/>
-            <Button Content="Close" Style="{StaticResource Btn}" Margin="0" IsCancel="True"/>
+            <Button Content="Close" Style="{StaticResource Btn}" Margin="0" IsCancel="True" IsDefault="True"/>
         </StackPanel>
     </StackPanel>
 </Window>
