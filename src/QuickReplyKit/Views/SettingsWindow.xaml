@@ -56,6 +56,10 @@
         <Button Content="Keyboard shortcuts…" HorizontalAlignment="Left" Margin="0,8,0,0"
                 Style="{StaticResource ActionButton}" Click="ManageHotkeys_Click"
                 ToolTip="See every shortcut, assign per-response instant-paste keys, and check for conflicts."/>
+        <Button Content="Scripts…" HorizontalAlignment="Left" Margin="0,8,0,0"
+                Style="{StaticResource ActionButton}" Click="ManageScripts_Click"
+                AutomationProperties.Name="Manage sandboxed scripts"
+                ToolTip="Create, review, validate, trust, and export restricted template scripts."/>
 
         <!-- Library path -->
         <TextBlock Text="Response library folder" Style="{StaticResource SectionLabel}"/>

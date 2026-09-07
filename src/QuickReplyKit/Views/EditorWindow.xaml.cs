@@ -27,12 +27,23 @@ public partial class EditorWindow : Window
 
     private EditorWindow(string libraryRoot, IEnumerable<string> categories,
         ResponseItem? editing, string category, string html,
-        Action<string, bool>? composeInsert = null)
+        Action<string, bool>? composeInsert = null, IEnumerable<string>? scriptNames = null)
     {
         InitializeComponent();
         _root = libraryRoot;
         _editing = editing;
         _composeInsert = composeInsert;
+
+        if (scriptNames?.Any() == true && InsertVarButton.ContextMenu is { } variables)
+        {
+            variables.Items.Add(new Separator());
+            foreach (string name in scriptNames)
+            {
+                var item = new MenuItem { Header = $"{{{{script:{name}}}}}", ToolTip = "Sandboxed script" };
+                item.Click += InsertVarItem_Click;
+                variables.Items.Add(item);
+            }
+        }
 
         foreach (var c in categories) CategoryBox.Items.Add(c);
         CategoryBox.Text = category;
@@ -67,17 +78,19 @@ public partial class EditorWindow : Window
 
     /// <summary>Open the editor to create a new response. Returns true if one was saved.</summary>
     public static bool OpenNew(Window owner, string libraryRoot, IEnumerable<string> categories,
-        string defaultCategory, string html = "")
+        string defaultCategory, string html = "", IEnumerable<string>? scriptNames = null)
     {
-        var dlg = new EditorWindow(libraryRoot, categories, null, defaultCategory, html) { Owner = owner };
+        var dlg = new EditorWindow(libraryRoot, categories, null, defaultCategory, html,
+            scriptNames: scriptNames) { Owner = owner };
         return dlg.ShowDialog() == true;
     }
 
     /// <summary>Open the editor to edit an existing response. Returns true if it was saved.</summary>
     public static bool OpenEdit(Window owner, string libraryRoot, IEnumerable<string> categories,
-        ResponseItem item)
+        ResponseItem item, IEnumerable<string>? scriptNames = null)
     {
-        var dlg = new EditorWindow(libraryRoot, categories, item, item.CategoryPath, item.Html)
+        var dlg = new EditorWindow(libraryRoot, categories, item, item.CategoryPath, item.Html,
+            scriptNames: scriptNames)
         { Owner = owner };
         return dlg.ShowDialog() == true;
     }
@@ -87,9 +100,10 @@ public partial class EditorWindow : Window
     /// resolved message. On Insert the (edited) content is handed to <paramref name="onInsert"/>
     /// (html, plain) — which runs the paste pipeline. Nothing is saved to disk.
     /// </summary>
-    public static void OpenCompose(Window owner, string html, Action<string, bool> onInsert)
+    public static void OpenCompose(Window owner, string html, Action<string, bool> onInsert,
+        IEnumerable<string>? scriptNames = null)
     {
-        var dlg = new EditorWindow("", System.Array.Empty<string>(), null, "", html, onInsert)
+        var dlg = new EditorWindow("", System.Array.Empty<string>(), null, "", html, onInsert, scriptNames)
         { Owner = owner };
         dlg.ShowDialog();
     }

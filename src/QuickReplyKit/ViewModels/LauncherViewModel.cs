@@ -128,6 +128,11 @@ public sealed class LauncherViewModel : ViewModelBase
         return paths;
     }
 
+    /// <summary>Enabled, valid, locally trusted scripts available to the editor variable menu.</summary>
+    public IReadOnlyList<string> ScriptNames() => _library.Scripts
+        .Where(x => x.IsValid && x.IsEnabled && x.IsTrusted)
+        .Select(x => x.Name).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+
     public string CategoryFullPath(string categoryPath) =>
         string.IsNullOrEmpty(categoryPath) ? LibraryRoot
             : System.IO.Path.Combine(LibraryRoot, categoryPath.Replace('/', System.IO.Path.DirectorySeparatorChar));

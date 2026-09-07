@@ -7,24 +7,31 @@ namespace QuickReplyKit.Core.Scripts;
 public sealed class ScriptCatalog
 {
     private sealed record Entry(ScriptDefinition? Definition, string? Error, bool Duplicate);
+    private sealed record Candidate(string Path, string RelativePath, string Name,
+        ScriptDefinition? Definition, string? Error);
 
     private readonly IReadOnlyDictionary<string, Entry> _entries;
     private readonly ScriptTrustLedger _trust;
 
-    private ScriptCatalog(IReadOnlyDictionary<string, Entry> entries, ScriptTrustLedger trust)
+    private ScriptCatalog(IReadOnlyDictionary<string, Entry> entries,
+        IReadOnlyList<ScriptCatalogItem> items, ScriptTrustLedger trust)
     {
         _entries = entries;
+        Items = items;
         _trust = trust;
     }
 
+    /// <summary>Every portable definition, including invalid and duplicate entries, in path order.</summary>
+    public IReadOnlyList<ScriptCatalogItem> Items { get; }
+
     public static ScriptCatalog Empty(ScriptTrustLedger trust) =>
-        new(new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase), trust);
+        new(new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase), [], trust);
 
     public static ScriptCatalog Load(string libraryRoot, ScriptTrustLedger trust)
     {
         if (!Directory.Exists(libraryRoot)) return Empty(trust);
 
-        var candidates = new List<(string Name, ScriptDefinition? Definition, string? Error)>();
+        var candidates = new List<Candidate>();
         try
         {
             foreach (string path in Directory.EnumerateFiles(libraryRoot, "*" + ScriptDefinitionFile.Extension,
@@ -32,7 +39,8 @@ public sealed class ScriptCatalog
             {
                 var loaded = ScriptDefinitionFile.Load(path);
                 string fallbackName = Path.GetFileName(path)[..^ScriptDefinitionFile.Extension.Length];
-                candidates.Add((loaded.Value?.Name ?? fallbackName, loaded.Value, loaded.Error));
+                candidates.Add(new(path, Path.GetRelativePath(libraryRoot, path).Replace('\\', '/'),
+                    loaded.Value?.Name ?? fallbackName, loaded.Value, loaded.Error));
             }
         }
         catch
@@ -47,7 +55,16 @@ public sealed class ScriptCatalog
             var first = values[0];
             entries[group.Key] = new(first.Definition, first.Error, values.Length > 1);
         }
-        return new(entries, trust);
+        var duplicateNames = candidates.GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var items = candidates.Select(candidate => new ScriptCatalogItem(
+            candidate.Path, candidate.RelativePath, candidate.Name, candidate.Definition,
+            candidate.Definition is not null && !duplicateNames.Contains(candidate.Name),
+            duplicateNames.Contains(candidate.Name),
+            candidate.Definition is not null && !duplicateNames.Contains(candidate.Name) &&
+                trust.IsTrusted(candidate.Definition),
+            candidate.Error)).ToArray();
+        return new(entries, items, trust);
     }
 
     /// <summary>Evaluate one valid, enabled, uniquely named and locally trusted definition.</summary>
@@ -64,4 +81,21 @@ public sealed class ScriptCatalog
 
     private static ScriptEvaluationResult Fail(string state, string name) =>
         new(false, $"[script {state}: {WebUtility.HtmlEncode(name)}]", $"Script '{name}' is {state}.");
+}
+
+/// <summary>Read-only status used by management and diagnostics; expression source is never logged.</summary>
+public sealed record ScriptCatalogItem(
+    string FullPath,
+    string RelativePath,
+    string Name,
+    ScriptDefinition? Definition,
+    bool IsValid,
+    bool IsDuplicate,
+    bool IsTrusted,
+    string? Error)
+{
+    public bool IsEnabled => Definition?.Enabled == true;
+    public string Status => !IsValid ? IsDuplicate ? "Duplicate name" : "Invalid"
+        : !IsEnabled ? IsTrusted ? "Disabled · trusted" : "Disabled · untrusted"
+        : IsTrusted ? "Enabled · trusted" : "Enabled · untrusted";
 }

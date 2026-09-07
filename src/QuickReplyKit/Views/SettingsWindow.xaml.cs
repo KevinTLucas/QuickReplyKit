@@ -167,6 +167,9 @@ public partial class SettingsWindow : Window
     private void ManageHotkeys_Click(object sender, RoutedEventArgs e) =>
         (Application.Current as App)?.OpenHotkeyManager();
 
+    private void ManageScripts_Click(object sender, RoutedEventArgs e) =>
+        new ScriptManagerWindow(_library, _onLibraryChanged) { Owner = this }.ShowDialog();
+
     // --- Save ---------------------------------------------------------------
 
     private void Save_Click(object sender, RoutedEventArgs e)

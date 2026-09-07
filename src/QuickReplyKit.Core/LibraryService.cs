@@ -37,6 +37,9 @@ public sealed class LibraryService : IDisposable
     /// <summary>Whether the library folder is being watched for live changes (diagnostics).</summary>
     public bool IsWatching => _watcher?.IsAttached == true;
 
+    /// <summary>Portable script definitions and their effective local status.</summary>
+    public IReadOnlyList<ScriptCatalogItem> Scripts => _scripts.Items;
+
     /// <summary>Raised after the library changed on disk and <see cref="Snapshot"/> was rebuilt.</summary>
     public event Action? Updated;
 
