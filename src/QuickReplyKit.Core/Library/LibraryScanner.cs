@@ -2,6 +2,7 @@ using System.IO;
 using System.Threading.Tasks;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
+using QuickReplyKit.Core.Scripts;
 using QuickReplyKit.Core.Storage;
 
 namespace QuickReplyKit.Core.Library;
@@ -71,7 +72,8 @@ public static class LibraryScanner
         };
 
         foreach (var file in Directory.EnumerateFiles(dir, "*.json")
-                     .Where(f => !Path.GetFileName(f).Equals(LegacyFolderSidecar, StringComparison.OrdinalIgnoreCase))
+                     .Where(f => !Path.GetFileName(f).Equals(LegacyFolderSidecar, StringComparison.OrdinalIgnoreCase) &&
+                                 !f.EndsWith(ScriptDefinitionFile.Extension, StringComparison.OrdinalIgnoreCase))
                      .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
             files.Add((node, file));
 
