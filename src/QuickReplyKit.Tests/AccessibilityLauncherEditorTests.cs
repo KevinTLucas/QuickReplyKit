@@ -42,7 +42,7 @@ public class AccessibilityLauncherEditorTests
         var icon = template.Descendants().Single(e => e.Name.LocalName == "TextBlock" &&
             (string?)e.Attribute("Text") == "{Binding Icon}");
         Assert.Equal("0,0,6,0", (string?)icon.Attribute("Margin"));
-        Assert.Empty(template.Descendants().Where(e => e.Name.LocalName == "ColumnDefinition"));
+        Assert.DoesNotContain(template.Descendants(), e => e.Name.LocalName == "ColumnDefinition");
 
         var style = launcher.Descendants().Single(e => e.Name.LocalName == "TreeView.ItemContainerStyle");
         Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Setter" &&

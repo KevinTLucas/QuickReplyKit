@@ -51,17 +51,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   consistent chrome while retaining visible keyboard focus and accessible names. Fix only clear usability/consistency
   issues, run the full regression suite, and validate the portable release. Do not use GPT Computer Use.
 
-## P3 - Optional After Requested Work
-
-### B18 - Stronger selected-folder indication
-
-- **Severity:** P3 visual navigation polish
-- **Status:** In progress on `feature/selected-folder-indicator`; merges before B19
-- **Impact:** The selected folder in the left navigation is not always visually obvious at a glance.
-- **Acceptance:** Add a clear theme-safe selected state using existing resources plus a non-color cue so it remains
-  understandable in High Contrast and to screen readers. Avoid relying on yellow alone. Validate deep folders,
-  keyboard selection, focused/inactive states, resizing, and both themes.
-
 - **Usage analytics / most-used sort:** local and opt-in only; only if Recent/Favorites prove insufficient.
 - **Keyboard shortcut cheat sheet:** only after onboarding and accessibility validation show a discoverability gap.
 
