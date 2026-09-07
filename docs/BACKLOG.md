@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B02 - Backup restore correctness and completeness
 
 - **Severity:** P0
-- **Status:** Confirmed by source audit
+- **Status:** In progress on `bugfix/backup-restore-integrity`; implementation complete, independent QA pending
 - **Impact:** Restore can fail or leave a partially replaced library, creating data-loss risk.
 - **Acceptance:** Protect/copy the selected archive before pre-restore pruning; stage and swap with rollback rather
   than delete-then-copy; restoring the oldest retained backup works; forced replacement failure preserves the original
