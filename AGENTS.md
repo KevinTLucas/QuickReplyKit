@@ -28,4 +28,6 @@ by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STAT
 only, no NuGet) → separate-subagent QA → merge `--no-ff`; **update the handoff docs (STATUS.md first) on every change** —
 a change isn't done until code, tests, and docs are consistent. That discipline is what preserves continuity.
 Use concise, human-readable branch names that describe the feature or bug; never include an AI/vendor name, agent UUID,
-or generated worktree/session identifier.
+or generated worktree/session identifier. One branch/worktree owns exactly one feature or fix: never work in another
+feature's branch or mix unrelated changes. Before QA and merge, verify the branch-owned commits and files with
+`git log --oneline main..BRANCH` and `git diff --name-status main...BRANCH`; inherited `main` history is not branch work.

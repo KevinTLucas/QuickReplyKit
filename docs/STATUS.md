@@ -6,13 +6,14 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `70e3b0b` (B01 fix plus handoff update); product merge `c596e29`.
+- **Current `main` before this process-doc update:** `97e4ff8`; product merge `c596e29`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **436 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
-- **Git:** every completed feature branch listed below is already an ancestor of `main`; there are no
-  unmerged feature commits. Several merged branches/worktrees remain locally and may be pruned later.
+- **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
+  human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
+  remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   15 ordered items with severity, acceptance criteria, and status. Confirmed data-loss/import defects lead;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
@@ -58,7 +59,7 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
 1. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
-2. **B03 P0:** implementation is complete on `bugfix/import-integrity`; independent security/UI QA remains before merge.
+2. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
 3. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
 4. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
 5. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
@@ -68,10 +69,14 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** `bugfix/backup-restore-integrity` contains the B02 implementation under review.
-`bugfix/import-integrity` now contains the complete B03 validated-plan implementation and tests; it must pass separate
-security/UI QA before merge. Resume these exact worktrees rather than starting duplicates. Branch names must stay
-human-readable and must not contain AI/vendor names, agent IDs, or generated session labels.
+**Active worktrees:** `bugfix/backup-restore-integrity` contains the committed B02 transactional restore and is in its
+second independent QA pass. `bugfix/import-integrity` contains the B03 immutable-plan importer plus fixes for the QA-found
+library-root link race, bounded decompression work, and extended Windows reserved names; focused import tests are green
+and independent security/UI re-QA is required before merge. `bugfix/clipboard-sanitization`,
+`bugfix/search-relevance`, and `bugfix/dark-hover-contrast` contain the distinct B04, B05, and B07 changes under review.
+Resume these exact worktrees rather than starting duplicates.
+Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
+work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
 ## Known Limits / Human Checks
 
