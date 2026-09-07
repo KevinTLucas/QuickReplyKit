@@ -6,13 +6,14 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `7b07a5f` (B17 feature tip; merge commit follows); use `git rev-parse HEAD` for the
-  docs-inclusive tip.
+- **Current product merge:** `ca730f6` (B17 import review selection merged into `main`); use `git rev-parse HEAD` for
+  the docs-inclusive tip.
 - **Current product baseline:** B01-B15, B17, and B18 are complete.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **572 passed** after B17 independent import-plan, accessibility, and UX QA; build remains clean.
-- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/latest/QuickReplyKit.exe` were rebuilt from B18 `main`
-  and match at 70,014,450 bytes. The published rich-clipboard self-test exits 0. No external .NET install is needed.
+- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/latest/QuickReplyKit.exe` were rebuilt from B17 `main`
+  and match at 69,887,798 bytes (SHA-256 `731445EA15B724E94DEE0110E373686D24144359126F2D408D74A3236B99E8C6`).
+  The published rich-clipboard self-test exits 0. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
@@ -25,7 +26,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| B17 import review selection | `7b07a5f` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
+| B17 import review selection | `ca730f6` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
 | B18 selected-folder indication | `57576ed` | 569/569; 45/45 focused; system-color bar plus semibold non-color cue; nav row width preserved | Complete |
 | B15 complete About / Diagnostics status | `5c30e8e` | 567/567 integrated; actual hotkey/watcher/logger state; safe path tokens; both themes; separate correctness/privacy/UI QA | Complete |
 | B14 complete diagnostics coverage | `7d0ce16` | 563/563 integrated; 19/19 focused; separate correctness/privacy QA; safe stack frames and no export rescan | Complete |
