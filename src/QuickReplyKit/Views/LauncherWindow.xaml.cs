@@ -152,10 +152,10 @@ public partial class LauncherWindow : Window
         try
         {
             var (html, needsSanitizing) = ReadClipboardContent();
-            if (needsSanitizing && html.Length > ClipboardHtml.MaxInputChars)
+            if (html.Length > ClipboardHtml.MaxInputChars)
             {
                 ConfirmDialog.Info(this, "Clipboard content is too large",
-                    "QuickReplyKit can import up to 1,000,000 characters of formatted clipboard content.");
+                    "QuickReplyKit can import up to 250,000 characters of clipboard content.");
                 return;
             }
             OpenEditorForNew(needsSanitizing

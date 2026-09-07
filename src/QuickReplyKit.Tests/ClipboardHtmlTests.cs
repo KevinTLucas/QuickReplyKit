@@ -128,8 +128,11 @@ public class ClipboardHtmlTests
 
     [Theory]
     [InlineData("display:none!important")]
+    [InlineData("display:none ! important")]
     [InlineData("visibility:hidden !important")]
+    [InlineData("visibility:hidden ! important")]
     [InlineData("mso-hide:all !IMPORTANT")]
+    [InlineData("opacity:0%")]
     public void Sanitize_RemovesImportantHiddenContent(string style) =>
         Assert.Equal("<p>visible</p>",
             ClipboardHtml.Sanitize($"<p>visible<span style='{style}'>secret</span></p>"));
@@ -137,6 +140,11 @@ public class ClipboardHtmlTests
     [Fact]
     public void Sanitize_DoesNotHidePartiallyTransparentContent() =>
         Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize("<p style='opacity:.5'>visible</p>"));
+
+    [Fact]
+    public void Sanitize_RemovesContentHiddenByStylesheetId() =>
+        Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize(
+            "<style>#secret{display:none}</style><p>visible<span id='secret'>secret</span></p>"));
 
     [Fact]
     public void Sanitize_RemovesSelfClosingSyntaxForBlockedContainer() =>
@@ -197,6 +205,10 @@ public class ClipboardHtmlTests
     [Fact]
     public void Sanitize_RejectsOversizedClipboardHtml() =>
         Assert.Equal("", ClipboardHtml.Sanitize(new string('x', ClipboardHtml.MaxInputChars + 1)));
+
+    [Fact]
+    public void FromPlainText_RejectsOversizedClipboardText() =>
+        Assert.Equal("", ClipboardHtml.FromPlainText(new string('x', ClipboardHtml.MaxInputChars + 1)));
 
     private static string WithOffsets(string before, string fragment, string after)
     {
