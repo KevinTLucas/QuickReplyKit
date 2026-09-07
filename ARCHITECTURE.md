@@ -99,10 +99,15 @@ view-models, interop, and app wiring.
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
+- Search ANDs whitespace tokens across name, response tags, app, category, and body. Field relevance ranks before
+  folder tie-breaking, while literal body matches remain searchable. Typo fallback uses bounded per-word edit
+  distance, with subsequence matching only for short abbreviations; long tokens never join across words.
 - **Startup is non-blocking:** the window shows immediately in a "Loading library…" state; the initial scan runs
   on a background task (parallelized) and populates via the watcher's `Updated`→Dispatcher path.
 - **Theming:** `Themes/Light.xaml`/`Dark.xaml` swapped at runtime by `ThemeManager`; all views use `DynamicResource`.
-  `AppConfig.Theme` = System/Light/Dark (System follows Windows). Per-Monitor-v2 DPI via `app.manifest`.
+  `AppConfig.Theme` = System/Light/Dark (System follows Windows). `App.xaml` owns one shared button template whose
+  translucent hover/pressed layer preserves each button's base color; all view-local button styles inherit it.
+  Per-Monitor-v2 DPI is enabled via `app.manifest`.
 - The editor uses a themed ComboBox template, standard text/highlight palettes, removable tag chips, and a visible
   launcher Edit action. Category context actions edit folder tags and recursively batch-apply them.
 - Import uses one immutable `ImportPlan` from `LibraryPorter.PlanImport`; the preview displays that exact plan and

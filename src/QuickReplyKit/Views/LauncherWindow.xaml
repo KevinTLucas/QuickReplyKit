@@ -16,24 +16,18 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVis"/>
 
-        <Style x:Key="IconButton" TargetType="Button">
+        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="6,2"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
 
-        <Style x:Key="ActionButton" TargetType="Button">
+        <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="MinWidth" Value="72"/>
-            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
         </Style>
 
         <!-- Nav category right-click menu (suppressed for the fixed Favorites/Recent/All nodes) -->

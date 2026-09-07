@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B04 - Sanitize Create from Clipboard content
 
 - **Severity:** P1 (trust/content safety)
-- **Status:** Two security-QA rounds completed and findings corrected on `bugfix/clipboard-sanitization`; final
+- **Status:** Three security-QA rounds completed and findings corrected on `bugfix/clipboard-sanitization`; final
   verification pending
 - **Impact:** Clipboard HTML can carry scripts, event attributes, embedded objects, unsafe links, or editor-specific
   markup that should never enter a response.
@@ -22,17 +22,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
   sanitizer tests cover active content and URL schemes.
 
-### B05 - Search relevance correctness
-
-- **Severity:** P1
-- **Status:** Confirmed by user examples; investigation required
-- **Impact:** Core find-and-paste workflow returns unrelated results, including `rostering` matching testing content
-  and `Licensing` returning unrelated IXL responses.
-- **Acceptance:** Build a realistic regression corpus for names, body, tags, app, and category; reproduce both examples;
-  remove false positives without losing intended typo tolerance; exact/prefix/name/tag matches outrank body/fuzzy;
-  fuzzy fallback never admits unrelated terms when exact matches exist; selected-folder behavior is deterministic;
-  large-library search stays responsive and existing valid search cases remain green.
-
 ### B06 - Repair Settings layout and About area
 
 - **Severity:** P1
@@ -41,16 +30,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
   and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;
   screenshots and UI Automation verify every control remains reachable.
-
-### B07 - Dark-mode button hover contrast
-
-- **Severity:** P1
-- **Status:** Confirmed UI defect
-- **Impact:** Hover background is too bright and makes button text unreadable in dark mode.
-- **Acceptance:** One shared themed button hover/pressed/focus treatment is readable in Light, Dark, and High Contrast;
-  no view-specific hardcoded hover colors; text/icon contrast remains clear; disabled and destructive states remain
-  distinguishable. Prove every view inherits the shared style or capture launcher, editor, Settings, import, backup,
-  Trash, onboarding, About, input/confirm, assignment, and hotkey-manager dialogs.
 
 ### B08 - Delete and restore folders through Trash
 
