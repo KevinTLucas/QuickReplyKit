@@ -125,27 +125,30 @@ public partial class EditorWindow : Window
         }
     }
 
-    private void TextColor_Click(object sender, RoutedEventArgs e) => TextColorPopup.IsOpen = true;
+    private void TextColor_Click(object sender, RoutedEventArgs e) => OpenMenu(TextColorButton);
 
-    private void Highlight_Click(object sender, RoutedEventArgs e) => HighlightPopup.IsOpen = true;
+    private void Highlight_Click(object sender, RoutedEventArgs e) => OpenMenu(HighlightButton);
+
+    private static void OpenMenu(Button button)
+    {
+        if (button.ContextMenu is { } menu) { menu.PlacementTarget = button; menu.IsOpen = true; }
+    }
 
     private void TextSwatch_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string tag })
+        if (sender is MenuItem { Tag: string tag })
         {
             if (tag == "auto") ClearForeground(Body.Selection);   // → inherits theme colour
             else Body.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brush(tag));
         }
-        TextColorPopup.IsOpen = false;
         Body.Focus();
     }
 
     private void HighlightSwatch_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string tag })
+        if (sender is MenuItem { Tag: string tag })
             Body.Selection.ApplyPropertyValue(TextElement.BackgroundProperty,
                 tag == "none" ? System.Windows.Media.Brushes.Transparent : Brush(tag));
-        HighlightPopup.IsOpen = false;
         Body.Focus();
     }
 
@@ -385,6 +388,7 @@ public partial class EditorWindow : Window
         var remove = new Button { Content = "✕", Margin = new Thickness(4, 0, 0, 0), Padding = new Thickness(2, 0, 2, 0),
             Background = System.Windows.Media.Brushes.Transparent, BorderThickness = new Thickness(0),
             Foreground = System.Windows.Media.Brushes.Black, Cursor = System.Windows.Input.Cursors.Hand, FontSize = 10 };
+        System.Windows.Automation.AutomationProperties.SetName(remove, $"Remove tag {tag}");
         var panel = new StackPanel { Orientation = Orientation.Horizontal };
         panel.Children.Add(label);
         panel.Children.Add(remove);

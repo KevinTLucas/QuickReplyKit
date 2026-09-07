@@ -141,7 +141,7 @@
                             </ToggleButton>
                             <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom"
                                    IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False"
-                                   PopupAnimation="Slide">
+                                   PopupAnimation="None">
                                 <Border Background="{DynamicResource CardBg}"
                                         BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
                                         CornerRadius="4"
