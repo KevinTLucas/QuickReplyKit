@@ -9,22 +9,11 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P1 - Core Workflow And Major UI
 
-### B04 - Sanitize Create from Clipboard content
-
-- **Severity:** P1 (trust/content safety)
-- **Status:** Queued
-- **Impact:** Clipboard HTML can carry scripts, event attributes, embedded objects, unsafe links, or editor-specific
-  markup that should never enter a response.
-- **Acceptance:** Clipboard input is parsed/normalized into the supported HTML subset only; scripts, stylesheets,
-  comments, forms, iframes/objects, images, event attributes, unsafe URI schemes, hidden content, and unsupported
-  markup are removed. Legitimate visible `<code>`/`<pre>` snippets remain as safely encoded visible text; allowed
-  formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
-  sanitizer tests cover active content and URL schemes.
-
 ### B08 - Delete and restore folders through Trash
 
 - **Severity:** P1 (data safety)
-- **Status:** Implementation complete on `feature/folder-trash` (`5755331`); independent QA pending
+- **Status:** Implementation and independent data-safety QA complete on `feature/folder-trash`; integrated regression
+  check pending before merge
 - **Impact:** Users cannot delete/restore a category and its nested responses as one recoverable operation.
 - **Acceptance:** Folder context menu offers Delete; confirmation states folder name and nested response count;
   deletion creates a required backup then moves the entire subtree to app Trash; restore recreates the exact hierarchy
@@ -33,7 +22,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Implementation evidence:** Required backup is enforced inside `TrashService.TrashFolder` before mutation; folder
   payloads retain every nested file and subfolder; old response-only `meta.json` remains readable; restore returns
   explicit Restored/Conflict/Invalid outcomes and never overwrites. Headless build is clean and the full branch suite
-  is 468/468; B08 stays here until separate-agent QA approves the integrated branch.
+  was 469/469 before current-main integration. Independent QA also proved a Trash path beneath a real junction cannot
+  enumerate or delete external data; B08 stays here until the integrated suite passes.
 
 ### B09 - Remove folder tags
 

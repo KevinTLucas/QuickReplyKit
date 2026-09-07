@@ -193,13 +193,12 @@ public static class FlowDocumentToHtml
         }
     }
 
-    // Only the quote needs escaping to keep the attribute well-formed. '&' is left as-is so the
-    // href round-trips verbatim through HtmlToFlowDocument (which does not entity-decode hrefs).
     private static void EscapeAttr(StringBuilder sb, string text)
     {
         foreach (char c in text)
         {
-            if (c == '"') sb.Append("&quot;");
+            if (c == '&') sb.Append("&amp;");
+            else if (c == '"') sb.Append("&quot;");
             else sb.Append(c);
         }
     }
