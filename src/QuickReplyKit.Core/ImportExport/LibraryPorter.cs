@@ -135,8 +135,7 @@ public static class LibraryPorter
         {
             Conflicts = plan.Entries.Count(e => e.Classification == ImportClassification.Conflict),
         };
-        bool sourceStale = !File.Exists(plan.SourcePath)
-            || !plan.SourceHash.AsSpan().SequenceEqual(HashFile(plan.SourcePath));
+        bool sourceStale = !SourceMatches(plan.SourcePath, plan.SourceHash);
 
         var actions = plan.Entries.ToDictionary(e => e.Id,
             e => NormalizeAction(e, decisions is not null && decisions.TryGetValue(e.Id, out var chosen)
@@ -175,7 +174,7 @@ public static class LibraryPorter
                 outcome = new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Skipped,
                     entry.Classification == ImportClassification.Identical ? "Identical; no changes made." : "Skipped.");
             else
-                outcome = Write(entry, actions[entry.Id]);
+                outcome = Write(plan.LibraryRoot, entry, actions[entry.Id]);
 
             result.Outcomes.Add(outcome);
             result.Messages.Add(outcome.Message);
@@ -218,7 +217,7 @@ public static class LibraryPorter
         _ => ImportAction.Skip,
     };
 
-    private static ImportOutcome Write(ImportPlanEntry entry, ImportAction action)
+    private static ImportOutcome Write(string root, ImportPlanEntry entry, ImportAction action)
     {
         string destination = action == ImportAction.KeepBoth ? entry.KeepBothFullPath! : entry.DestinationFullPath!;
         try
@@ -238,8 +237,8 @@ public static class LibraryPorter
                 ImportAction.KeepBoth => ImportOutcomeKind.KeptBoth,
                 _ => ImportOutcomeKind.Imported,
             };
-            string relative = Path.GetRelativePath(Path.GetPathRoot(destination)!, destination);
-            return new(entry.Id, entry.DestinationPath, kind, $"{kind}: {entry.DestinationPath}");
+            string relative = Path.GetRelativePath(root, destination).Replace('\\', '/');
+            return new(entry.Id, relative, kind, $"{kind}: {relative}");
         }
         catch (Exception ex)
         {
@@ -250,9 +249,19 @@ public static class LibraryPorter
 
     private static bool DestinationMatches(string root, string path, byte[]? expectedHash)
     {
-        if (!IsInside(root, path) || HasReparsePoint(root, path)) return false;
-        if (expectedHash is null) return !File.Exists(path) && !Directory.Exists(path);
-        return File.Exists(path) && expectedHash.AsSpan().SequenceEqual(HashFile(path));
+        try
+        {
+            if (!IsInside(root, path) || HasReparsePoint(root, path)) return false;
+            if (expectedHash is null) return !File.Exists(path) && !Directory.Exists(path);
+            return File.Exists(path) && expectedHash.AsSpan().SequenceEqual(HashFile(path));
+        }
+        catch { return false; }
+    }
+
+    private static bool SourceMatches(string path, byte[] expectedHash)
+    {
+        try { return File.Exists(path) && expectedHash.AsSpan().SequenceEqual(HashFile(path)); }
+        catch { return false; }
     }
 
     private static IReadOnlyList<Candidate> ReadCandidates(string source)

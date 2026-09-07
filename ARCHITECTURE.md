@@ -102,10 +102,14 @@ view-models, interop, and app wiring.
   `AppConfig.Theme` = System/Light/Dark (System follows Windows). Per-Monitor-v2 DPI via `app.manifest`.
 - The editor uses a themed ComboBox template, standard text/highlight palettes, removable tag chips, and a visible
   launcher Edit action. Category context actions edit folder tags and recursively batch-apply them.
-- Import is two-stage: `ImportPreview.Analyze` performs a destination/content comparison, then `LibraryPorter.Import`
-  applies one Skip/Overwrite/Keep-both policy after confirmation. A rolling backup is created before the write.
-  Current preview states are New, Changed, and same-path Identical. Preview/import policy alignment, preview path
-  containment, and folder-sidecar import are known gaps tracked in BACKLOG.
+- Import uses one immutable `ImportPlan` from `LibraryPorter.PlanImport`; the preview displays that exact plan and
+  `LibraryPorter.Import(plan, decisions)` executes it. Entries are classified as New, Duplicate elsewhere, Identical,
+  Conflict, Invalid, or Unsafe. New/duplicate/conflict rows have per-item actions plus an apply-to-all conflict choice;
+  Identical/Invalid/Unsafe rows are locked to Skip. Planning validates canonical containment before destination reads,
+  ignores legacy `.qrkfolder.json`, rejects path aliases/reparse traversal and bounded-ZIP violations, and records
+  source/destination fingerprints. Execution rechecks those fingerprints, reports stale entries without writing them,
+  and atomically replaces individual files. Valid siblings continue when another entry is invalid, unsafe, stale, or
+  fails. A required rolling backup is created after the user accepts the plan and before any write.
 - `LibraryBackup` keeps 10 library-only zip snapshots. Restore extracts to a temporary directory, then replaces the
   library after taking a pre-restore snapshot. The oldest-snapshot pruning bug and non-atomic replacement are tracked
   in BACKLOG. `TrashService` soft-deletes individual responses, refuses overwrite/path escape on restore, and purges

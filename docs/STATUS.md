@@ -58,7 +58,7 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
 1. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
-2. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
+2. **B03 P0:** implementation is complete on `bugfix/import-integrity`; independent security/UI QA remains before merge.
 3. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
 4. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
 5. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
@@ -68,10 +68,10 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** `bugfix/backup-restore-integrity` contains an uncommitted B02 implementation under review;
-`bugfix/import-integrity` contains an early uncommitted B03 planner. Their agents stopped at the current usage limit,
-so resume these exact worktrees rather than starting duplicate branches. Branch names must stay human-readable and
-must not contain AI/vendor names, agent IDs, or generated session labels.
+**Active worktrees:** `bugfix/backup-restore-integrity` contains the B02 implementation under review.
+`bugfix/import-integrity` now contains the complete B03 validated-plan implementation and tests; it must pass separate
+security/UI QA before merge. Resume these exact worktrees rather than starting duplicates. Branch names must stay
+human-readable and must not contain AI/vendor names, agent IDs, or generated session labels.
 
 ## Known Limits / Human Checks
 

@@ -47,6 +47,7 @@ public class ImportPlanTests
             ImportOutcomeKind.Skipped, ImportOutcomeKind.KeptBoth, ImportOutcomeKind.Imported,
             ImportOutcomeKind.Imported, ImportOutcomeKind.Invalid,
         }, result.Outcomes.Select(o => o.Kind));
+        Assert.Equal("Changed (imported).json", result.Outcomes[1].DestinationPath);
         Assert.True(File.Exists(Path.Combine(lib, "Changed (imported).json")));
         Assert.True(File.Exists(Path.Combine(lib, "Duplicate.json")));
         Assert.True(File.Exists(Path.Combine(lib, "New.json")));
