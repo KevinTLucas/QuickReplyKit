@@ -19,7 +19,7 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** `main` includes completed B01-B03, B05, and B07 and is green at 455 tests. The app is launchable, but
+**Current state (audited 2026-09-07):** `main` includes completed B01-B03 and B05-B07 and is green at 455 tests. The app is launchable, but
 the backlog is **not empty**: clipboard sanitization leads the remaining work, followed
 by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STATUS.md` for the current evidence and
 `docs/BACKLOG.md` for the exact next item.
@@ -37,3 +37,7 @@ and never override the repository's Git author configuration.
 **QA cleanup:** reuse a single Notepad tab for paste verification and close every test-created tab normally with
 **Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
 Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.
+
+**Current QA boundary:** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated input, or
+other desktop-driving tools. Do not move, focus, or close the user's windows. Use command-line build/tests, focused
+headless harnesses, self-test output when it will not disturb the desktop, and static XAML/code review.
