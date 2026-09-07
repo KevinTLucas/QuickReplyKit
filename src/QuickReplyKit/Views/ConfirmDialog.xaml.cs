@@ -30,7 +30,7 @@ public partial class ConfirmDialog : Window
                 Content = label,
                 Style = (Style)Resources[danger ? "DangerButton" : "ActionButton"],
                 IsDefault = isDefault,
-                IsCancel = label.Equals("Cancel", System.StringComparison.OrdinalIgnoreCase),
+                IsCancel = buttons.Length == 1 || label.Equals("Cancel", System.StringComparison.OrdinalIgnoreCase),
             };
             b.Click += (_, _) => { _result = index; DialogResult = true; };
             ButtonBar.Children.Add(b);

@@ -25,6 +25,8 @@
                    Margin="0,2,0,10"/>
 
         <TextBox x:Name="HotkeyBox" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                 AutomationProperties.Name="Instant-paste hotkey"
+                 AutomationProperties.HelpText="Focus this box, then press the shortcut combination"
                  FontSize="14" Padding="8,6" Cursor="Hand"
                  Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextPrimary}"
                  BorderBrush="{DynamicResource CardBorder}"
@@ -33,6 +35,7 @@
         <TextBlock Style="{StaticResource Hint}"
                    Text="Click, then press the key combination (e.g. Ctrl+Alt+1). It pastes this response straight into whatever app you're in, without opening QuickReplyKit."/>
         <TextBlock x:Name="ErrorText" Foreground="{DynamicResource Error}" FontSize="12" TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Assertive"
                    Margin="0,6,0,0" Visibility="Collapsed"/>
 
         <TextBlock Text="Paste as" FontWeight="SemiBold" FontSize="13" Margin="0,14,0,4"/>

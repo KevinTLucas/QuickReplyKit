@@ -41,12 +41,15 @@
         <!-- Global hotkey -->
         <TextBlock Text="Global hotkey" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
         <TextBox x:Name="HotkeyBox" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                 AutomationProperties.Name="Global launcher hotkey"
+                 AutomationProperties.HelpText="Focus this box, then press the shortcut combination"
                  FontSize="14" Padding="8,6" Cursor="Hand" Style="{StaticResource Input}"
                  PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus"
                  LostKeyboardFocus="HotkeyBox_LostFocus"/>
         <TextBlock x:Name="HotkeyHint" Style="{StaticResource Hint}"
                    Text="Click, then press the key combination you want (e.g. Ctrl+Alt+D)."/>
         <TextBlock x:Name="HotkeyError" Foreground="{DynamicResource Error}" FontSize="12" TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Assertive"
                    Margin="0,4,0,0" Visibility="Collapsed"/>
         <Button Content="Keyboard shortcuts…" HorizontalAlignment="Left" Margin="0,8,0,0"
                 Style="{StaticResource ActionButton}" Click="ManageHotkeys_Click"
@@ -61,6 +64,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="LibraryPathBox" IsReadOnly="True" FontSize="13"
+                     AutomationProperties.Name="Response library folder"
                      Padding="8,6" VerticalContentAlignment="Center" Style="{StaticResource Input}"/>
             <Button Grid.Column="1" Content="Change…" Style="{StaticResource ActionButton}"
                     Click="ChangeLibrary_Click"/>
@@ -85,6 +89,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="BackupPathBox" IsReadOnly="True" FontSize="13"
+                     AutomationProperties.Name="Backup folder"
                      Padding="8,6" VerticalContentAlignment="Center" Style="{StaticResource Input}"/>
             <Button Grid.Column="1" Content="Change…" Style="{StaticResource ActionButton}"
                     Click="ChangeBackup_Click"/>
@@ -94,6 +99,7 @@
                     ToolTip="Use the default QuickReplyKit backup folder" Click="ResetBackup_Click"/>
         </Grid>
         <TextBlock x:Name="BackupPathError" Foreground="{DynamicResource Error}" FontSize="12"
+                   AutomationProperties.LiveSetting="Assertive"
                    TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"/>
 
         <!-- Default paste behaviour -->
