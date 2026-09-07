@@ -174,8 +174,10 @@ box — press any combination to see what it's bound to — plus a filter over t
 - Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and record structured workflow
   stages, counts, timings, modes, and safe crash frames. They exclude search text, response names/tags/content,
   template token names, clipboard data, hotkey values, window handles, user paths, and exception messages. Enable
-  verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable environment
-  summary with version, OS/runtime, library/count/watcher state, hotkey, config path, and log path.
+  verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable support summary with
+  version, OS/runtime, aggregate hotkey-registration counts, library/count/watcher state, actual logging status, and
+  one-click access to the library, config, logs, backups, and Trash. The copied report uses safe location tokens and
+  excludes response details, individual response hotkeys, clipboard/customer content, and raw custom/network paths.
 - First launch shows a short three-card introduction to the hotkey, search, and paste workflow.
 
 ## Current limitations before broad rollout

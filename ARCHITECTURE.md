@@ -147,15 +147,18 @@ view-models, interop, and app wiring.
   method frames. Logs exclude queries, response/template/clipboard content, hotkey values, HWNDs, paths, and exception
   messages; the sink also flattens control characters to prevent forged log lines.
 - First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
-  copyable, read-only environment snapshot. Settings links to hotkeys, backups, Trash, logs, and diagnostics.
+  copyable, read-only support snapshot built by `DiagnosticsReport`: runtime/version, aggregate actual hotkey
+  registration, library/watcher/logger state, counts, and safe location tokens. It never includes response details,
+  individual response hotkeys, or raw custom/network/user paths. Settings links to hotkeys, backups, Trash, logs,
+  and diagnostics.
 - Accessibility is defined in XAML at the control boundary: Automation names/help, polite/assertive live regions,
   native keyboard menus, safe dialog defaults, visible focus, and theme/High Contrast resources.
 
 ## Known completion boundaries
 
-The implemented paths above are merged and tested. The remaining contract gaps are intentionally explicit in
-[`docs/BACKLOG.md`](docs/BACKLOG.md): refreshing About with current hotkey, watcher, backup, Trash, and logger state;
-and the security-gated computed-variable DSL.
+The implemented paths above are merged and tested. Remaining work is intentionally explicit in
+[`docs/BACKLOG.md`](docs/BACKLOG.md): import selection/review, the security-gated computed-variable DSL,
+selected-folder polish, and the final enterprise UI standards audit.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
