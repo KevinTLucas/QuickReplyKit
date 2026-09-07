@@ -158,7 +158,7 @@ public partial class LauncherWindow : Window
         try
         {
             if (Clipboard.ContainsData(DataFormats.Html))
-                return ClipboardHtml.ExtractFragment(Clipboard.GetData(DataFormats.Html) as string);
+                return ClipboardHtml.Sanitize(Clipboard.GetData(DataFormats.Html) as string);
             if (Clipboard.ContainsText())
                 return ClipboardHtml.FromPlainText(Clipboard.GetText());
         }

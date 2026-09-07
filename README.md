@@ -74,7 +74,8 @@ So: copy the one exe to any supported Windows PC and it runs — no prerequisite
 From the launcher you can, via the `+` / clipboard buttons and the right-click menu on a response:
 
 - **New** — create a response and choose (or create) its folder in the hierarchy.
-- **New from clipboard** — turn whatever you just copied into a new response, opened in the editor.
+- **New from clipboard** — turn whatever you just copied into a new response, opened in the editor. Clipboard HTML
+  is reduced to QuickReplyKit's supported formatting; scripts, hidden/embedded content, and unsafe links are removed.
 - **Edit** — a built-in rich-text editor: bold, italic, underline, **strikethrough**, bullet/numbered
   lists, links, paragraphs, plus **font size/heading, standard text colors, highlight colors, and
   alignment** — no need to touch markup or files. Tags are entered as removable colored chips.

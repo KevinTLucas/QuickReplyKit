@@ -71,8 +71,9 @@ Settings/About layout. Treat them as bugs, not optional polish.
 
 **Active worktrees:** `bugfix/backup-restore-integrity` contains the committed B02 transactional-restore
 implementation and handoff docs, awaiting independent QA. `bugfix/import-integrity` contains the committed B03
-validated import-plan implementation plus two local refinements in `LibraryPorter.cs` and `ImportPlanTests.cs`, awaiting
-documentation, commit, and independent security/UI QA. Resume these exact worktrees rather than starting duplicates.
+validated import-plan implementation and is in security/UI QA. `bugfix/clipboard-sanitization` contains the B04
+clipboard trust-boundary implementation (active/hidden markup removal, subset normalization, and safe links); focused
+tests are green and independent security/UI QA is pending. Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

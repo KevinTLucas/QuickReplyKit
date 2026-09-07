@@ -63,4 +63,69 @@ public class ClipboardHtmlTests
     [InlineData("")]
     public void FromPlainText_EmptyIsEmpty(string? input) =>
         Assert.Equal("", ClipboardHtml.FromPlainText(input));
+
+    [Fact]
+    public void Sanitize_RemovesActiveBlocksCommentsAndEventAttributes()
+    {
+        string html = "<!--secret--><p onclick=\"run()\">Hello<script>alert(1)</script> " +
+            "<style>p{display:none}</style><b onmouseover=\"run()\">there</b></p>";
+
+        Assert.Equal("<p>Hello <b>there</b></p>", ClipboardHtml.Sanitize(html));
+    }
+
+    [Theory]
+    [InlineData("iframe")]
+    [InlineData("object")]
+    [InlineData("svg")]
+    [InlineData("form")]
+    [InlineData("template")]
+    public void Sanitize_RemovesBlockedElementAndItsContent(string tag) =>
+        Assert.Equal("<p>beforeafter</p>",
+            ClipboardHtml.Sanitize($"<p>before<{tag}>hidden</{tag}>after</p>"));
+
+    [Fact]
+    public void Sanitize_DropsVoidActiveOrHiddenElements_WithoutDroppingFollowingText() =>
+        Assert.Equal("<p>beforemiddleafter</p>",
+            ClipboardHtml.Sanitize("<p>before<embed src='x'>middle<input hidden value='secret'>after</p>"));
+
+    [Theory]
+    [InlineData("hidden")]
+    [InlineData("aria-hidden='true'")]
+    [InlineData("style='display:none'")]
+    [InlineData("style='visibility: hidden'")]
+    [InlineData("style='opacity:0'")]
+    public void Sanitize_RemovesHiddenContent(string attribute) =>
+        Assert.Equal("<p>visible</p>",
+            ClipboardHtml.Sanitize($"<p>visible<span {attribute}>secret</span></p>"));
+
+    [Theory]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("file:///c:/secret.txt")]
+    [InlineData("data:text/html,boom")]
+    public void Sanitize_StripsUnsafeLinkTarget_ButKeepsText(string uri) =>
+        Assert.Equal("<p><a>open</a></p>", ClipboardHtml.Sanitize($"<p><a href=\"{uri}\">open</a></p>"));
+
+    [Theory]
+    [InlineData("https://example.com/")]
+    [InlineData("mailto:support@example.com")]
+    public void Sanitize_KeepsSafeLinks(string uri) =>
+        Assert.Equal($"<p><a href=\"{uri}\">open</a></p>",
+            ClipboardHtml.Sanitize($"<p><a href=\"{uri}\">open</a></p>"));
+
+    [Fact]
+    public void Sanitize_KeepsSupportedFormattingAndDropsUnsupportedStyles() =>
+        Assert.Equal("<p style=\"text-align:center\"><span style=\"color:#FF0000\"><b>x</b></span></p>",
+            ClipboardHtml.Sanitize("<p style='text-align:center;position:fixed'><span style='color:red;left:0'><b>x</b></span></p>"));
+
+    [Fact]
+    public void Sanitize_KeepsCodeAsEncodedVisibleText() =>
+        Assert.Equal("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+            ClipboardHtml.Sanitize("<pre>&lt;script&gt;alert(1)&lt;/script&gt;</pre>"));
+
+    [Theory]
+    [InlineData("<p>unterminated<script>bad")]
+    [InlineData("<p title='>''>visible")]
+    [InlineData("<!-- unterminated")]
+    public void Sanitize_MalformedInput_NeverThrows(string html) =>
+        Assert.Null(Record.Exception(() => ClipboardHtml.Sanitize(html)));
 }

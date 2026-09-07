@@ -115,7 +115,7 @@ public static class HtmlToFlowDocument
                     if (closing) { PopSpan(); break; }
                     var link = new Hyperlink();
                     string? href = Attr(tag, "href");
-                    if (href != null && Uri.TryCreate(href, UriKind.Absolute, out var uri))
+                    if (href != null && Uri.TryCreate(href, UriKind.Absolute, out var uri) && SafeLink(uri))
                     {
                         link.NavigateUri = uri;
                         link.RequestNavigate += OnNavigate;
@@ -172,6 +172,11 @@ public static class HtmlToFlowDocument
         catch { /* ignore navigation failures */ }
         e.Handled = true;
     }
+
+    private static bool SafeLink(Uri uri) =>
+        uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+        uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+        uri.Scheme.Equals(Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase);
 
     // <span style="color:…; background-color:…; font-size:…px"> → a Span carrying those local
     // properties. Unknown/unparseable declarations are ignored (best effort, never throws).
