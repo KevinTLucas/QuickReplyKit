@@ -60,7 +60,8 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 1. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
 2. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
-3. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
+3. **B04, B06, B07 P1:** clipboard sanitization, Settings/About layout, and dark hover contrast remain. B05 search
+   relevance is implemented on `bugfix/search-relevance` and awaits independent correctness/performance/UI QA.
 4. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
 5. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
 6. **B16 P2:** sandboxed dynamic-variable scripts, only after its import, sanitizer, accessibility, and logging gates.
@@ -75,6 +76,9 @@ validated import-plan implementation plus two local refinements in `LibraryPorte
 documentation, commit, and independent security/UI QA. Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
+`bugfix/search-relevance` contains only B05 search scoring plus regression tests/docs: relevance outranks folder
+tie-breaking, and long fuzzy tokens cannot span words. Literal body matches remain searchable; B10 supplies explicit
+folder-only filtering.
 
 ## Known Limits / Human Checks
 

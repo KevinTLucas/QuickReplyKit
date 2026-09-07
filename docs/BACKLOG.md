@@ -47,7 +47,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B05 - Search relevance correctness
 
 - **Severity:** P1
-- **Status:** Confirmed by user examples; investigation required
+- **Status:** Implementation complete on `bugfix/search-relevance`; independent QA pending
 - **Impact:** Core find-and-paste workflow returns unrelated results, including `rostering` matching testing content
   and `Licensing` returning unrelated IXL responses.
 - **Acceptance:** Build a realistic regression corpus for names, body, tags, app, and category; reproduce both examples;

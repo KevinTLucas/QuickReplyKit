@@ -132,6 +132,17 @@ public class ResponseSearchTests
         Assert.Equal(new[] { "Reset Guide", "Ticket" }, results.Select(r => r.Name));
     }
 
+    [Fact]
+    public void Scope_DoesNotPromoteBodyAboveOutOfScopeName()
+    {
+        var inScopeBody = Item("General Help", category: "Selected", html: "<p>license details</p>");
+        var outOfScopeName = Item("License Expired", category: "Elsewhere");
+
+        var results = ResponseSearch.Search(new[] { inScopeBody, outOfScopeName }, "license", scope: "Selected");
+
+        Assert.Equal(new[] { "License Expired", "General Help" }, results.Select(r => r.Name));
+    }
+
     // --- M1: lazy fuzzy fallback -------------------------------------------
 
     [Fact]
@@ -164,6 +175,14 @@ public class ResponseSearchTests
         var pwd = Item("Password Reset");
         // "pwd" is not a substring but is a subsequence of "password"; no exact hit → fuzzy fires.
         Assert.Single(ResponseSearch.Search(new[] { pwd }, "pwd"));
+    }
+
+    [Fact]
+    public void Fuzzy_DoesNotJoinLongTokenAcrossWords()
+    {
+        var unrelated = Item("Roster Testing");
+
+        Assert.Empty(ResponseSearch.Search(new[] { unrelated }, "rostering"));
     }
 
     [Fact]
@@ -214,5 +233,15 @@ public class ResponseSearchTests
 
         Assert.Empty(hit.NameSpans);
         Assert.Null(hit.Snippet);
+    }
+
+    [Fact]
+    public void LiteralBodyMatch_RemainsAvailable_AlongsideMetadataMatches()
+    {
+        var tagged = Item("No Campus License", tags: new[] { "licensing" });
+        var body = Item("Getting Started", html: "<p>Contact us about campus licensing.</p>");
+
+        Assert.Equal(new[] { "No Campus License", "Getting Started" },
+            ResponseSearch.Search(new[] { body, tagged }, "licensing").Select(r => r.Name));
     }
 }
