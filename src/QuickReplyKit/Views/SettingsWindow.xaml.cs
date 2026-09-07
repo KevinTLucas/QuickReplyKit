@@ -25,6 +25,7 @@ public partial class SettingsWindow : Window
 
     private string _gesture;      // captured hotkey (edited in place by the capture box)
     private string _libraryPath;  // chosen library folder (may differ from _config until Save)
+    private string _backupPath;
     private bool _saved;          // set on Save so Close doesn't revert the (persisted) theme
     private bool _loaded;         // gates live theme preview until the radios are initialised
 
@@ -36,6 +37,7 @@ public partial class SettingsWindow : Window
         _onLibraryChanged = onLibraryChanged;
         _gesture = config.HotkeyGesture;
         _libraryPath = config.LibraryPath;
+        _backupPath = config.BackupPath;
 
         InitializeComponent();
         void LimitHeight() => MaxHeight = Math.Max(MinHeight, System.Windows.Forms.Screen
@@ -45,6 +47,7 @@ public partial class SettingsWindow : Window
 
         HotkeyBox.Text = _gesture;
         LibraryPathBox.Text = _libraryPath;
+        BackupPathBox.Text = _backupPath;
         PasteRich.IsChecked = config.DefaultPasteMode == PasteMode.RichText;
         PastePlain.IsChecked = config.DefaultPasteMode == PasteMode.PlainText;
         ThemeSystem.IsChecked = config.Theme == AppTheme.System;
@@ -115,13 +118,47 @@ public partial class SettingsWindow : Window
         catch { /* best effort */ }
     }
 
+    private void ChangeBackup_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFolderDialog
+        {
+            Title = "Choose the backup folder",
+            InitialDirectory = Directory.Exists(_backupPath) ? _backupPath : "",
+        };
+        if (dlg.ShowDialog(this) == true)
+        {
+            _backupPath = dlg.FolderName;
+            BackupPathBox.Text = _backupPath;
+            HideBackupPathError();
+        }
+    }
+
+    private void OpenBackup_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            _backupPath = BackupLocation.EnsureWritable(_backupPath);
+            BackupPathBox.Text = _backupPath;
+            HideBackupPathError();
+            Process.Start(new ProcessStartInfo(_backupPath) { UseShellExecute = true });
+        }
+        catch (Exception ex) { ShowBackupPathError(ex.Message); }
+    }
+
+    private void ResetBackup_Click(object sender, RoutedEventArgs e)
+    {
+        _backupPath = AppPaths.BackupsDir;
+        BackupPathBox.Text = _backupPath;
+        HideBackupPathError();
+    }
+
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => App.OpenLogsFolder();
 
     private void About_Click(object sender, RoutedEventArgs e) =>
         new AboutWindow(_config, _library) { Owner = this }.ShowDialog();
 
     private void Backup_Click(object sender, RoutedEventArgs e) =>
-        new BackupWindow(_config.LibraryPath, _library, _onLibraryChanged) { Owner = this }.ShowDialog();
+        new BackupWindow(_config.LibraryPath, _config.BackupPath, _library, _onLibraryChanged) { Owner = this }.ShowDialog();
 
     private void Trash_Click(object sender, RoutedEventArgs e) =>
         new TrashWindow(_config.LibraryPath, _config.TrashRetentionDays,
@@ -134,6 +171,18 @@ public partial class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        try
+        {
+            _backupPath = BackupLocation.EnsureWritable(_backupPath);
+            BackupPathBox.Text = _backupPath;
+            HideBackupPathError();
+        }
+        catch (Exception ex)
+        {
+            ShowBackupPathError(ex.Message);
+            return;
+        }
+
         if (!HotkeyGesture.TryParse(_gesture, out _))
         {
             ShowHotkeyError("That isn't a valid shortcut. Use a modifier plus a key, e.g. Ctrl+Alt+D.");
@@ -149,6 +198,7 @@ public partial class SettingsWindow : Window
         }
 
         _config.HotkeyGesture = _gesture;
+        _config.BackupPath = _backupPath;
         _config.DefaultPasteMode = PastePlain.IsChecked == true ? PasteMode.PlainText : PasteMode.RichText;
         _config.Theme = SelectedTheme();
         _config.RememberWindow = RememberWindowCheck.IsChecked == true;
@@ -178,4 +228,12 @@ public partial class SettingsWindow : Window
     }
 
     private void HideHotkeyError() => HotkeyError.Visibility = Visibility.Collapsed;
+
+    private void ShowBackupPathError(string message)
+    {
+        BackupPathError.Text = message;
+        BackupPathError.Visibility = Visibility.Visible;
+    }
+
+    private void HideBackupPathError() => BackupPathError.Visibility = Visibility.Collapsed;
 }

@@ -14,6 +14,7 @@ public class AppConfigTests
 
         Assert.Equal("Ctrl+Alt+D", cfg.HotkeyGesture);
         Assert.Equal(AppPaths.DefaultLibraryDir, cfg.LibraryPath);
+        Assert.Equal(AppPaths.BackupsDir, cfg.BackupPath);
         Assert.Equal(PasteMode.RichText, cfg.DefaultPasteMode);
         Assert.True(cfg.RememberWindow);   // on by default
         Assert.NotNull(cfg.Window);
@@ -28,6 +29,7 @@ public class AppConfigTests
         {
             HotkeyGesture = "Ctrl+Shift+Q",
             LibraryPath = @"C:\Custom\Lib",
+            BackupPath = @"C:\Custom\Backups",
             DefaultPasteMode = PasteMode.PlainText,
             RememberWindow = false,
             Window = new WindowBounds { X = 1, Y = 2, Width = 300, Height = 400, MonitorDeviceName = @"\\.\DISPLAY1" },
@@ -37,6 +39,7 @@ public class AppConfigTests
         var loaded = AppConfig.Load(path);
         Assert.Equal("Ctrl+Shift+Q", loaded.HotkeyGesture);
         Assert.Equal(@"C:\Custom\Lib", loaded.LibraryPath);
+        Assert.Equal(@"C:\Custom\Backups", loaded.BackupPath);
         Assert.Equal(PasteMode.PlainText, loaded.DefaultPasteMode);
         Assert.False(loaded.RememberWindow);
         Assert.Equal(300, loaded.Window.Width);
@@ -56,6 +59,30 @@ public class AppConfigTests
 
         var loaded = AppConfig.Load(path);
         Assert.Equal("Ctrl+Alt+D", loaded.HotkeyGesture);
+        Assert.Equal(AppPaths.BackupsDir, loaded.BackupPath);
+    }
+
+    [Fact]
+    public void Load_OldOrNullBackupPath_UsesDefault()
+    {
+        using var t = new TempDir();
+        string old = t.Of("old.json");
+        string empty = t.Of("empty.json");
+        File.WriteAllText(old, "{}" );
+        File.WriteAllText(empty, """{"backupPath":null}""");
+
+        Assert.Equal(AppPaths.BackupsDir, AppConfig.Load(old).BackupPath);
+        Assert.Equal(AppPaths.BackupsDir, AppConfig.Load(empty).BackupPath);
+    }
+
+    [Fact]
+    public void Load_UnavailableBackupPath_DoesNotBlockStartup()
+    {
+        using var t = new TempDir();
+        string path = t.Of("config.json");
+        File.WriteAllText(path, """{"backupPath":"relative\\offline"}""");
+
+        Assert.Equal(@"relative\offline", AppConfig.Load(path).BackupPath);
     }
 
     [Fact]

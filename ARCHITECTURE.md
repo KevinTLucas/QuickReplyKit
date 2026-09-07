@@ -60,11 +60,11 @@ view-models, interop, and app wiring.
 - A folder may contain `.qrkfolder.json`, a `FolderMeta` sidecar holding folder tags. The scanner ignores it as a
   response; direct folder copying preserves it. Export archives contain it, but current ZIP import incorrectly skips
   it; that known gap is tracked in BACKLOG. Batch apply explicitly unions those tags into descendant response files.
-- **App config**: `%APPDATA%\QuickReplyKit\config.json` (launcher hotkey, library path, paste mode, window bounds,
+- **App config**: `%APPDATA%\QuickReplyKit\config.json` (launcher hotkey, library path, backup path, paste mode, window bounds,
   theme, remember-window, verbose logging, Trash retention, onboarding flag, and **per-response instant-paste
   hotkeys** keyed by library-relative path). **Recent** is `%APPDATA%\QuickReplyKit\recent.json`; Favorites remain
   in response files so they travel when shared.
-- Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in `backups`, and
+- Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in `backups` by default, and
   recoverable deleted responses in `trash`. None is scanned as library content.
 
 ## Rich text & templates
@@ -127,6 +127,9 @@ view-models, interop, and app wiring.
   then swaps directories. A failed install rolls the exact original directory back; older library-only ZIPs remain
   restorable without changing settings. Restored config is retargeted to the actual restored library folder; the old
   launcher's final config save is suppressed and QuickReplyKit restarts so restored settings become authoritative.
+  `AppConfig.BackupPath` selects the snapshot directory (default `AppPaths.BackupsDir`). `BackupLocation` requires an
+  absolute path and verifies write access before Settings saves it and before create/list/restore operations. An
+  unavailable configured path therefore blocks only the affected safety operation, never normal startup.
   `TrashService` soft-deletes individual responses and complete category subtrees. Folder deletion validates the
   library tree, requires a `LibraryBackup` snapshot, and moves every nested response/side file as one typed Trash
   payload. Old response-only metadata remains readable. Restore recreates the exact original hierarchy, refuses
@@ -140,7 +143,7 @@ view-models, interop, and app wiring.
 ## Known completion boundaries
 
 The implemented paths above are merged and tested. The remaining contract gaps are intentionally explicit in
-[`docs/BACKLOG.md`](docs/BACKLOG.md): clipboard sanitization; full accessibility; backup-path configuration;
+[`docs/BACKLOG.md`](docs/BACKLOG.md): full accessibility; backup-path configuration pending independent QA;
 complete logging and folder-tag scope controls; richer import review plus any future
 code-import gate; and refreshing About for actual launcher/response-hotkey state and backup/Trash paths.
 

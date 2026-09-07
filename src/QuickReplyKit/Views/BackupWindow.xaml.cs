@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.ImportExport;
+using QuickReplyKit.Core.Storage;
 
 namespace QuickReplyKit.Views;
 
@@ -12,6 +13,7 @@ namespace QuickReplyKit.Views;
 public partial class BackupWindow : Window
 {
     private readonly string _libraryRoot;
+    private readonly string _backupsDir;
     private readonly Core.LibraryService _library;
     private readonly Action _onLibraryChanged;
 
@@ -21,10 +23,11 @@ public partial class BackupWindow : Window
         public string Display => $"{Info.Created:yyyy-MM-dd HH:mm:ss}   ·   {Info.Bytes / 1024.0:0.#} KB";
     }
 
-    public BackupWindow(string libraryRoot, Core.LibraryService library, Action onLibraryChanged)
+    public BackupWindow(string libraryRoot, string backupsDir, Core.LibraryService library, Action onLibraryChanged)
     {
         InitializeComponent();
         _libraryRoot = libraryRoot;
+        _backupsDir = backupsDir;
         _library = library;
         _onLibraryChanged = onLibraryChanged;
         Refresh();
@@ -32,7 +35,17 @@ public partial class BackupWindow : Window
 
     private void Refresh()
     {
-        var rows = LibraryBackup.List(AppPaths.BackupsDir).Select(b => new Row { Info = b }).ToList();
+        List<Row> rows;
+        try
+        {
+            rows = LibraryBackup.List(_backupsDir).Select(b => new Row { Info = b }).ToList();
+            EmptyHint.Text = "No snapshots yet.";
+        }
+        catch (Exception ex)
+        {
+            rows = new();
+            EmptyHint.Text = "Backup folder unavailable: " + ex.Message;
+        }
         BackupList.ItemsSource = rows;
         if (rows.Count > 0) BackupList.SelectedIndex = 0;
         EmptyHint.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -43,7 +56,7 @@ public partial class BackupWindow : Window
     {
         try
         {
-            var path = LibraryBackup.Create(_libraryRoot, AppPaths.BackupsDir, "manual");
+            var path = LibraryBackup.Create(_libraryRoot, _backupsDir, "manual");
             if (path is null)
                 ConfirmDialog.Info(this, "Nothing to back up", "Your library is empty — no snapshot was taken.");
         }
@@ -67,7 +80,7 @@ public partial class BackupWindow : Window
 
         try
         {
-            bool settingsRestored = LibraryBackup.Restore(row.Info.Path, _libraryRoot, AppPaths.BackupsDir);
+            bool settingsRestored = LibraryBackup.Restore(row.Info.Path, _libraryRoot, _backupsDir);
             _library.Reload();
             _onLibraryChanged();
             Refresh();
@@ -90,10 +103,10 @@ public partial class BackupWindow : Window
     {
         try
         {
-            Directory.CreateDirectory(AppPaths.BackupsDir);
+            BackupLocation.EnsureWritable(_backupsDir);
             System.Diagnostics.Process.Start(
-                new System.Diagnostics.ProcessStartInfo(AppPaths.BackupsDir) { UseShellExecute = true });
+                new System.Diagnostics.ProcessStartInfo(_backupsDir) { UseShellExecute = true });
         }
-        catch { /* best effort */ }
+        catch (Exception ex) { ConfirmDialog.Info(this, "Backup folder unavailable", ex.Message); }
     }
 }

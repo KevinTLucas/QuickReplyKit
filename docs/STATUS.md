@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main` at this branch sync:** `afeabd5`.
+- **Current `main` at this branch sync:** `a03bb11`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **519 passed, 0 failed, 0 skipped** after B08 integration QA.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt successfully from green `main` after the latest
@@ -19,6 +19,10 @@
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   8 ordered items with severity, acceptance criteria, and status. Removing folder tags is next; sandboxed scripting
   remains deliberately last behind its security prerequisites.
+- **B13 branch state:** `feature/configurable-backup-location` implements a persisted, validated backup path plus
+  Settings Change/Open/Reset controls and consistent backup/restore/import/folder-trash wiring. Independent QA and
+  merge are still required; B13 remains in the backlog until then. Branch validation: clean build and **526/526**
+  tests, including defaults, migration, persistence, invalid/unavailable paths, and custom-path restore.
 
 ## Merged And QA'd
 
@@ -73,8 +77,8 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B08 are merged. Start B09 from current green `main`; do not reuse or mix another feature's
-branch. A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** B01-B08 are merged. B13 is isolated on `feature/configurable-backup-location` and awaits QA;
+B09 and other work remain separate. A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

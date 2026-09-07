@@ -54,7 +54,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B13 - Configurable backup-folder location
 
 - **Severity:** P2
-- **Status:** Queued; implement after the P0 B02 correctness fix
+- **Status:** Implementation complete on `feature/configurable-backup-location`; independent QA pending
 - **Impact:** Enterprises may require backups on a managed/local/network path rather than `%APPDATA%`.
 - **Acceptance:** Settings shows current backup location with Change/Open/Reset; value persists; default remains app
   data; path is validated and writable before save/use; unavailable paths fail clearly without blocking normal app

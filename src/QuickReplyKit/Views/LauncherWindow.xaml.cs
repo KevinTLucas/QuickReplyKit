@@ -401,7 +401,7 @@ public partial class LauncherWindow : Window
         try
         {
             TrashService.TrashFolder(_vm.CategoryFullPath(nav.CategoryPath), _vm.LibraryRoot,
-                AppPaths.TrashDir, AppPaths.BackupsDir);
+                AppPaths.TrashDir, _config.BackupPath);
             _vm.ReloadLibrary();
         }
         catch (Exception ex)
@@ -462,7 +462,7 @@ public partial class LauncherWindow : Window
         if (decisions == null) return;
 
         // A bulk write never starts unless the current library can be protected first.
-        try { LibraryBackup.CreateRequired(_vm.LibraryRoot, AppPaths.BackupsDir, "before import"); }
+        try { LibraryBackup.CreateRequired(_vm.LibraryRoot, _config.BackupPath, "before import"); }
         catch (IOException ex)
         {
             ConfirmDialog.Info(this, "Import canceled", ex.Message);

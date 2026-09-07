@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using QuickReplyKit.Core.Diagnostics;
+using QuickReplyKit.Core.Storage;
 
 namespace QuickReplyKit.Core.ImportExport;
 
@@ -37,10 +38,10 @@ public static class LibraryBackup
 
     internal static string? Create(string libraryRoot, string backupsDir, string configPath, string? reason)
     {
+        backupsDir = BackupLocation.EnsureWritable(backupsDir);
         if (!Directory.Exists(libraryRoot) || !Directory.EnumerateFileSystemEntries(libraryRoot).Any())
             return null;
 
-        Directory.CreateDirectory(backupsDir);
         string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
         string dest = Path.Combine(backupsDir, $"{Prefix}{stamp}.zip");
         for (int n = 2; File.Exists(dest); n++)
@@ -100,7 +101,7 @@ public static class LibraryBackup
     /// <summary>Saved snapshots, newest first.</summary>
     public static IReadOnlyList<BackupInfo> List(string backupsDir)
     {
-        if (!Directory.Exists(backupsDir)) return Array.Empty<BackupInfo>();
+        backupsDir = BackupLocation.EnsureWritable(backupsDir);
         return Directory.EnumerateFiles(backupsDir, Prefix + "*.zip")
             .Select(p => { var fi = new FileInfo(p); return new BackupInfo(p, fi.LastWriteTime, fi.Length); })
             .OrderByDescending(b => b.Created).ThenByDescending(b => b.Path, StringComparer.OrdinalIgnoreCase)
@@ -120,6 +121,7 @@ public static class LibraryBackup
         Action<string, string>? installLibrary, int maxEntries = MaxArchiveEntries,
         long maxEntryBytes = MaxArchiveEntryBytes, long maxExpandedBytes = MaxArchiveExpandedBytes)
     {
+        backupsDir = BackupLocation.EnsureWritable(backupsDir);
         if (!File.Exists(backupZip)) throw new FileNotFoundException("Backup not found", backupZip);
 
         string libraryFull = Path.GetFullPath(libraryRoot);
