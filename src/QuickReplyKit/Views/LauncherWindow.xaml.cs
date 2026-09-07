@@ -81,7 +81,17 @@ public partial class LauncherWindow : Window
                 if (_vm.CopyCommand.CanExecute(null)) _vm.CopyCommand.Execute(null);
                 e.Handled = true;
                 break;
+            case Key.Back when SearchBox.Text.Length == 0 && _vm.HasSearchScope:
+                _vm.ClearSearchScope();
+                e.Handled = true;
+                break;
         }
+    }
+
+    private void ClearSearchScope_Click(object sender, RoutedEventArgs e)
+    {
+        _vm.ClearSearchScope();
+        SearchBox.Focus();
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

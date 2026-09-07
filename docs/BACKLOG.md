@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B10 - Outlook-style folder-scoped search chip
 
 - **Severity:** P1
-- **Status:** Queued
+- **Status:** QA - implementation complete on `feature/folder-search-filter`; 524 tests pass; independent QA pending
 - **Impact:** Users need visible, predictable folder filtering while typing a global search.
 - **Acceptance:** Selecting a folder adds a removable chip in/adjacent to the search field and limits results to that
   folder subtree; selecting another folder replaces it; removing the chip or selecting All Responses returns global
