@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B09 - Remove folder tags
 
 - **Severity:** P1 (requested product correction)
-- **Status:** Queued
+- **Status:** QA (implementation complete on `feature/remove-folder-tags`; independent QA and merge pending)
 - **Impact:** Folder metadata adds complexity the user no longer wants. Folders should only organize or bulk-edit
   contained responses; response tags remain.
 - **Acceptance:** Remove Folder tags and Apply folder tags controls; stop reading/writing/applying folder tags; remove

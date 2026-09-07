@@ -16,9 +16,9 @@
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
-- **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
-  8 ordered items with severity, acceptance criteria, and status. Removing folder tags is next; sandboxed scripting
-  remains deliberately last behind its security prerequisites.
+- **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains
+  8 ordered items with severity, acceptance criteria, and status. B09 folder-tag removal is implemented on
+  `feature/remove-folder-tags` and awaiting independent QA; sandboxed scripting remains deliberately last.
 
 ## Merged And QA'd
 
@@ -54,8 +54,8 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
   rich or plain without opening the launcher. Focus returns to the prior app; clipboard content is restored;
   transient paste content is marked to stay out of Windows clipboard history.
 - **Library/editor:** live-watched folder hierarchy; create/edit/duplicate/rename/move; rich editor with standard
-  color/highlight palettes, lists, links, alignment, size, strike, tag chips, folder tags, recursive batch apply,
-  edit-before-insert, templates, safe built-in variables, and response includes.
+  color/highlight palettes, lists, links, alignment, size, strike, response-tag chips, edit-before-insert, templates,
+  safe built-in variables, and response includes. On the B09 branch, retired folder-tag sidecars are inert.
 - **Safety/sharing:** import preview; zip/file import/export; conflict policies; invalid-file tolerance; importer and
   Trash path-traversal guards; rolling library backups with restore; app-local response and folder Trash with exact
   hierarchy restore.
@@ -67,14 +67,16 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B09-B11 P1:** remove folder tags, scoped-search chip, and full accessibility.
+1. **B09-B11 P1:** finish independent QA/merge for folder-tag removal, then scoped-search chip and accessibility.
 2. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
 3. **B16 P2:** sandboxed dynamic-variable scripts, only after its accessibility and logging gates.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B08 are merged. Start B09 from current green `main`; do not reuse or mix another feature's
-branch. A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** B01-B08 are merged. B09 is isolated on `feature/remove-folder-tags` and is awaiting independent
+QA before merge; its implementation build is clean, its focused compatibility suite is 50/50, and its full suite is
+516/516 (the lower count removes retired folder-tag tests). A stale interrupted historical hotkey worktree remains
+quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

@@ -112,27 +112,9 @@ public sealed class LauncherViewModel : ViewModelBase
         return paths;
     }
 
-    // --- Folder tags (sidecar) ---------------------------------------------
-
     public string CategoryFullPath(string categoryPath) =>
         string.IsNullOrEmpty(categoryPath) ? LibraryRoot
             : System.IO.Path.Combine(LibraryRoot, categoryPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
-
-    public IReadOnlyList<string> FolderTags(string categoryPath) =>
-        FolderMeta.Load(CategoryFullPath(categoryPath));
-
-    public void SetFolderTags(string categoryPath, IReadOnlyList<string> tags)
-    {
-        FolderMeta.Save(CategoryFullPath(categoryPath), tags);
-        _library.Reload();
-        OnLibraryUpdated();
-    }
-
-    /// <summary>Valid responses in a category (optionally including subfolders).</summary>
-    public IReadOnlyList<ResponseItem> ResponsesUnder(string categoryPath, bool recursive) =>
-        _library.Snapshot.AllResponses.Where(r => r.IsValid && (recursive
-            ? r.CategoryPath == categoryPath || r.CategoryPath.StartsWith(categoryPath + "/", StringComparison.OrdinalIgnoreCase)
-            : r.CategoryPath == categoryPath)).ToList();
 
     /// <summary>Valid and invalid response files below one category, for destructive confirmations.</summary>
     public int ResponseCountUnder(string categoryPath) => _library.Snapshot.AllResponses.Count(r =>
@@ -144,14 +126,6 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         _library.Reload();
         OnLibraryUpdated();
-    }
-
-    /// <summary>Union the folder's tags into its responses; returns how many files changed.</summary>
-    public int ApplyFolderTagsToResponses(string categoryPath, bool recursive)
-    {
-        int changed = FolderMeta.ApplyTags(ResponsesUnder(categoryPath, recursive), FolderTags(categoryPath), LibraryRoot);
-        if (changed > 0) { _library.Reload(); OnLibraryUpdated(); }
-        return changed;
     }
 
     /// <summary>Select the row for a given library-relative path after a refresh, if it exists.</summary>

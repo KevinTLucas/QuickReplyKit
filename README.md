@@ -87,11 +87,12 @@ From the launcher you can, via the `+` / clipboard buttons and the right-click m
   the final message, and insert it — **without** saving a new response.
 - **Duplicate**, **Rename**, **Move to…** another folder.
 - **Copy** to the clipboard, **Open containing folder** in Explorer.
-- **Folder tags** — right-click a category to store tags with that folder, then batch-apply them to
-  every response below it. The metadata travels when the folder is copied.
 - **Instant-paste hotkey** — right-click a response to bind a global rich/plain paste shortcut.
 - **Delete** — with confirmation, into QuickReplyKit's recoverable in-app Trash. Right-click a category to delete
   and later restore its complete folder tree, including nested responses and side files.
+
+Older libraries may contain `.qrkfolder.json` files from a retired folder-tag feature. QuickReplyKit leaves these
+legacy sidecars in place but ignores them; they never appear as responses or affect response tags.
 
 ## Templates: variables & reusable sections
 

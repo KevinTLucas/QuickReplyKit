@@ -16,6 +16,4 @@ public sealed class CategoryNode
     /// <summary>Responses that live directly in this folder (valid and invalid).</summary>
     public List<ResponseItem> Responses { get; } = new();
 
-    /// <summary>Folder tags from the <c>.qrkfolder.json</c> sidecar (empty when none). Travels with the folder.</summary>
-    public IReadOnlyList<string> Tags { get; set; } = System.Array.Empty<string>();
 }
