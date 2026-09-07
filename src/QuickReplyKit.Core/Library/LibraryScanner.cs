@@ -58,9 +58,12 @@ public static class LibraryScanner
         {
             Name = isRoot ? SafeLeaf(libraryRoot) : Path.GetFileName(dir),
             RelativePath = isRoot ? "" : rel.Replace('\\', '/'),
+            Tags = FolderMeta.Load(dir),
         };
 
-        foreach (var file in Directory.EnumerateFiles(dir, "*.json").OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+        foreach (var file in Directory.EnumerateFiles(dir, "*.json")
+                     .Where(f => !FolderMeta.IsSidecar(f))          // the folder-tags sidecar isn't a response
+                     .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
             files.Add((node, file));
 
         foreach (var sub in Directory.EnumerateDirectories(dir).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))

@@ -290,6 +290,39 @@ public partial class LauncherWindow : Window
         if (dlg.ShowDialog(this) == true) LibraryPorter.Export(item, dlg.FileName);
     }
 
+    private void MenuFolderTags_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedNav is not { Scope: NavScope.Category } nav) return;
+        string current = string.Join(", ", _vm.FolderTags(nav.CategoryPath));
+        string? input = InputDialog.Prompt(this, "Folder tags",
+            $"Tags for “{nav.Title}” (comma-separated). They travel with the folder and can be applied to its responses:",
+            current, allowEmpty: true);
+        if (input == null) return;
+        var tags = input.Split(',').Select(t => t.Trim()).Where(t => t.Length > 0).ToList();
+        _vm.SetFolderTags(nav.CategoryPath, tags);
+    }
+
+    private void MenuApplyFolderTags_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.SelectedNav is not { Scope: NavScope.Category } nav) return;
+        var tags = _vm.FolderTags(nav.CategoryPath);
+        if (tags.Count == 0)
+        {
+            ConfirmDialog.Info(this, "No folder tags",
+                $"“{nav.Title}” has no folder tags yet. Set them first (right-click → Folder tags…), then apply.");
+            return;
+        }
+        int inScope = _vm.ResponsesUnder(nav.CategoryPath, recursive: true).Count;
+        bool ok = ConfirmDialog.Confirm(this, "Apply folder tags",
+            $"Add these tags — {string.Join(", ", tags)} — to all {inScope} response(s) in “{nav.Title}” and its subfolders?",
+            "Apply");
+        if (!ok) return;
+        int changed = _vm.ApplyFolderTagsToResponses(nav.CategoryPath, recursive: true);
+        ConfirmDialog.Info(this, "Tags applied",
+            changed == 0 ? "Every response already had those tags — nothing to change."
+                         : $"Folder tags added to {changed} response(s).");
+    }
+
     private void MenuExportFolder_Click(object sender, RoutedEventArgs e)
     {
         if (_vm.SelectedNav is not { Scope: NavScope.Category } nav) return;
