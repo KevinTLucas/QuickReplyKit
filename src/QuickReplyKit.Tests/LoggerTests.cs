@@ -24,10 +24,10 @@ public class LoggerTests
     {
         var dir = TempDir();
         var log = new Logger(dir, LogLevel.Info);
-        log.Info("keep-info");
-        log.Warn("keep-warn");
-        log.Debug("drop-debug");
-        log.Verbose("drop-verbose");
+        log.Info("Test", "Gate", "keep-info");
+        log.Warn("Test", "Gate", "keep-warn");
+        log.Debug("Test", "Gate", "drop-debug");
+        log.Verbose("Test", "Gate", "drop-verbose");
         var text = ReadActive(log, dir);
 
         Assert.Contains("keep-info", text);
@@ -42,7 +42,9 @@ public class LoggerTests
     {
         var dir = TempDir();
         var log = new Logger(dir, LogLevel.Verbose);
-        log.Verbose("v"); log.Debug("d"); log.Error("e");
+        log.Verbose("Test", "Levels", "v");
+        log.Debug("Test", "Levels", "d");
+        log.Error("Test", "Levels", "e");
         var text = ReadActive(log, dir);
         Assert.Contains("[VERBO] ", text);
         Assert.Contains("[DEBUG] ", text);
@@ -55,8 +57,8 @@ public class LoggerTests
     {
         var dir = TempDir();
         // Tiny caps so a few lines force multiple rolls; keep at most 3 files total.
-        var log = new Logger(dir, LogLevel.Info, maxBytes: 200, maxFiles: 3);
-        for (int i = 0; i < 400; i++) log.Info($"line {i:D4} " + new string('x', 40));
+        var log = new Logger(dir, LogLevel.Info, maxBytes: 250, maxFiles: 3);
+        for (int i = 0; i < 400; i++) log.Info("Test", "Rollover", $"line {i:D4} " + new string('x', 40));
         log.Dispose();
 
         var files = Directory.GetFiles(dir, "quickreplykit*.log");
@@ -76,8 +78,25 @@ public class LoggerTests
         var file = Path.Combine(Path.GetTempPath(), "qrk-notadir-" + Guid.NewGuid().ToString("N"));
         File.WriteAllText(file, "x");
         var log = new Logger(Path.Combine(file, "logs"), LogLevel.Info);
-        log.Info("should not throw");     // must not throw
+        log.Info("Test", "Filesystem", "should not throw");     // must not throw
         log.Dispose();
         File.Delete(file);
+    }
+
+    [Fact]
+    public void StructuredMetadata_AndSafeException_AreWrittenWithoutExceptionMessage()
+    {
+        var dir = TempDir();
+        string canary = "PRIVATE-" + Guid.NewGuid().ToString("N");
+        var log = new Logger(dir, LogLevel.Info);
+
+        log.Error("PasteEngine", "Clipboard", "restore failed", new IOException(canary));
+        var text = ReadActive(log, dir);
+
+        Assert.Contains("[PasteEngine/Clipboard] restore failed", text);
+        Assert.Contains("exceptionType=System.IO.IOException", text);
+        Assert.Contains("hresult=0x", text);
+        Assert.DoesNotContain(canary, text);
+        Directory.Delete(dir, true);
     }
 }

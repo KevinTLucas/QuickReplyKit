@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 
@@ -28,8 +29,19 @@ public static class LibraryPorter
 
     public static void Export(ResponseItem item, string destPath)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destPath))!);
-        File.Copy(item.FullPath, destPath, overwrite: true);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destPath))!);
+            File.Copy(item.FullPath, destPath, overwrite: true);
+            Diag.Info("LibraryPorter", "Export",
+                $"complete kind=response entries=1 bytes={new FileInfo(destPath).Length} elapsedMs={sw.ElapsedMilliseconds}");
+        }
+        catch (Exception ex)
+        {
+            Diag.Warn("LibraryPorter", "Export", "failed kind=response", ex);
+            throw;
+        }
     }
 
     public static void ExportFolder(string libraryRoot, string categoryPath, string destZip)
@@ -37,13 +49,31 @@ public static class LibraryPorter
         string source = string.IsNullOrEmpty(categoryPath)
             ? libraryRoot
             : Path.Combine(libraryRoot, categoryPath.Replace('/', Path.DirectorySeparatorChar));
-        ZipDirectory(source, destZip);
+        ExportZip("folder", source, destZip);
     }
 
-    public static void ExportLibrary(string libraryRoot, string destZip) => ZipDirectory(libraryRoot, destZip);
+    public static void ExportLibrary(string libraryRoot, string destZip) => ExportZip("library", libraryRoot, destZip);
 
     /// <summary>Build the exact validated plan that the preview displays and the importer executes.</summary>
     public static ImportPlan PlanImport(string libraryRoot, string sourcePath, string targetCategory)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            var plan = BuildImportPlan(libraryRoot, sourcePath, targetCategory);
+            int Count(ImportClassification kind) => plan.Entries.Count(e => e.Classification == kind);
+            Diag.Info("LibraryPorter", "ImportPlan",
+                $"complete entries={plan.Entries.Count} new={Count(ImportClassification.New)} duplicate={Count(ImportClassification.DuplicateElsewhere)} identical={Count(ImportClassification.Identical)} conflicts={Count(ImportClassification.Conflict)} invalid={Count(ImportClassification.Invalid)} unsafe={Count(ImportClassification.Unsafe)} elapsedMs={sw.ElapsedMilliseconds}");
+            return plan;
+        }
+        catch (Exception ex)
+        {
+            Diag.Warn("LibraryPorter", "ImportPlan", "failed", ex);
+            throw;
+        }
+    }
+
+    private static ImportPlan BuildImportPlan(string libraryRoot, string sourcePath, string targetCategory)
     {
         string root = Path.GetFullPath(libraryRoot);
         string source = Path.GetFullPath(sourcePath);
@@ -129,6 +159,24 @@ public static class LibraryPorter
 
     /// <summary>Execute the immutable preview plan with optional per-row decisions.</summary>
     public static ImportResult Import(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions = null)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            var result = ExecuteImport(plan, decisions);
+            int Count(ImportOutcomeKind kind) => result.Outcomes.Count(o => o.Kind == kind);
+            Diag.Info("LibraryPorter", "ImportExecution",
+                $"complete entries={result.Outcomes.Count} imported={Count(ImportOutcomeKind.Imported)} overwritten={Count(ImportOutcomeKind.Overwritten)} keptBoth={Count(ImportOutcomeKind.KeptBoth)} skipped={Count(ImportOutcomeKind.Skipped)} invalid={Count(ImportOutcomeKind.Invalid)} unsafe={Count(ImportOutcomeKind.Unsafe)} stale={Count(ImportOutcomeKind.Stale)} failed={Count(ImportOutcomeKind.Failed)} elapsedMs={sw.ElapsedMilliseconds}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Diag.Warn("LibraryPorter", "ImportExecution", "failed", ex);
+            throw;
+        }
+    }
+
+    private static ImportResult ExecuteImport(ImportPlan plan, IReadOnlyDictionary<int, ImportAction>? decisions)
     {
         var result = new ImportResult
         {
@@ -469,5 +517,23 @@ public static class LibraryPorter
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destZip))!);
         if (File.Exists(destZip)) File.Delete(destZip);
         ZipFile.CreateFromDirectory(sourceDir, destZip, CompressionLevel.Optimal, includeBaseDirectory: false);
+    }
+
+    private static void ExportZip(string kind, string sourceDir, string destZip)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            ZipDirectory(sourceDir, destZip);
+            using var archive = ZipFile.OpenRead(destZip);
+            var files = archive.Entries.Where(e => e.Name.Length > 0).ToList();
+            Diag.Info("LibraryPorter", "Export",
+                $"complete kind={kind} entries={files.Count} bytes={files.Sum(e => e.Length)} elapsedMs={sw.ElapsedMilliseconds}");
+        }
+        catch (Exception ex)
+        {
+            Diag.Warn("LibraryPorter", "Export", $"failed kind={kind}", ex);
+            throw;
+        }
     }
 }

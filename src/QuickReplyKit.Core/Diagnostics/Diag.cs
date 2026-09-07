@@ -19,11 +19,13 @@ public static class Diag
 
     public static string? Directory => _logger?.Directory;
 
-    public static void Error(string m, Exception? ex = null) => _logger?.Error(m, ex);
-    public static void Warn(string m) => _logger?.Warn(m);
-    public static void Info(string m) => _logger?.Info(m);
-    public static void Debug(string m) => _logger?.Debug(m);
-    public static void Verbose(string m) => _logger?.Verbose(m);
+    public static void Error(string source, string category, string message, Exception? ex = null) =>
+        _logger?.Error(source, category, message, ex);
+    public static void Warn(string source, string category, string message, Exception? ex = null) =>
+        _logger?.Warn(source, category, message, ex);
+    public static void Info(string source, string category, string message) => _logger?.Info(source, category, message);
+    public static void Debug(string source, string category, string message) => _logger?.Debug(source, category, message);
+    public static void Verbose(string source, string category, string message) => _logger?.Verbose(source, category, message);
 
     public static void Shutdown() { _logger?.Dispose(); _logger = null; }
 }

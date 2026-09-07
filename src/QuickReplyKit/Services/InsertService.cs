@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Windows;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Text;
 using QuickReplyKit.Interop;
@@ -29,49 +30,83 @@ public sealed class InsertService : IInsertService
     public void InsertPlain(ResponseItem item) => Insert(item, rich: false);
 
     /// <summary>User-intended copy: normal clipboard set, no exclusion, no restore.</summary>
-    public void Copy(ResponseItem item)
+    public void Copy(ResponseItem item) => TryCopy(item);
+
+    private static bool TryCopy(ResponseItem item)
     {
         var data = new DataObject();
         data.SetData(DataFormats.UnicodeText, item.PlainText);
         data.SetData(DataFormats.Html, CfHtml.Build(item.Html));
         for (int attempt = 0; attempt < 3; attempt++)
         {
-            try { Clipboard.SetDataObject(data, copy: true); return; }
+            try
+            {
+                Clipboard.SetDataObject(data, copy: true);
+                Diag.Verbose("InsertService", "Action", $"copy complete textLength={item.PlainText.Length} htmlLength={item.Html.Length}");
+                return true;
+            }
             catch when (attempt < 2) { Thread.Sleep(30); }
-            catch (Exception ex) { Debug.WriteLine("[QuickReplyKit] copy failed: " + ex.Message); return; }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[QuickReplyKit] copy failed");
+                Diag.Warn("InsertService", "Action", "copy failed", ex);
+                return false;
+            }
         }
+        return false;
     }
 
     private void Insert(ResponseItem item, bool rich)
     {
-        if (_busy) return;
+        if (_busy)
+        {
+            Diag.Verbose("InsertService", "Paste", "completion result=ignored reason=busy");
+            return;
+        }
         _busy = true;
         try
         {
             nint target = _tracker.Target;
+            bool targetPresent = ForegroundWindow.IsAlive(target);
+            Diag.Verbose("InsertService", "Paste", $"target present={targetPresent}");
 
             // Target gone (app closed between open and insert): leave the text on the clipboard,
             // no exclusion, no restore — do not throw.
-            if (!ForegroundWindow.IsAlive(target))
+            if (!targetPresent)
             {
-                Copy(item);
+                bool copied = TryCopy(item);
+                Diag.Info("InsertService", "Paste", $"completion result=fallback fallback=copy success={copied}");
                 return;
             }
 
             var snapshot = ClipboardBackup.Snapshot();
+            Diag.Verbose("InsertService", "Paste", $"snapshot captured={snapshot is not null}");
 
-            ForegroundWindow.Restore(target);
+            Diag.Verbose("InsertService", "Paste", "focus attempt=true");
+            bool focused = ForegroundWindow.Restore(target);
+            Diag.Verbose("InsertService", "Paste", $"focus result={focused}");
 
             bool wrote = rich
                 ? ClipboardWriter.WriteRich(item.PlainText, CfHtml.Build(item.Html))
                 : ClipboardWriter.WritePlain(item.PlainText);
+            Diag.Verbose("InsertService", "Paste",
+                $"clipboard transientWrite={wrote} mode={(rich ? "rich" : "plain")} textLength={item.PlainText.Length} htmlLength={(rich ? item.Html.Length : 0)}");
 
-            if (!wrote) { ClipboardBackup.Restore(snapshot); return; }
+            if (!wrote)
+            {
+                bool restoredAfterFailure = ClipboardBackup.Restore(snapshot);
+                Diag.Verbose("InsertService", "Paste", $"clipboard restore={restoredAfterFailure}");
+                Diag.Warn("InsertService", "Paste", "completion result=failed stage=clipboardWrite");
+                return;
+            }
 
-            InputSender.SendCtrlV();
+            bool sent = InputSender.SendCtrlV();
+            Diag.Verbose("InsertService", "Paste", $"input send={sent}");
             Thread.Sleep(PasteConsumeMs);
 
-            ClipboardBackup.Restore(snapshot);
+            bool restored = ClipboardBackup.Restore(snapshot);
+            Diag.Verbose("InsertService", "Paste", $"clipboard restore={restored}");
+            Diag.Info("InsertService", "Paste", $"completion result=complete inputSent={sent} clipboardRestored={restored}");
         }
         finally
         {

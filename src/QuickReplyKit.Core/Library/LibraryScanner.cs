@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 
@@ -22,8 +23,12 @@ public static class LibraryScanner
 
     public static LibrarySnapshot Scan(string libraryRoot)
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         if (!Directory.Exists(libraryRoot))
+        {
+            Diag.Info("LibraryScanner", "Scan", $"complete rootAvailable=false responses=0 valid=0 invalid=0 elapsedMs={sw.ElapsedMilliseconds}");
             return Empty(libraryRoot);
+        }
 
         // 1. Build the folder tree and collect every .json path in deterministic pre-order.
         var files = new List<(CategoryNode node, string path)>();
@@ -41,6 +46,9 @@ public static class LibraryScanner
             all.Add(items[i]);
         }
 
+        int valid = all.Count(x => x.IsValid);
+        Diag.Info("LibraryScanner", "Scan",
+            $"complete rootAvailable=true responses={all.Count} valid={valid} invalid={all.Count - valid} elapsedMs={sw.ElapsedMilliseconds}");
         return new LibrarySnapshot { Root = root, AllResponses = all, LibraryRoot = libraryRoot };
     }
 

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using Microsoft.Win32;
+using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Storage;
 using Brushes = System.Windows.Media.Brushes;
 using SystemColors = System.Windows.SystemColors;
@@ -38,7 +39,11 @@ public static class ThemeManager
     private static void Swap(AppTheme effective)
     {
         var app = Application.Current;
-        if (app is null) return;
+        if (app is null)
+        {
+            Diag.Verbose("ThemeManager", "Theme", $"apply deferred preference={_preference} effective={effective}");
+            return;
+        }
         _effective = effective;
 
         var dict = new ResourceDictionary
@@ -53,6 +58,8 @@ public static class ThemeManager
 
         // Re-theme the title bar of every already-open window (covers live preview).
         foreach (Window w in app.Windows) ThemeTitleBar(w);
+        Diag.Info("ThemeManager", "Theme",
+            $"apply complete preference={_preference} effective={effective} highContrast={SystemParameters.HighContrast}");
     }
 
     /// <summary>Dark/light the window's title bar (non-client frame) to match the current theme.</summary>
@@ -91,6 +98,7 @@ public static class ThemeManager
             bool accessibilityChange = e.Category is UserPreferenceCategory.Accessibility or UserPreferenceCategory.Color;
             if (!accessibilityChange && (e.Category != UserPreferenceCategory.General || _preference != AppTheme.System))
                 return;
+            Diag.Verbose("ThemeManager", "Theme", $"system change category={e.Category}");
             // SystemEvents fires off the UI thread; marshal the resource swap.
             Application.Current?.Dispatcher.BeginInvoke(
                 new Action(() => Swap(ThemeResolver.Effective(_preference, SystemUsesLight()))));

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using QuickReplyKit.Core.Diagnostics;
 
 namespace QuickReplyKit.Core.Templates;
 
@@ -32,6 +33,17 @@ public static class TemplateEngine
     /// </summary>
     private const int MaxIncludes = 1000;
 
+    private sealed class Metrics
+    {
+        public int Tokens;
+        public int Builtins;
+        public int IncludeAttempts;
+        public int ResolvedIncludes;
+        public int Missing;
+        public int Cycles;
+        public int Limited;
+    }
+
     /// <summary>
     /// Allow-listed built-ins. Each is a pure function of (now, optional arg). This dictionary is the
     /// complete set of executable behaviour — extend it by adding another pure function, nothing else.
@@ -50,10 +62,20 @@ public static class TemplateEngine
     /// <summary>Resolve every token in <paramref name="html"/>. Never throws; never hangs.</summary>
     public static string Resolve(string html, Func<string, string?> lookupHtmlByName, DateTimeOffset now)
     {
-        if (string.IsNullOrEmpty(html)) return html ?? "";
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        if (string.IsNullOrEmpty(html))
+        {
+            Diag.Verbose("TemplateEngine", "Template",
+                $"resolve complete inputLength=0 outputLength=0 tokens=0 builtins=0 includeAttempts=0 resolvedIncludes=0 missing=0 cycles=0 limited=0 elapsedMs={sw.ElapsedMilliseconds}");
+            return html ?? "";
+        }
         var lookup = lookupHtmlByName ?? (static _ => null);
-        return ResolveInternal(html, lookup, now, new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0,
-            new[] { MaxIncludes });
+        var metrics = new Metrics();
+        string output = ResolveInternal(html, lookup, now,
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0, new[] { MaxIncludes }, metrics);
+        Diag.Verbose("TemplateEngine", "Template",
+            $"resolve complete inputLength={html.Length} outputLength={output.Length} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={sw.ElapsedMilliseconds}");
+        return output;
     }
 
     /// <summary>True if the text contains at least one <c>{{…}}</c> token (ignoring <c>{{{{</c> escapes).</summary>
@@ -76,7 +98,8 @@ public static class TemplateEngine
     }
 
     private static string ResolveInternal(
-        string html, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget)
+        string html, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget,
+        Metrics metrics)
     {
         var sb = new StringBuilder(html.Length);
         int i = 0;
@@ -88,7 +111,8 @@ public static class TemplateEngine
                 int close = html.IndexOf("}}", i + 2, StringComparison.Ordinal);
                 if (close < 0) { sb.Append(html, i, html.Length - i); break; } // no closer: literal tail
                 string token = html.Substring(i + 2, close - (i + 2)).Trim();
-                sb.Append(ResolveToken(token, lookup, now, path, depth, budget));
+                metrics.Tokens++;
+                sb.Append(ResolveToken(token, lookup, now, path, depth, budget, metrics));
                 i = close + 2;
                 continue;
             }
@@ -99,7 +123,8 @@ public static class TemplateEngine
     }
 
     private static string ResolveToken(
-        string token, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget)
+        string token, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget,
+        Metrics metrics)
     {
         if (token.Length == 0) return "";
 
@@ -112,21 +137,40 @@ public static class TemplateEngine
             arg = token[(colon + 1)..].Trim();
         }
 
-        if (Builtins.TryGetValue(name, out var fn)) return fn(now, arg);
+        if (Builtins.TryGetValue(name, out var fn))
+        {
+            metrics.Builtins++;
+            return fn(now, arg);
+        }
 
-        return ResolveInclude(token, lookup, now, path, depth, budget); // whole token is the response name
+        return ResolveInclude(token, lookup, now, path, depth, budget, metrics); // whole token is the response name
     }
 
     private static string ResolveInclude(
-        string name, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget)
+        string name, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget,
+        Metrics metrics)
     {
-        if (depth >= MaxDepth || path.Contains(name)) return $"[cycle: {name}]";
-        if (--budget[0] < 0) return $"[includes: too many]"; // non-cyclic fan-out bomb: stop, never hang
+        metrics.IncludeAttempts++;
+        if (depth >= MaxDepth || path.Contains(name))
+        {
+            metrics.Cycles++;
+            return $"[cycle: {name}]";
+        }
+        if (--budget[0] < 0)
+        {
+            metrics.Limited++;
+            return $"[includes: too many]"; // non-cyclic fan-out bomb: stop, never hang
+        }
         string? body = lookup(name);
-        if (body is null) return $"[missing: {name}]";
+        if (body is null)
+        {
+            metrics.Missing++;
+            return $"[missing: {name}]";
+        }
 
+        metrics.ResolvedIncludes++;
         path.Add(name);
-        try { return ResolveInternal(body, lookup, now, path, depth + 1, budget); }
+        try { return ResolveInternal(body, lookup, now, path, depth + 1, budget, metrics); }
         finally { path.Remove(name); }
     }
 
