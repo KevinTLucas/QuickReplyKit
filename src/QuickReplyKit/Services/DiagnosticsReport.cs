@@ -16,6 +16,7 @@ internal static class DiagnosticsReport
         int registered = hotkeys.Count(x => !x.IsLauncher && x.Registered);
         int configured = config.ResponseHotkeys.Count;
         int valid = snapshot.AllResponses.Count(x => x.IsValid);
+        var scripts = library.Scripts;
 
         var text = new StringBuilder();
         void Row(string name, string value) => text.Append(name.PadRight(22)).Append(": ").AppendLine(value);
@@ -32,6 +33,8 @@ internal static class DiagnosticsReport
         Row("Library state", library.IsLoading ? "loading" : "ready");
         Row("Responses", $"{snapshot.AllResponses.Count} ({valid} valid, {snapshot.AllResponses.Count - valid} invalid)");
         Row("Watcher", library.IsWatching ? "attached" : "not attached");
+        Row("Scripts", $"{scripts.Count} total, {scripts.Count(x => x.IsEnabled)} enabled, " +
+            $"{scripts.Count(x => x.IsTrusted)} trusted, {scripts.Count(x => !x.IsValid)} invalid");
         Row("Logging", Diag.IsEnabled
             ? Diag.Threshold == LogLevel.Verbose ? "active (verbose)" : "active (normal)"
             : "unavailable");
@@ -41,6 +44,7 @@ internal static class DiagnosticsReport
         Row("Logs folder", @"%APPDATA%\QuickReplyKit\logs");
         Row("Backup folder", Redact(config.BackupPath));
         Row("Trash folder", @"%APPDATA%\QuickReplyKit\trash");
+        Row("Script trust file", @"%APPDATA%\QuickReplyKit\script-trust.json");
         return text.ToString();
     }
 

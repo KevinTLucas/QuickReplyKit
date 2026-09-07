@@ -185,7 +185,7 @@ public partial class LauncherWindow : Window
 
     private void OpenEditorForNew(string html)
     {
-        EditorWindow.OpenNew(this, _vm.LibraryRoot, _vm.CategoryPaths(), _vm.CurrentCategory, html);
+        EditorWindow.OpenNew(this, _vm.LibraryRoot, _vm.CategoryPaths(), _vm.CurrentCategory, html, _vm.ScriptNames());
         // On save the file watcher refreshes the library; nothing else to do here.
     }
 
@@ -249,14 +249,14 @@ public partial class LauncherWindow : Window
     private void MenuEdit_Click(object sender, RoutedEventArgs e)
     {
         if (_vm.SelectedItem is { IsValid: true } item)
-            EditorWindow.OpenEdit(this, _vm.LibraryRoot, _vm.CategoryPaths(), item);
+            EditorWindow.OpenEdit(this, _vm.LibraryRoot, _vm.CategoryPaths(), item, _vm.ScriptNames());
     }
 
     private void MenuEditInsert_Click(object sender, RoutedEventArgs e)
     {
         // Open the editor on the resolved message; on Insert the edited text is pasted, not saved.
         if (_vm.SelectedItem is { IsValid: true } item)
-            EditorWindow.OpenCompose(this, _vm.ResolveComposed(item), _vm.InsertComposed);
+            EditorWindow.OpenCompose(this, _vm.ResolveComposed(item), _vm.InsertComposed, _vm.ScriptNames());
     }
 
     private void MenuDuplicate_Click(object sender, RoutedEventArgs e)

@@ -50,6 +50,8 @@ public class DiagnosticsReportTests
             Assert.Contains("Watcher               : not attached", report);
             Assert.Contains("Logging               : active (verbose)", report);
             Assert.Contains("Trash folder", report);
+            Assert.Contains("Scripts               : 0 total, 0 enabled, 0 trusted, 0 invalid", report);
+            Assert.Contains(@"Script trust file     : %APPDATA%\QuickReplyKit\script-trust.json", report);
             Assert.Equal(@"%USERPROFILE%\[private path]", DiagnosticsReport.Redact(Path.Combine(profile, "Documents", "QRK")));
             Assert.Equal("%USERPROFILE%", DiagnosticsReport.Redact(profile));
             Assert.Equal(@"%USERPROFILE%\[private path]",
