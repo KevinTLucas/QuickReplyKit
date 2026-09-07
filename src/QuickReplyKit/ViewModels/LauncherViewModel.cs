@@ -404,8 +404,7 @@ public sealed class LauncherViewModel : ViewModelBase
         _selectedResult?.IsValid == true ? _selectedResult.Item : null;
 
     /// <summary>Resolve <c>{{…}}</c> tokens in the stored HTML against the current library and clock.</summary>
-    private string Resolve(string html) =>
-        TemplateEngine.Resolve(html, n => _library.FindByName(n)?.Html, _now());
+    private string Resolve(string html) => _library.ResolveTemplate(html, _now());
 
     /// <summary>
     /// A copy of <paramref name="item"/> with its template tokens resolved into HTML — never mutating

@@ -2,7 +2,6 @@ using QuickReplyKit.Core;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
-using QuickReplyKit.Core.Templates;
 using QuickReplyKit.Interop;
 
 namespace QuickReplyKit.Services;
@@ -94,7 +93,7 @@ public sealed class HotkeyService : IDisposable
         return false;
     }
 
-    private void InstantPaste(string relativePath, bool plain)
+    internal void InstantPaste(string relativePath, bool plain)
     {
         // Re-resolve against the live snapshot: the library may have changed since registration.
         var item = _library.FindByRelativePath(relativePath);
@@ -105,7 +104,7 @@ public sealed class HotkeyService : IDisposable
         }
 
         Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
-        string html = TemplateEngine.Resolve(item.Html, n => _library.FindByName(n)?.Html, _now());
+        string html = _library.ResolveTemplate(item.Html, _now());
         var resolved = new ResponseItem { Html = html };
         if (plain) _insert.InsertPlain(resolved);
         else _insert.InsertRich(resolved);

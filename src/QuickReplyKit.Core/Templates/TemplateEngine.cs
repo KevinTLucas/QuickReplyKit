@@ -1,37 +1,52 @@
 using System.Globalization;
 using System.Text;
 using QuickReplyKit.Core.Diagnostics;
+using QuickReplyKit.Core.Scripts;
 
 namespace QuickReplyKit.Core.Templates;
 
 /// <summary>
-/// Resolves <c>{{ token }}</c> occurrences inside the stored HTML subset at insert/preview time.
-///
-/// Two kinds of token:
-///   • Built-in variables — a FIXED, allow-listed set of pure, deterministic functions of the
-///     supplied clock (greeting/date/time/day/date:&lt;format&gt;). This is the whole vocabulary:
-///     an imported/shared response can NEVER cause arbitrary code to run — there is no eval hook.
-///   • Includes — any other name is looked up (case-insensitive) via <paramref name="lookupHtmlByName"/>
-///     and its stored HTML is spliced in and resolved recursively, enabling {{welcome}}/{{closing}}
-///     composition. Cycles and excessive depth emit an inline <c>[cycle: name]</c> marker and stop
-///     (never hang/throw); an unknown name emits <c>[missing: name]</c>.
-///
-/// Literal braces: write <c>{{{{</c> to output a literal <c>{{</c> (so <c>{{{{name}}</c> → <c>{{name}}</c>).
-/// Names are case-insensitive and whitespace inside the braces is trimmed. Output stays within the
-/// HTML subset (markers are plain bracketed text, no markup).
+/// Resolves allow-listed built-ins, response includes, and optional sandboxed scripts in stored HTML.
+/// Script tokens execute only in text-node content; cycles and all limits produce visible markers.
 /// </summary>
 public static class TemplateEngine
 {
-    /// <summary>Safety net for pathological include chains that escape cycle detection.</summary>
     private const int MaxDepth = 32;
-
-    /// <summary>
-    /// Cap on total include expansions per resolve. Cycle detection stops loops, but a non-cyclic
-    /// fan-out DAG (each response including the next twice: t0→t1 t1→t2 t2…) expands exponentially
-    /// within <see cref="MaxDepth"/>. This budget bounds the total work so a crafted/shared library
-    /// can never hang the app. Far above any realistic template (which uses a handful of includes).
-    /// </summary>
     private const int MaxIncludes = 1000;
+    public const int MaxScriptCalls = 64;
+    public const int MaxResolvedChars = 250_000;
+    private const string OutputLimitMarker = "[template error: output-limit]";
+
+    private sealed class Context(
+        Func<string, string?> lookup,
+        Func<string, DateTimeOffset, ScriptEvaluationResult>? evaluateScript,
+        DateTimeOffset now,
+        Metrics metrics)
+    {
+        public readonly Func<string, string?> Lookup = lookup;
+        public readonly Func<string, DateTimeOffset, ScriptEvaluationResult>? EvaluateScript = evaluateScript;
+        public readonly DateTimeOffset Now = now;
+        public readonly Metrics Metrics = metrics;
+        public readonly HashSet<string> Path = new(StringComparer.OrdinalIgnoreCase);
+        public readonly StringBuilder Output = new();
+        public int IncludesLeft = MaxIncludes;
+        public int ScriptCalls;
+        public bool OutputLimited;
+
+        public void Append(char value)
+        {
+            if (OutputLimited) return;
+            if (Output.Length == MaxResolvedChars) { OutputLimited = true; return; }
+            Output.Append(value);
+        }
+
+        public void Append(string value)
+        {
+            if (OutputLimited || value.Length == 0) return;
+            if (value.Length > MaxResolvedChars - Output.Length) { OutputLimited = true; return; }
+            Output.Append(value);
+        }
+    }
 
     private sealed class Metrics
     {
@@ -42,43 +57,43 @@ public static class TemplateEngine
         public int Missing;
         public int Cycles;
         public int Limited;
+        public int Scripts;
     }
 
-    /// <summary>
-    /// Allow-listed built-ins. Each is a pure function of (now, optional arg). This dictionary is the
-    /// complete set of executable behaviour — extend it by adding another pure function, nothing else.
-    /// </summary>
     private static readonly Dictionary<string, Func<DateTimeOffset, string?, string>> Builtins =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["greeting"] = static (now, _) => Greeting(now),
-            ["date"]     = static (now, arg) => string.IsNullOrEmpty(arg)
-                                ? now.ToString("d", CultureInfo.CurrentCulture)
-                                : FormatDate(now, arg),
-            ["time"]     = static (now, _) => now.ToString("t", CultureInfo.CurrentCulture),
-            ["day"]      = static (now, _) => now.ToString("dddd", CultureInfo.CurrentCulture),
+            ["date"] = static (now, arg) => string.IsNullOrEmpty(arg)
+                ? now.ToString("d", CultureInfo.CurrentCulture)
+                : FormatDate(now, arg),
+            ["time"] = static (now, _) => now.ToString("t", CultureInfo.CurrentCulture),
+            ["day"] = static (now, _) => now.ToString("dddd", CultureInfo.CurrentCulture),
         };
 
-    /// <summary>Resolve every token in <paramref name="html"/>. Never throws; never hangs.</summary>
-    public static string Resolve(string html, Func<string, string?> lookupHtmlByName, DateTimeOffset now)
+    /// <summary>
+    /// Resolve every token. <paramref name="evaluateScript"/> receives the same caller-captured clock
+    /// for the complete render. Existing callers may omit it; script tokens then fail closed.
+    /// </summary>
+    public static string Resolve(string html, Func<string, string?> lookupHtmlByName, DateTimeOffset now,
+        Func<string, DateTimeOffset, ScriptEvaluationResult>? evaluateScript = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         if (string.IsNullOrEmpty(html))
         {
-            Diag.Verbose("TemplateEngine", "Template",
-                $"resolve complete inputLength=0 outputLength=0 tokens=0 builtins=0 includeAttempts=0 resolvedIncludes=0 missing=0 cycles=0 limited=0 elapsedMs={sw.ElapsedMilliseconds}");
+            Log(0, 0, new Metrics(), sw.ElapsedMilliseconds);
             return html ?? "";
         }
-        var lookup = lookupHtmlByName ?? (static _ => null);
+
         var metrics = new Metrics();
-        string output = ResolveInternal(html, lookup, now,
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase), 0, new[] { MaxIncludes }, metrics);
-        Diag.Verbose("TemplateEngine", "Template",
-            $"resolve complete inputLength={html.Length} outputLength={output.Length} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={sw.ElapsedMilliseconds}");
+        var context = new Context(lookupHtmlByName ?? (static _ => null), evaluateScript, now, metrics);
+        ResolveInternal(html, context, 0, scriptsAllowed: true);
+        string output = context.OutputLimited ? OutputLimitMarker : context.Output.ToString();
+        Log(html.Length, output.Length, metrics, sw.ElapsedMilliseconds);
         return output;
     }
 
-    /// <summary>True if the text contains at least one <c>{{…}}</c> token (ignoring <c>{{{{</c> escapes).</summary>
+    /// <summary>True when text contains a real <c>{{…}}</c> token, ignoring <c>{{{{</c> escapes.</summary>
     public static bool ContainsTokens(string? html)
     {
         if (string.IsNullOrEmpty(html)) return false;
@@ -97,36 +112,52 @@ public static class TemplateEngine
         return false;
     }
 
-    private static string ResolveInternal(
-        string html, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget,
-        Metrics metrics)
+    private static void ResolveInternal(string html, Context context, int depth, bool scriptsAllowed)
     {
-        var sb = new StringBuilder(html.Length);
-        int i = 0;
-        while (i < html.Length)
+        bool inTag = false;
+        char quote = '\0';
+
+        for (int i = 0; i < html.Length && !context.OutputLimited;)
         {
-            if (IsEscape(html, i)) { sb.Append("{{"); i += 4; continue; }
+            if (IsEscape(html, i)) { context.Append("{{"); i += 4; continue; }
             if (IsOpen(html, i))
             {
                 int close = html.IndexOf("}}", i + 2, StringComparison.Ordinal);
-                if (close < 0) { sb.Append(html, i, html.Length - i); break; } // no closer: literal tail
-                string token = html.Substring(i + 2, close - (i + 2)).Trim();
-                metrics.Tokens++;
-                sb.Append(ResolveToken(token, lookup, now, path, depth, budget, metrics));
+                if (close < 0)
+                {
+                    context.Append(html[i..]);
+                    break;
+                }
+
+                string token = html.Substring(i + 2, close - i - 2).Trim();
+                context.Metrics.Tokens++;
+                ResolveToken(token, html.Substring(i, close + 2 - i), context, depth,
+                    scriptsAllowed && !inTag);
                 i = close + 2;
                 continue;
             }
-            sb.Append(html[i]);
-            i++;
+
+            char value = html[i++];
+            context.Append(value);
+            if (!inTag)
+            {
+                if (value == '<') inTag = true;
+            }
+            else if (quote == '\0')
+            {
+                if (value is '\'' or '"') quote = value;
+                else if (value == '>') inTag = false;
+            }
+            else if (value == quote)
+            {
+                quote = '\0';
+            }
         }
-        return sb.ToString();
     }
 
-    private static string ResolveToken(
-        string token, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget,
-        Metrics metrics)
+    private static void ResolveToken(string token, string literal, Context context, int depth, bool scriptAllowed)
     {
-        if (token.Length == 0) return "";
+        if (token.Length == 0) return;
 
         string name = token;
         string? arg = null;
@@ -137,42 +168,78 @@ public static class TemplateEngine
             arg = token[(colon + 1)..].Trim();
         }
 
-        if (Builtins.TryGetValue(name, out var fn))
+        if (name.Equals("script", StringComparison.OrdinalIgnoreCase))
         {
-            metrics.Builtins++;
-            return fn(now, arg);
+            if (!scriptAllowed) { context.Append(literal); return; }
+            ResolveScript(arg ?? "", context);
+            return;
         }
 
-        return ResolveInclude(token, lookup, now, path, depth, budget, metrics); // whole token is the response name
+        if (Builtins.TryGetValue(name, out var builtin))
+        {
+            context.Metrics.Builtins++;
+            context.Append(builtin(context.Now, arg));
+            return;
+        }
+
+        ResolveInclude(token, context, depth, scriptAllowed);
     }
 
-    private static string ResolveInclude(
-        string name, Func<string, string?> lookup, DateTimeOffset now, HashSet<string> path, int depth, int[] budget,
-        Metrics metrics)
+    private static void ResolveScript(string name, Context context)
     {
-        metrics.IncludeAttempts++;
-        if (depth >= MaxDepth || path.Contains(name))
+        if (++context.ScriptCalls > MaxScriptCalls)
         {
-            metrics.Cycles++;
-            return $"[cycle: {name}]";
+            context.Metrics.Limited++;
+            context.Append("[scripts: too many]");
+            return;
         }
-        if (--budget[0] < 0)
+
+        context.Metrics.Scripts++;
+        if (context.EvaluateScript is null)
         {
-            metrics.Limited++;
-            return $"[includes: too many]"; // non-cyclic fan-out bomb: stop, never hang
+            context.Append($"[script missing: {System.Net.WebUtility.HtmlEncode(name)}]");
+            return;
         }
-        string? body = lookup(name);
+
+        try { context.Append(context.EvaluateScript(name, context.Now).Output); }
+        catch { context.Append("[script error: evaluation-failed]"); }
+    }
+
+    private static void ResolveInclude(string name, Context context, int depth, bool scriptsAllowed)
+    {
+        context.Metrics.IncludeAttempts++;
+        if (depth >= MaxDepth || context.Path.Contains(name))
+        {
+            context.Metrics.Cycles++;
+            context.Append($"[cycle: {name}]");
+            return;
+        }
+        if (--context.IncludesLeft < 0)
+        {
+            context.Metrics.Limited++;
+            context.Append("[includes: too many]");
+            return;
+        }
+
+        string? body;
+        try { body = context.Lookup(name); }
+        catch { body = null; }
         if (body is null)
         {
-            metrics.Missing++;
-            return $"[missing: {name}]";
+            context.Metrics.Missing++;
+            context.Append($"[missing: {name}]");
+            return;
         }
 
-        metrics.ResolvedIncludes++;
-        path.Add(name);
-        try { return ResolveInternal(body, lookup, now, path, depth + 1, budget, metrics); }
-        finally { path.Remove(name); }
+        context.Metrics.ResolvedIncludes++;
+        context.Path.Add(name);
+        try { ResolveInternal(body, context, depth + 1, scriptsAllowed); }
+        finally { context.Path.Remove(name); }
     }
+
+    private static void Log(int inputLength, int outputLength, Metrics metrics, long elapsedMs) =>
+        Diag.Verbose("TemplateEngine", "Template",
+            $"resolve complete inputLength={inputLength} outputLength={outputLength} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} scripts={metrics.Scripts} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={elapsedMs}");
 
     private static string Greeting(DateTimeOffset now) =>
         now.Hour < 12 ? "Good morning" : now.Hour < 17 ? "Good afternoon" : "Good evening";
@@ -180,12 +247,13 @@ public static class TemplateEngine
     private static string FormatDate(DateTimeOffset now, string format)
     {
         try { return now.ToString(format, CultureInfo.CurrentCulture); }
-        catch (FormatException) { return $"[date: invalid format]"; }
+        catch (FormatException) { return "[date: invalid format]"; }
     }
 
-    private static bool IsOpen(string s, int i) =>
-        i + 1 < s.Length && s[i] == '{' && s[i + 1] == '{';
+    private static bool IsOpen(string value, int index) =>
+        index + 1 < value.Length && value[index] == '{' && value[index + 1] == '{';
 
-    private static bool IsEscape(string s, int i) =>
-        i + 3 < s.Length && s[i] == '{' && s[i + 1] == '{' && s[i + 2] == '{' && s[i + 3] == '{';
+    private static bool IsEscape(string value, int index) =>
+        index + 3 < value.Length && value[index] == '{' && value[index + 1] == '{' &&
+        value[index + 2] == '{' && value[index + 3] == '{';
 }
