@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Interop;
 using Microsoft.Win32;
 using QuickReplyKit.Core.Storage;
+using Brushes = System.Windows.Media.Brushes;
+using SystemColors = System.Windows.SystemColors;
 
 namespace QuickReplyKit.Services;
 
@@ -43,6 +45,7 @@ public static class ThemeManager
         {
             Source = new Uri($"/Themes/{effective}.xaml", UriKind.Relative),
         };
+        if (SystemParameters.HighContrast) ApplyHighContrast(dict);
 
         if (_current is not null) app.Resources.MergedDictionaries.Remove(_current);
         app.Resources.MergedDictionaries.Add(dict);
@@ -57,7 +60,7 @@ public static class ThemeManager
     {
         var hwnd = new WindowInteropHelper(window).Handle;
         if (hwnd == IntPtr.Zero) return;   // not yet sourced; the Loaded handler will catch it
-        int dark = _effective == AppTheme.Dark ? 1 : 0;
+        int dark = !SystemParameters.HighContrast && _effective == AppTheme.Dark ? 1 : 0;
         try { DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref dark, sizeof(int)); }
         catch { /* older Windows without the attribute: leave the default frame */ }
     }
@@ -85,10 +88,44 @@ public static class ThemeManager
 
         SystemEvents.UserPreferenceChanged += (_, e) =>
         {
-            if (e.Category != UserPreferenceCategory.General || _preference != AppTheme.System) return;
+            bool accessibilityChange = e.Category is UserPreferenceCategory.Accessibility or UserPreferenceCategory.Color;
+            if (!accessibilityChange && (e.Category != UserPreferenceCategory.General || _preference != AppTheme.System))
+                return;
             // SystemEvents fires off the UI thread; marshal the resource swap.
             Application.Current?.Dispatcher.BeginInvoke(
                 new Action(() => Swap(ThemeResolver.Effective(_preference, SystemUsesLight()))));
         };
     }
+
+    private static void ApplyHighContrast(ResourceDictionary dict)
+    {
+        dict["WindowBg"] = SystemColors.WindowBrush;
+        dict["CardBg"] = SystemColors.ControlBrush;
+        dict["CardBorder"] = SystemColors.ControlTextBrush;
+        dict["Accent"] = SystemColors.HighlightBrush;
+        dict["PrimaryButtonBg"] = SystemColors.HighlightBrush;
+        dict["OnAccent"] = SystemColors.HighlightTextBrush;
+        dict["TextPrimary"] = SystemColors.WindowTextBrush;
+        dict["TextMuted"] = SystemColors.GrayTextBrush;
+        dict["Selection"] = SystemColors.HighlightBrush;
+        dict["Disabled"] = SystemColors.GrayTextBrush;
+        dict["Warning"] = SystemColors.WindowTextBrush;
+        dict["Error"] = SystemColors.WindowTextBrush;
+        dict["Danger"] = SystemColors.HighlightBrush;
+        dict["Favorite"] = SystemColors.WindowTextBrush;
+        dict["Hyperlink"] = SystemColors.HotTrackBrush;
+        dict["ButtonHoverOverlay"] = Brushes.Transparent;
+        dict["ButtonPressedOverlay"] = Brushes.Transparent;
+        dict["ButtonOutlineOuter"] = SystemColors.WindowTextBrush;
+        dict["ButtonOutlineInner"] = SystemColors.WindowBrush;
+        dict[SystemColors.HighlightBrushKey] = SystemColors.HighlightBrush;
+        dict[SystemColors.HighlightTextBrushKey] = SystemColors.HighlightTextBrush;
+        dict[SystemColors.InactiveSelectionHighlightBrushKey] = SystemColors.HighlightBrush;
+        dict[SystemColors.InactiveSelectionHighlightTextBrushKey] = SystemColors.HighlightTextBrush;
+        dict[SystemColors.WindowBrushKey] = SystemColors.WindowBrush;
+        dict[SystemColors.WindowTextBrushKey] = SystemColors.WindowTextBrush;
+        dict[SystemColors.ControlTextBrushKey] = SystemColors.ControlTextBrush;
+        dict[SystemColors.GrayTextBrushKey] = SystemColors.GrayTextBrush;
+    }
+
 }

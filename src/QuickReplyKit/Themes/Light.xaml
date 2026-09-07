@@ -5,6 +5,7 @@
     <SolidColorBrush x:Key="CardBg" Color="#FFFFFFFF"/>
     <SolidColorBrush x:Key="CardBorder" Color="#FFE2E2EC"/>
     <SolidColorBrush x:Key="Accent" Color="#FF4F46E5"/>
+    <SolidColorBrush x:Key="PrimaryButtonBg" Color="#FF4F46E5"/>
     <SolidColorBrush x:Key="OnAccent" Color="#FFFFFFFF"/>
     <SolidColorBrush x:Key="TextPrimary" Color="#FF1A1A22"/>
     <SolidColorBrush x:Key="TextMuted" Color="#FF8A8AA0"/>
@@ -15,6 +16,10 @@
     <SolidColorBrush x:Key="Danger" Color="#FFDC2626"/>
     <SolidColorBrush x:Key="Favorite" Color="#FFF59E0B"/>
     <SolidColorBrush x:Key="Hyperlink" Color="#FF4F46E5"/>
+    <SolidColorBrush x:Key="ButtonHoverOverlay" Color="#14000000"/>
+    <SolidColorBrush x:Key="ButtonPressedOverlay" Color="#26000000"/>
+    <SolidColorBrush x:Key="ButtonOutlineOuter" Color="#FF000000"/>
+    <SolidColorBrush x:Key="ButtonOutlineInner" Color="#FFFFFFFF"/>
 
     <!-- Selected-item highlight in list/tree controls: default templates read these SystemColors
          keys via DynamicResource, so overriding them here re-themes selection app-wide. -->

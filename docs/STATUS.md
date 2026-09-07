@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `80cefa0`.
+- **Current `main`:** `5b70994`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **455 passed, 0 failed, 0 skipped** after B05 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -15,13 +15,14 @@
   human-readable branches listed under Active worktrees. Several fully merged historical branches/worktrees
   remain locally and may be pruned after confirming no agent still owns them.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
-  12 ordered items with severity, acceptance criteria, and status. Clipboard trust-boundary work leads;
+  11 ordered items with severity, acceptance criteria, and status. Clipboard trust-boundary work leads;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B07 accessible button states | `5b70994` | 455/455; all button families; Light/Dark/High Contrast and arbitrary swatches | Complete |
 | B05 search relevance | `80cefa0` | 455/455; 21/21 focused; 4,000-response corpus averaged 7.26 ms/search | Complete |
 | B03 import plan integrity | `6aa1ae1` | 452/452; junction race, ZIP limits, malformed/traversal/device paths, stale-plan handling | Complete |
 | B02 transactional backup restore | `c6fdda8` | 443/443; rollback/oldest restore 40 repeated runs; all self-tests 3 rounds; both themes | Complete |
@@ -60,20 +61,18 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B04, B06, B07 P1:** clipboard sanitization, Settings/About layout, and dark hover contrast.
+1. **B04 and B06 P1:** clipboard sanitization and Settings/About layout.
 2. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
 3. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
 4. **B16 P2:** sandboxed dynamic-variable scripts, only after its sanitizer, accessibility, and logging gates.
 
-**Known confirmed regressions/defects:** clipboard sanitization gaps, dark hover contrast, and clipped
+**Known confirmed regressions/defects:** clipboard sanitization gaps and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** B02, B03, and B05 are merged. `bugfix/clipboard-sanitization` and
-`bugfix/dark-hover-contrast` are in final headless QA. `bugfix/settings-about-layout` contains only B06's
-resizable/scrolling Settings and About layouts; its owner-monitor and diagnostics-wrapping QA findings are corrected
-and independent re-QA is pending.
-`feature/folder-trash` is paused cleanly before implementation. Resume these exact worktrees rather than starting
-duplicates.
+**Active worktrees:** B02, B03, B05, and B07 are merged. `bugfix/clipboard-sanitization` is in final security QA;
+`bugfix/settings-about-layout` has corrected its owner-monitor and diagnostics-wrapping QA findings and awaits
+independent re-QA. `feature/folder-trash` is paused cleanly before implementation. Resume these exact worktrees rather
+than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

@@ -31,16 +31,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   static layout review and automated tests verify every control remains reachable; desktop UI automation is disabled
   at the user's request.
 
-### B07 - Dark-mode button hover contrast
-
-- **Severity:** P1
-- **Status:** Confirmed UI defect
-- **Impact:** Hover background is too bright and makes button text unreadable in dark mode.
-- **Acceptance:** One shared themed button hover/pressed/focus treatment is readable in Light, Dark, and High Contrast;
-  no view-specific hardcoded hover colors; text/icon contrast remains clear; disabled and destructive states remain
-  distinguishable. Prove every view inherits the shared style or capture launcher, editor, Settings, import, backup,
-  Trash, onboarding, About, input/confirm, assignment, and hotkey-manager dialogs.
-
 ### B08 - Delete and restore folders through Trash
 
 - **Severity:** P1 (data safety)
