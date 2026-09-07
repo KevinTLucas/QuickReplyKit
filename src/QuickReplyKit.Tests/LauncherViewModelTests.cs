@@ -115,7 +115,7 @@ public class LauncherViewModelTests
         });
     }
 
-    // --- Scope vs global search --------------------------------------------
+    // --- Scoped search -----------------------------------------------------
 
     [Fact]
     public void EmptyQuery_AllScope_ShowsValidByName_ThenInvalid()
@@ -186,7 +186,7 @@ public class LauncherViewModelTests
     }
 
     [Fact]
-    public void NonEmptyQuery_UsesGlobalSearch_IgnoringNavScope()
+    public void CategorySearch_IncludesDescendants_AndExcludesOtherFolders()
     {
         Sta(() =>
         {
@@ -195,10 +195,95 @@ public class LauncherViewModelTests
             using var svc = NewService(dir);
             var vm = NewVm(svc, new FakeInsertService());
 
-            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat2");  // scope that does NOT contain Beta
-            vm.Query = "beta";                                     // global search wins
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1");
+            vm.Query = "a";
 
-            Assert.Contains(vm.Results, r => r.Name == "Beta");
+            Assert.Equal(new[] { "Beta", "Gamma" }, vm.Results.Select(r => r.Name).ToArray());
+            Assert.True(vm.HasSearchScope);
+            Assert.Equal("Cat1", vm.SearchScopeLabel);
+        });
+    }
+
+    [Fact]
+    public void SelectingAnotherCategory_ReplacesSearchScope()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+            vm.Query = "a";
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1");
+            Assert.Equal(new[] { "Beta", "Gamma" }, vm.Results.Select(r => r.Name).ToArray());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat2");
+            Assert.Equal(new[] { "Delta" }, vm.Results.Select(r => r.Name).ToArray());
+            Assert.Equal("Cat2", vm.SearchScopeLabel);
+        });
+    }
+
+    [Fact]
+    public void ClearSearchScope_PreservesQuery_AndRestoresGlobalResults()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat2");
+            vm.Query = "beta";
+            Assert.Empty(vm.Results);
+
+            vm.ClearSearchScope();
+
+            Assert.Equal("beta", vm.Query);
+            Assert.False(vm.HasSearchScope);
+            Assert.Equal(new[] { "Beta" }, vm.Results.Select(r => r.Name).ToArray());
+            Assert.Equal(NavScope.All, vm.SelectedNav!.Scope);
+        });
+    }
+
+    [Fact]
+    public void SelectingAll_ClearsCategoryChip_WithoutClearingQuery()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1/Sub");
+            vm.Query = "gamma";
+            Assert.Equal("Cat1 › Sub", vm.SearchScopeLabel);
+
+            vm.SelectedNav = Nav(vm, NavScope.All);
+
+            Assert.False(vm.HasSearchScope);
+            Assert.Equal("gamma", vm.Query);
+            Assert.Equal(new[] { "Gamma" }, vm.Results.Select(r => r.Name).ToArray());
+        });
+    }
+
+    [Fact]
+    public void CategorySearch_ComputesFuzzyFallbackInsideScope()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Inside", "Licence Help.json"));
+            TestFiles.WriteResponse(dir.Of("lib", "Outside", "License Exact.json"));
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Inside");
+            vm.Query = "license";
+
+            Assert.Equal(new[] { "Licence Help" }, vm.Results.Select(r => r.Name).ToArray());
         });
     }
 
@@ -231,7 +316,7 @@ public class LauncherViewModelTests
     }
 
     [Fact]
-    public void Search_RelevanceOutranksScope_AndScopeBreaksTies()
+    public void CategorySearch_PreservesRelevanceWithinScope()
     {
         Sta(() =>
         {
@@ -244,8 +329,7 @@ public class LauncherViewModelTests
             vm.Query = "a";                                // matches all four names; scope reorders
 
             var names = vm.Results.Select(r => r.Name).ToArray();
-            // Alpha's prefix match wins; Cat1 then breaks the tie among contains matches.
-            Assert.Equal(new[] { "Alpha", "Beta", "Gamma", "Delta" }, names);
+            Assert.Equal(new[] { "Beta", "Gamma" }, names);
         });
     }
 
@@ -288,6 +372,28 @@ public class LauncherViewModelTests
     }
 
     [Fact]
+    public void CategorySearch_BodyOnlyHit_RetainsSnippet()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Inside", "Guide.json"),
+                html: "<p>Remember to reset the account first.</p>");
+            TestFiles.WriteResponse(dir.Of("lib", "Outside", "Other.json"),
+                html: "<p>Reset this unrelated account.</p>");
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Inside");
+            vm.Query = "reset";
+
+            var row = Assert.Single(vm.Results);
+            Assert.Equal("Guide", row.Name);
+            Assert.Contains("reset", row.Subtitle, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
+    [Fact]
     public void EmptyingQuery_RestoresSelectedNavScope()
     {
         Sta(() =>
@@ -323,6 +429,25 @@ public class LauncherViewModelTests
     }
 
     [Fact]
+    public void FavoritesSearch_UsesOnlyFavoriteCandidates_WithoutFolderChip()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Favorite Match.json"), favorite: true);
+            TestFiles.WriteResponse(dir.Of("lib", "Plain Match.json"), favorite: false);
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Favorites);
+            vm.Query = "match";
+
+            Assert.Equal(new[] { "Favorite Match" }, vm.Results.Select(r => r.Name).ToArray());
+            Assert.False(vm.HasSearchScope);
+        });
+    }
+
+    [Fact]
     public void RecentScope_ShowsUsedItems_MostRecentFirst()
     {
         Sta(() =>
@@ -338,6 +463,48 @@ public class LauncherViewModelTests
             vm.SelectedNav = Nav(vm, NavScope.Recent);
 
             Assert.Equal(new[] { "B", "A" }, vm.Results.Select(r => r.Name).ToArray());
+        });
+    }
+
+    [Fact]
+    public void RecentSearch_UsesOnlyRecentCandidates_WithoutFolderChip()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "Used Match.json"));
+            TestFiles.WriteResponse(dir.Of("lib", "Unused Match.json"));
+            using var svc = NewService(dir);
+            svc.MarkUsed(svc.Snapshot.AllResponses.First(r => r.Name == "Used Match"));
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Recent);
+            vm.Query = "match";
+
+            Assert.Equal(new[] { "Used Match" }, vm.Results.Select(r => r.Name).ToArray());
+            Assert.False(vm.HasSearchScope);
+        });
+    }
+
+    [Fact]
+    public void ScopedSearch_UsesSpecificEmptyMessages()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1");
+            vm.Query = "nomatch";
+            Assert.Equal("No responses match “nomatch” in “Cat1”.", vm.EmptyStateText);
+
+            vm.SelectedNav = Nav(vm, NavScope.Favorites);
+            Assert.Equal("No favorite responses match “nomatch”.", vm.EmptyStateText);
+
+            vm.SelectedNav = Nav(vm, NavScope.Recent);
+            Assert.Equal("No recent responses match “nomatch”.", vm.EmptyStateText);
         });
     }
 

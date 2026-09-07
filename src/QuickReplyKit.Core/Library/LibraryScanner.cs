@@ -18,6 +18,8 @@ namespace QuickReplyKit.Core.Library;
 /// </summary>
 public static class LibraryScanner
 {
+    private const string LegacyFolderSidecar = ".qrkfolder.json";
+
     public static LibrarySnapshot Scan(string libraryRoot)
     {
         if (!Directory.Exists(libraryRoot))
@@ -58,11 +60,10 @@ public static class LibraryScanner
         {
             Name = isRoot ? SafeLeaf(libraryRoot) : Path.GetFileName(dir),
             RelativePath = isRoot ? "" : rel.Replace('\\', '/'),
-            Tags = FolderMeta.Load(dir),
         };
 
         foreach (var file in Directory.EnumerateFiles(dir, "*.json")
-                     .Where(f => !FolderMeta.IsSidecar(f))          // the folder-tags sidecar isn't a response
+                     .Where(f => !Path.GetFileName(f).Equals(LegacyFolderSidecar, StringComparison.OrdinalIgnoreCase))
                      .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
             files.Add((node, file));
 

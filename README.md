@@ -15,9 +15,10 @@ Responses are just a folder tree of `.json` files, so sharing is as simple as co
 5. Press **Enter** to insert it at your cursor. (**Shift+Enter** inserts as plain text; **Ctrl+C** copies.)
 6. The launcher hides and focus returns to your app — your original clipboard is left intact.
 
-Search checks response names, apps, folders, tags, and body text. Stronger fields outrank the selected-folder
-tie-break, while literal body matches remain available. Minor misspellings are considered only when a token has no
-exact match anywhere, keeping ordinary searches precise and fast.
+Search checks response names, apps, folders, tags, and body text. Selecting a folder adds a removable filter chip and
+searches only that folder and its descendants; selecting **All Responses** or removing the chip returns to global
+search without clearing what you typed. Favorites and Recent search only those views. Minor misspellings are
+considered only when a token has no exact match in the active view, keeping ordinary searches precise and fast.
 
 The hotkey is configurable in Settings. Single-click selects and previews a response (it never
 auto-inserts); double-click inserts.
@@ -87,11 +88,12 @@ From the launcher you can, via the `+` / clipboard buttons and the right-click m
   the final message, and insert it — **without** saving a new response.
 - **Duplicate**, **Rename**, **Move to…** another folder.
 - **Copy** to the clipboard, **Open containing folder** in Explorer.
-- **Folder tags** — right-click a category to store tags with that folder, then batch-apply them to
-  every response below it. The metadata travels when the folder is copied.
 - **Instant-paste hotkey** — right-click a response to bind a global rich/plain paste shortcut.
 - **Delete** — with confirmation, into QuickReplyKit's recoverable in-app Trash. Right-click a category to delete
   and later restore its complete folder tree, including nested responses and side files.
+
+Older libraries may contain `.qrkfolder.json` files from a retired folder-tag feature. QuickReplyKit leaves these
+legacy sidecars in place but ignores them; they never appear as responses or affect response tags.
 
 ## Templates: variables & reusable sections
 

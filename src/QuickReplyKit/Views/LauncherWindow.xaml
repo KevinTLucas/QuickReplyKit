@@ -32,9 +32,6 @@
 
         <!-- Nav category right-click menu (suppressed for the fixed Favorites/Recent/All nodes) -->
         <ContextMenu x:Key="NavContextMenu">
-            <MenuItem Header="Folder tags…" Click="MenuFolderTags_Click"/>
-            <MenuItem Header="Apply folder tags to responses…" Click="MenuApplyFolderTags_Click"/>
-            <Separator/>
             <MenuItem Header="Export folder…" Click="MenuExportFolder_Click"/>
             <Separator/>
             <MenuItem Header="_Delete folder…" Click="MenuDeleteFolder_Click"/>
@@ -65,12 +62,45 @@
                         ToolTip="Show/hide the navigation pane" Click="NavToggle_Click"/>
                 <TextBlock Grid.Column="1" Text="🔍" FontSize="14" Margin="4,0,8,0"
                            VerticalAlignment="Center" Foreground="{DynamicResource Accent}"/>
-                <TextBox Grid.Column="2" x:Name="SearchBox" TabIndex="0" BorderThickness="0"
-                         Background="Transparent" Foreground="{DynamicResource TextPrimary}"
-                         FontSize="15" VerticalAlignment="Center"
-                         VerticalContentAlignment="Center"
-                         Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
-                         PreviewKeyDown="SearchBox_PreviewKeyDown"/>
+                <DockPanel Grid.Column="2" LastChildFill="True">
+                    <Border DockPanel.Dock="Left" MaxWidth="150" Margin="0,0,6,0" Padding="5,1,2,1"
+                            CornerRadius="3" Background="{DynamicResource Selection}"
+                            BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
+                            Visibility="{Binding HasSearchScope, Converter={StaticResource BoolVis}}"
+                            AutomationProperties.Name="{Binding SearchScopeLabel, StringFormat=Search in folder {0}}">
+                        <DockPanel LastChildFill="True">
+                            <Button DockPanel.Dock="Right" Content="×" Style="{StaticResource IconButton}"
+                                    Padding="3,0" Margin="3,0,0,0"
+                                    AutomationProperties.Name="Remove folder search filter"
+                                    ToolTip="Remove folder search filter"
+                                    Click="ClearSearchScope_Click"/>
+                            <TextBlock Text="{Binding SearchScopeLabel}" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" ToolTip="{Binding CurrentCategory}"/>
+                        </DockPanel>
+                    </Border>
+                    <Grid>
+                        <TextBox x:Name="SearchBox" TabIndex="0" BorderThickness="0"
+                                 Background="Transparent" Foreground="{DynamicResource TextPrimary}"
+                                 FontSize="15" VerticalAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewKeyDown="SearchBox_PreviewKeyDown"/>
+                        <TextBlock Text="Search responses…" IsHitTestVisible="False"
+                                   VerticalAlignment="Center" FontSize="15"
+                                   Foreground="{DynamicResource TextMuted}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Query}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </DockPanel>
                 <Button Grid.Column="3" x:Name="NewButton" Content="＋" Style="{StaticResource IconButton}"
                         Foreground="{DynamicResource Accent}" FontSize="18"
                         AutomationProperties.Name="New response"
@@ -93,22 +123,6 @@
                         ToolTip="Settings" Click="SettingsButton_Click"/>
             </Grid>
         </Border>
-
-        <!-- Search box placeholder -->
-        <TextBlock Grid.Row="0" Text="Search responses…" IsHitTestVisible="False"
-                   Margin="70,0,0,0" VerticalAlignment="Center" FontSize="15"
-                   Foreground="{DynamicResource TextMuted}">
-            <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Query}" Value="">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
-        </TextBlock>
 
         <!-- Main: Nav | Results | Preview -->
         <Grid Grid.Row="1" Margin="0,12,0,0">

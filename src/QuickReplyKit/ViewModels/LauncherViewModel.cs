@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
+using QuickReplyKit.Core.Search;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Core.Templates;
 using QuickReplyKit.Core.Text;
@@ -14,8 +15,7 @@ using QuickReplyKit.Services;
 namespace QuickReplyKit.ViewModels;
 
 /// <summary>
-/// Drives the launcher: nav tree, live results (scope when the query is empty, global search
-/// otherwise), preview, empty states, and the three insert actions.
+/// Drives the launcher: nav tree, scoped live results, preview, empty states, and the three insert actions.
 /// </summary>
 public sealed class LauncherViewModel : ViewModelBase
 {
@@ -73,8 +73,22 @@ public sealed class LauncherViewModel : ViewModelBase
         set
         {
             if (!Set(ref _selectedNav, value)) return;
-            if (string.IsNullOrWhiteSpace(Query)) RefreshResults();  // scope only matters with no query
+            OnPropertyChanged(nameof(CurrentCategory));
+            OnPropertyChanged(nameof(HasSearchScope));
+            OnPropertyChanged(nameof(SearchScopeLabel));
+            RefreshResults();
         }
+    }
+
+    public bool HasSearchScope => _selectedNav?.Scope == NavScope.Category;
+
+    public string SearchScopeLabel => CurrentCategory.Replace("/", " › ");
+
+    /// <summary>Return to global search without changing the current query.</summary>
+    public void ClearSearchScope()
+    {
+        SelectNav(NavRoots.First(n => n.Scope == NavScope.All));
+        RefreshResults();
     }
 
     // --- Results / selection ------------------------------------------------
@@ -112,27 +126,9 @@ public sealed class LauncherViewModel : ViewModelBase
         return paths;
     }
 
-    // --- Folder tags (sidecar) ---------------------------------------------
-
     public string CategoryFullPath(string categoryPath) =>
         string.IsNullOrEmpty(categoryPath) ? LibraryRoot
             : System.IO.Path.Combine(LibraryRoot, categoryPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
-
-    public IReadOnlyList<string> FolderTags(string categoryPath) =>
-        FolderMeta.Load(CategoryFullPath(categoryPath));
-
-    public void SetFolderTags(string categoryPath, IReadOnlyList<string> tags)
-    {
-        FolderMeta.Save(CategoryFullPath(categoryPath), tags);
-        _library.Reload();
-        OnLibraryUpdated();
-    }
-
-    /// <summary>Valid responses in a category (optionally including subfolders).</summary>
-    public IReadOnlyList<ResponseItem> ResponsesUnder(string categoryPath, bool recursive) =>
-        _library.Snapshot.AllResponses.Where(r => r.IsValid && (recursive
-            ? r.CategoryPath == categoryPath || r.CategoryPath.StartsWith(categoryPath + "/", StringComparison.OrdinalIgnoreCase)
-            : r.CategoryPath == categoryPath)).ToList();
 
     /// <summary>Valid and invalid response files below one category, for destructive confirmations.</summary>
     public int ResponseCountUnder(string categoryPath) => _library.Snapshot.AllResponses.Count(r =>
@@ -144,14 +140,6 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         _library.Reload();
         OnLibraryUpdated();
-    }
-
-    /// <summary>Union the folder's tags into its responses; returns how many files changed.</summary>
-    public int ApplyFolderTagsToResponses(string categoryPath, bool recursive)
-    {
-        int changed = FolderMeta.ApplyTags(ResponsesUnder(categoryPath, recursive), FolderTags(categoryPath), LibraryRoot);
-        if (changed > 0) { _library.Reload(); OnLibraryUpdated(); }
-        return changed;
     }
 
     /// <summary>Select the row for a given library-relative path after a refresh, if it exists.</summary>
@@ -240,8 +228,8 @@ public sealed class LauncherViewModel : ViewModelBase
         }
         else
         {
-            // Global search, but rank hits inside the selected category (if any) first.
-            var hits = _library.Search(Query, CurrentCategory);
+            // Filter first so exact matches outside the active view cannot suppress fuzzy matches inside it.
+            var hits = ResponseSearch.Rank(ScopeItems(_selectedNav), Query);
             foreach (var h in hits) Results.Add(new ResponseRowVm(h.Item, OnToggleFavorite, h.NameSpans, h.Snippet));
             count = hits.Count;
         }
@@ -339,7 +327,13 @@ public sealed class LauncherViewModel : ViewModelBase
         else if (_library.Snapshot.AllResponses.Count == 0)
             EmptyStateText = "No responses yet.\nAdd a .json to your library, or open the library folder to get started.";
         else if (!string.IsNullOrWhiteSpace(Query))
-            EmptyStateText = $"No responses match “{Query}”.";
+            EmptyStateText = _selectedNav?.Scope switch
+            {
+                NavScope.Category => $"No responses match “{Query}” in “{CurrentCategory}”.",
+                NavScope.Favorites => $"No favorite responses match “{Query}”.",
+                NavScope.Recent => $"No recent responses match “{Query}”.",
+                _ => $"No responses match “{Query}”.",
+            };
         else
             EmptyStateText = _selectedNav?.Scope switch
             {
@@ -457,6 +451,9 @@ public sealed class LauncherViewModel : ViewModelBase
         _selectedNav = node;
         node.IsSelected = true;
         OnPropertyChanged(nameof(SelectedNav));
+        OnPropertyChanged(nameof(CurrentCategory));
+        OnPropertyChanged(nameof(HasSearchScope));
+        OnPropertyChanged(nameof(SearchScopeLabel));
     }
 
     private static NavNodeVm BuildCategory(CategoryNode node)
