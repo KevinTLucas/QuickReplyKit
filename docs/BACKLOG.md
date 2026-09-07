@@ -24,11 +24,12 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B06 - Repair Settings layout and About area
 
 - **Severity:** P1
-- **Status:** Confirmed UI defect
+- **Status:** Headless layout/accessibility QA passed on `bugfix/settings-about-layout`; final integration pending
 - **Impact:** Settings content, especially the About/Diagnostics area, is truncated or broken at real display scales.
 - **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
   and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;
-  screenshots and UI Automation verify every control remains reachable.
+  static layout review and automated tests verify every control remains reachable; desktop UI automation is disabled
+  at the user's request.
 
 ### B08 - Delete and restore folders through Trash
 
