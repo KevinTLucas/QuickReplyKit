@@ -9,7 +9,7 @@
 - **Current product baseline:** B01-B10 are merged; use `git rev-parse HEAD` for the current docs-inclusive tip.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **524 passed** after B10 independent QA; build remains clean.
-- **Portable publish:** B09's current self-contained build is at `publish/latest/QuickReplyKit.exe`. The canonical
+- **Portable publish:** B10's current self-contained build is at `publish/latest/QuickReplyKit.exe`. The canonical
   `publish/QuickReplyKit.exe` was locked by the user's running instance and was deliberately not closed or replaced;
   the next unlocked product publish promotes the latest build. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
