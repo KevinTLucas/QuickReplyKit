@@ -5,12 +5,14 @@
 > **Update this file on every meaningful change** — it's part of the Definition of Done (see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `d562052` · **`dotnet test` = 403 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
+- **`main` tip:** `8f74aa9` · **`dotnet test` = 407 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
 - **App: ✅ feature-complete & merged** — MVP + all V2 features + the end-user continuous-improvement pass are done.
   Polished, launchable, and portable.
-- **⏳ Backlog sprint in progress** (2026-09-06): working through [`BACKLOG.md`](BACKLOG.md) top-down. **Done & merged
-  so far:** BUG #6 (right-click crash) + BUG #1 (dark-mode ComboBox). **In flight / next:** #3 Edit button + #2 Automatic
-  colour (branch `feature/edit-palettes`, QA running), then #7 logging. Remaining queued items are in BACKLOG.md.
+- **⏳ Backlog sprint in progress** (2026-09-06): working through [`BACKLOG.md`](BACKLOG.md) top-down.
+  **Merged to main:** BUG #6 (right-click crash), BUG #1 (dark ComboBox), #7 diagnostics/logging.
+  **Awaiting QA merge:** #3 Edit button + #2 Automatic colour (`feature/edit-palettes`), #13 About screen
+  (`feature/about-screen`), #10 backups + restore (`feature/backups`). **Not yet started:** #4/#5 hotkeys, #8 tags,
+  #9 import preview, #11 trash, #12 onboarding, #14 accessibility.
 - **Both known bugs are now fixed** — no open bugs. Remaining work = the queued *features* in BACKLOG.md.
 
 ## What it is / what it does

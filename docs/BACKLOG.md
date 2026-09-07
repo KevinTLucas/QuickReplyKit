@@ -42,7 +42,12 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
 6. ✅ **DONE (merged `d562052`)** — Fast/repeated right-click crash. Root cause was mutating `ContextMenu.IsOpen` inside
    the `Opened` handler (reentrancy). Both the results and nav menus now gate in `ContextMenuOpening` via `e.Handled`;
    no `IsOpen` mutation remains. Independent QA: survived 80 right-clicks @15ms with no crash. See STATUS.md.
-7. **Diagnostics / logging system.** So "send me the log file" instantly gives what's needed to debug. Requirements:
+7. ✅ **DONE (merged `8f74aa9`)** — Diagnostics/logging system. Hand-rolled thread-safe `Logger` (Core/Diagnostics)
+   + `Diag` facade: async single-writer, level-gated (Error/Warn/Info/Debug/Verbose), size-capped rolling (~10 MB/file,
+   keep 5 → ~50 MB) under `%APPDATA%\QuickReplyKit\logs\`; session header; crash capture (AppDomain/Dispatcher/Task,
+   logged-not-swallowed); Settings verbose toggle (live) + "Open logs folder" (Settings + tray). Independent QA 9/9
+   incl. security (no body/PII leak). Original spec kept below for reference.
+   <details><summary>original requirements</summary>
    - **Rolling & size-capped (~50 MB total)** — never grows unbounded; size-based rollover (a few files) or a single
      capped/circular file. Logs under `%APPDATA%\QuickReplyKit\logs\`.
    - **Standard levels** (Error/Warn/Info/Debug/Verbose), timestamped, with thread + source/category; each **session**
@@ -56,6 +61,7 @@ Prioritized; a bug first. Follow the normal flow (branch → ponytail → separa
    - **Easy retrieval:** "Open logs folder" (Settings + tray), optional "Copy diagnostics" (recent log + version + config).
    - **Constraint:** no NuGet (Serilog/NLog are the enterprise norm but are banned here) — hand-roll a small thread-safe
      `Logger` (BCL `StreamWriter` + lock/queue + size rollover). Keep it lean.
+   </details>
 8. **Richer tag UX (chips) + folder tags + batch-apply.** Three related pieces:
    - **Tag chips in the editor.** Replace the comma-separated **Tags** textbox (New/Edit response) with a chip/token
      input: type a tag + Enter/comma → it becomes a small **colored chip** (label + a little **×** to remove) that
