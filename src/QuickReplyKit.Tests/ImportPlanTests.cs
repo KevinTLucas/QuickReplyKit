@@ -178,6 +178,57 @@ public class ImportPlanTests
         Assert.Equal(ImportClassification.New, plan.Entries[1].Classification);
     }
 
+    [Theory]
+    [InlineData("NUL.txt.json")]
+    [InlineData("LPT1.foo.json")]
+    [InlineData("COM9.response.json")]
+    public void ExtendedWindowsDeviceNames_AreUnsafe(string name)
+    {
+        using var t = new TempDir();
+        string source = t.Of("reserved.zip");
+        MakeZip(source, (name, Valid));
+
+        var entry = Assert.Single(LibraryPorter.PlanImport(t.Of("lib"), source, "").Entries);
+
+        Assert.Equal(ImportClassification.Unsafe, entry.Classification);
+    }
+
+    [Fact]
+    public void AggregateDeclaredSize_IsRejectedAsOneArchiveBeforeEntryReads()
+    {
+        using var t = new TempDir();
+        string source = t.Of("aggregate.zip");
+        using (var zip = ZipFile.Open(source, ZipArchiveMode.Create))
+            for (int i = 0; i < 11; i++)
+                WriteEntry(zip, $"Large{i}.json", new string('x', checked((int)LibraryPorter.MaxEntryBytes)));
+
+        var entry = Assert.Single(LibraryPorter.PlanImport(t.Of("lib"), source, "").Entries);
+
+        Assert.Equal(ImportClassification.Invalid, entry.Classification);
+        Assert.Contains("100 MB", entry.Message);
+    }
+
+    [Fact]
+    public void LibraryRootReplacedByLinkAfterPreview_FailsClosed()
+    {
+        using var t = new TempDir();
+        string source = t.Of("Good.json");
+        string root = t.Of("lib");
+        string outside = t.Of("outside");
+        File.WriteAllText(source, Valid);
+        Directory.CreateDirectory(outside);
+        var plan = LibraryPorter.PlanImport(root, source, "");
+        try { Directory.CreateSymbolicLink(root, outside); }
+        catch (UnauthorizedAccessException) { return; }
+        catch (IOException) { return; }
+        catch (PlatformNotSupportedException) { return; }
+
+        var outcome = Assert.Single(LibraryPorter.Import(plan).Outcomes);
+
+        Assert.Equal(ImportOutcomeKind.Stale, outcome.Kind);
+        Assert.False(File.Exists(Path.Combine(outside, "Good.json")));
+    }
+
     private static void Write(string root, string relative, string content)
     {
         string path = Path.Combine(root, relative);

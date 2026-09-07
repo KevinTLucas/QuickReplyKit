@@ -31,7 +31,7 @@ src/
     Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ImportPreview, Backup, Trash,
                              About, Onboarding, Input/Confirm dialogs, HighlightText
     ViewModels/              LauncherViewModel, ResponseRowVm, NavNodeVm, RelayCommand, ViewModelBase,
-                             ImportCoordinator, ImportPreview
+                             ImportCoordinator, ImportPreviewWindow
     Interop/                 HotkeyRegistrar (many hotkeys, one msg-only window), HotkeyGesture, HotkeyConflicts (pure
                              dup/lookup logic), ForegroundWindow, ForegroundMonitor, ForegroundTargetTracker,
                              ClipboardWriter, ClipboardBackup, InputSender

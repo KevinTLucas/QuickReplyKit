@@ -13,7 +13,6 @@ public sealed class ImportResult
     public int Imported { get; internal set; }
     public int SkippedInvalid { get; internal set; }
     public int Conflicts { get; internal set; }
-    public List<string> Messages { get; } = new();
     public List<ImportOutcome> Outcomes { get; } = new();
 }
 
@@ -177,7 +176,6 @@ public static class LibraryPorter
                 outcome = Write(plan.LibraryRoot, entry, actions[entry.Id]);
 
             result.Outcomes.Add(outcome);
-            result.Messages.Add(outcome.Message);
             if (outcome.Kind is ImportOutcomeKind.Imported or ImportOutcomeKind.Overwritten or ImportOutcomeKind.KeptBoth)
                 result.Imported++;
             if (outcome.Kind is ImportOutcomeKind.Invalid or ImportOutcomeKind.Unsafe)
@@ -284,23 +282,37 @@ public static class LibraryPorter
             return new[] { new Candidate("Archive", Array.Empty<byte>(),
                 $"Archive exceeds the {MaxImportEntries:N0}-entry limit.") };
 
+        var responseEntries = zip.Entries.Where(entry => entry.Name.Length > 0
+            && entry.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            && !entry.Name.Equals(FolderSidecar, StringComparison.OrdinalIgnoreCase)).ToArray();
+        long declaredTotal = 0;
+        foreach (var entry in responseEntries)
+        {
+            if (declaredTotal > MaxImportBytes - entry.Length)
+                return new[] { new Candidate("Archive", Array.Empty<byte>(),
+                    "Archive exceeds the 100 MB response limit.") };
+            declaredTotal += entry.Length;
+        }
+
         var candidates = new List<Candidate>();
         long total = 0;
-        foreach (var entry in zip.Entries)
+        foreach (var entry in responseEntries)
         {
-            if (entry.Name.Length == 0 || !entry.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
-                || entry.Name.Equals(FolderSidecar, StringComparison.OrdinalIgnoreCase)) continue;
             if (entry.Length > MaxEntryBytes)
             {
                 candidates.Add(new(entry.FullName, Array.Empty<byte>(), "Response exceeds the 10 MB limit."));
                 continue;
             }
             byte[] content;
-            try { using var stream = entry.Open(); content = ReadLimited(stream, MaxEntryBytes); }
-            catch (InvalidDataException ex) { candidates.Add(new(entry.FullName, Array.Empty<byte>(), ex.Message)); continue; }
-            if (total > MaxImportBytes - content.Length)
+            try
             {
-                candidates.Add(new(entry.FullName, Array.Empty<byte>(), "Archive exceeds the 100 MB response limit."));
+                using var stream = entry.Open();
+                content = ReadLimited(stream, MaxEntryBytes, MaxImportBytes - total);
+            }
+            catch (InvalidDataException ex)
+            {
+                candidates.Add(new(entry.FullName, Array.Empty<byte>(), ex.Message));
+                if (ex.Message.StartsWith("Archive exceeds", StringComparison.Ordinal)) break;
                 continue;
             }
             total += content.Length;
@@ -309,14 +321,17 @@ public static class LibraryPorter
         return candidates;
     }
 
-    private static byte[] ReadLimited(Stream stream, long limit)
+    private static byte[] ReadLimited(Stream stream, long entryLimit, long remainingTotal)
     {
         using var output = new MemoryStream();
         var buffer = new byte[81920];
         int read;
         while ((read = stream.Read(buffer)) > 0)
         {
-            if (output.Length > limit - read) throw new InvalidDataException("Response exceeds the 10 MB limit.");
+            if (output.Length > entryLimit - read)
+                throw new InvalidDataException("Response exceeds the 10 MB limit.");
+            if (output.Length > remainingTotal - read)
+                throw new InvalidDataException("Archive exceeds the 100 MB response limit.");
             output.Write(buffer, 0, read);
         }
         return output.ToArray();
@@ -391,7 +406,7 @@ public static class LibraryPorter
 
         foreach (string part in value.Replace('\\', '/').Split('/', StringSplitOptions.None))
         {
-            string stem = Path.GetFileNameWithoutExtension(part).ToUpperInvariant();
+            string stem = part.Split('.', 2)[0].ToUpperInvariant();
             bool reserved = stem is "CON" or "PRN" or "AUX" or "NUL"
                 || stem.Length == 4 && (stem.StartsWith("COM") || stem.StartsWith("LPT"))
                     && stem[3] is >= '1' and <= '9';
@@ -415,6 +430,7 @@ public static class LibraryPorter
 
     private static bool HasReparsePoint(string root, string destination)
     {
+        if ((Directory.Exists(root) || File.Exists(root)) && IsReparsePoint(root)) return true;
         string relative = Path.GetRelativePath(root, destination);
         string current = root;
         foreach (string part in relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
