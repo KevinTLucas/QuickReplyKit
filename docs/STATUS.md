@@ -5,16 +5,16 @@
 > **Update this file on every meaningful change** — it's part of the Definition of Done (see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `f303524` · **`dotnet test` = 413 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
+- **`main` tip:** `a8a19a8` · **`dotnet test` = 420 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
 - **App: ✅ feature-complete & merged** — MVP + all V2 features + the end-user continuous-improvement pass are done.
   Polished, launchable, and portable.
-- **⏳ Backlog sprint in progress** (2026-09-06): working through [`BACKLOG.md`](BACKLOG.md) top-down.
-  **Merged to main:** BUG #6 (right-click crash), BUG #1 (dark ComboBox), #2 Automatic text colour, #3 Edit button,
-  #7 diagnostics/logging, #10 backups + restore, #13 About/Diagnostics screen.
-  **Done on branches, in independent QA (merge when green):** #8 tag chips + folder tags + batch-apply
-  (`feature/tags`), #9 import preview (`feature/import-preview`), #12 first-run onboarding (`feature/onboarding`),
-  #4/#5 per-response hotkeys + manager (`feature/hotkeys`).
-  **Not yet started:** #11 in-app trash, #14 accessibility pass.
+- **⏳ Backlog sprint (nearly done)** (2026-09-07): working through [`BACKLOG.md`](BACKLOG.md) top-down.
+  **Merged to main (9):** BUG #6 (right-click crash), BUG #1 (dark ComboBox), #2 Automatic text colour, #3 Edit button,
+  #7 diagnostics/logging, #8 tags (chips + folder tags + batch-apply), #9 import preview, #10 backups + restore,
+  #12 first-run onboarding, #13 About/Diagnostics. (That's 10 — #12/#13 both in.)
+  **Done on branches, in independent QA (merge when green):** #4/#5 per-response hotkeys + manager (`feature/hotkeys`,
+  417 tests), #11 in-app trash + restore + retention (`feature/trash`, 425 tests).
+  **Last item, not yet started:** #14 full accessibility pass.
 - **No open bugs.** Each feature: branch → ponytail → separate-subagent QA → `--no-ff` merge. Every feature ships with
   tests + a `--show-<x>` QA launch override (see App.xaml.cs) so its window can be screenshotted headlessly.
 
