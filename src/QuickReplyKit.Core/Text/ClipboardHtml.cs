@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -39,6 +41,8 @@ public static class ClipboardHtml
             return cfHtml[from..e].Trim();
         }
 
+        if (TryOffsetFragment(cfHtml, out string fragment)) return fragment.Trim();
+
         // No fragment markers: strip a "Version:0.9\nStartHTML:…\n…" CF_HTML header if present.
         if (cfHtml.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
         {
@@ -58,7 +62,7 @@ public static class ClipboardHtml
         if (html.Length == 0) return "";
         try
         {
-            string visible = VisibleMarkup(html);
+            string visible = VisibleMarkup(html, HiddenClasses(html));
             return FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(visible));
         }
         catch { return ""; }
@@ -103,7 +107,7 @@ public static class ClipboardHtml
         }
     }
 
-    private static string VisibleMarkup(string html)
+    private static string VisibleMarkup(string html, HashSet<string> hiddenClasses)
     {
         var output = new StringBuilder(html.Length);
         var skipped = new Stack<string>();
@@ -135,15 +139,15 @@ public static class ClipboardHtml
             string tag = html[i..(end + 1)];
             string name = TagName(tag);
             bool closing = tag.Length > 1 && tag[1] == '/';
-            bool selfClosing = tag.AsSpan(0, tag.Length - 1).TrimEnd().EndsWith("/", StringComparison.Ordinal);
-            bool hasNoContent = selfClosing || VoidElements.Contains(name);
+            bool hasNoContent = VoidElements.Contains(name);
 
             if (skipped.Count > 0)
             {
                 if (closing && name.Equals(skipped.Peek(), StringComparison.OrdinalIgnoreCase)) skipped.Pop();
-                else if (!closing && !hasNoContent && Blocked.Contains(name)) skipped.Push(name);
+                else if (!closing && !hasNoContent
+                    && name.Equals(skipped.Peek(), StringComparison.OrdinalIgnoreCase)) skipped.Push(name);
             }
-            else if (!closing && (Blocked.Contains(name) || Hidden(tag)))
+            else if (!closing && (Blocked.Contains(name) || Hidden(tag, hiddenClasses)))
             {
                 if (!hasNoContent) skipped.Push(name);
             }
@@ -156,7 +160,7 @@ public static class ClipboardHtml
         return output.ToString();
     }
 
-    private static int TagEnd(string html, int from)
+    internal static int TagEnd(string html, int from)
     {
         char quote = '\0';
         for (int i = from; i < html.Length; i++)
@@ -178,9 +182,117 @@ public static class ClipboardHtml
         return tag[start..i];
     }
 
-    private static bool Hidden(string tag) =>
-        Regex.IsMatch(tag, @"\s(hidden|inert)(\s|=|/|>)", RegexOptions.IgnoreCase) ||
-        Regex.IsMatch(tag, "\\saria-hidden\\s*=\\s*(['\"]?)true\\1", RegexOptions.IgnoreCase) ||
-        Regex.IsMatch(tag, @"\b(display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\D|$))",
-            RegexOptions.IgnoreCase);
+    internal static string? Attribute(string tag, string wanted)
+    {
+        int i = 1;
+        while (i < tag.Length && (tag[i] == '/' || char.IsWhiteSpace(tag[i]))) i++;
+        while (i < tag.Length && !char.IsWhiteSpace(tag[i]) && tag[i] is not '>' and not '/') i++;
+        while (i < tag.Length)
+        {
+            while (i < tag.Length && (char.IsWhiteSpace(tag[i]) || tag[i] == '/')) i++;
+            if (i >= tag.Length || tag[i] == '>') break;
+            int nameStart = i;
+            while (i < tag.Length && !char.IsWhiteSpace(tag[i]) && tag[i] is not '=' and not '>' and not '/') i++;
+            string name = tag[nameStart..i];
+            while (i < tag.Length && char.IsWhiteSpace(tag[i])) i++;
+            string value = "";
+            if (i < tag.Length && tag[i] == '=')
+            {
+                i++;
+                while (i < tag.Length && char.IsWhiteSpace(tag[i])) i++;
+                if (i < tag.Length && tag[i] is '\'' or '"')
+                {
+                    char quote = tag[i++];
+                    int start = i;
+                    while (i < tag.Length && tag[i] != quote) i++;
+                    value = tag[start..i];
+                    if (i < tag.Length) i++;
+                }
+                else
+                {
+                    int start = i;
+                    while (i < tag.Length && !char.IsWhiteSpace(tag[i]) && tag[i] != '>') i++;
+                    value = tag[start..i];
+                }
+            }
+            if (name.Equals(wanted, StringComparison.OrdinalIgnoreCase)) return WebUtility.HtmlDecode(value);
+        }
+        return null;
+    }
+
+    private static bool Hidden(string tag, HashSet<string> hiddenClasses)
+    {
+        if (Attribute(tag, "hidden") is not null || Attribute(tag, "inert") is not null
+            || Attribute(tag, "aria-hidden")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        string? classes = Attribute(tag, "class");
+        if (classes?.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+                .Any(hiddenClasses.Contains) == true)
+            return true;
+        return HiddenStyle(Attribute(tag, "style"));
+    }
+
+    private static bool HiddenStyle(string? style)
+    {
+        if (string.IsNullOrEmpty(style)) return false;
+        style = Regex.Replace(style, @"/\*.*?\*/", "", RegexOptions.Singleline);
+        foreach (string declaration in style.Split(';'))
+        {
+            int colon = declaration.IndexOf(':');
+            if (colon < 0) continue;
+            string key = declaration[..colon].Trim();
+            string value = declaration[(colon + 1)..].Trim();
+            if (key.Equals("display", StringComparison.OrdinalIgnoreCase)
+                    && value.Equals("none", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("visibility", StringComparison.OrdinalIgnoreCase)
+                    && (value.Equals("hidden", StringComparison.OrdinalIgnoreCase)
+                        || value.Equals("collapse", StringComparison.OrdinalIgnoreCase))
+                || key.Equals("mso-hide", StringComparison.OrdinalIgnoreCase)
+                    && value.Equals("all", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("opacity", StringComparison.OrdinalIgnoreCase)
+                    && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double opacity)
+                    && opacity == 0)
+                return true;
+        }
+        return false;
+    }
+
+    private static HashSet<string> HiddenClasses(string html)
+    {
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match block in Regex.Matches(html, @"<style\b[^>]*>(.*?)</style\s*>",
+                     RegexOptions.IgnoreCase | RegexOptions.Singleline))
+        foreach (Match rule in Regex.Matches(block.Groups[1].Value, @"([^{}]+)\{([^{}]*)\}",
+                     RegexOptions.Singleline))
+        {
+            if (!HiddenStyle(rule.Groups[2].Value)) continue;
+            foreach (Match cls in Regex.Matches(rule.Groups[1].Value, @"\.([A-Za-z_][\w-]*)"))
+                result.Add(cls.Groups[1].Value);
+        }
+        return result;
+    }
+
+    private static bool TryOffsetFragment(string html, out string fragment)
+    {
+        fragment = "";
+        if (!html.StartsWith("Version:", StringComparison.OrdinalIgnoreCase)
+            || !HeaderOffset(html, "StartFragment", out int start)
+            || !HeaderOffset(html, "EndFragment", out int end)) return false;
+        byte[] bytes = Encoding.UTF8.GetBytes(html);
+        if (start < 0 || end <= start || end > bytes.Length) return false;
+        fragment = Encoding.UTF8.GetString(bytes, start, end - start);
+        return true;
+    }
+
+    private static bool HeaderOffset(string html, string name, out int value)
+    {
+        value = 0;
+        int start = html.IndexOf(name + ":", StringComparison.OrdinalIgnoreCase);
+        if (start < 0) return false;
+        start += name.Length + 1;
+        while (start < html.Length && char.IsWhiteSpace(html[start])) start++;
+        int end = start;
+        while (end < html.Length && char.IsDigit(html[end])) end++;
+        return end > start && int.TryParse(html.AsSpan(start, end - start), out value);
+    }
 }

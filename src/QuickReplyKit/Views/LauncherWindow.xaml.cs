@@ -143,8 +143,18 @@ public partial class LauncherWindow : Window
     private void NewButton_Click(object sender, RoutedEventArgs e) =>
         OpenEditorForNew("");
 
-    private void NewFromClipboardButton_Click(object sender, RoutedEventArgs e) =>
-        OpenEditorForNew(ReadClipboardAsHtml());
+    private async void NewFromClipboardButton_Click(object sender, RoutedEventArgs e)
+    {
+        NewFromClipboardButton.IsEnabled = false;
+        try
+        {
+            var (html, needsSanitizing) = ReadClipboardContent();
+            OpenEditorForNew(needsSanitizing
+                ? await Task.Run(() => ClipboardHtml.Sanitize(html))
+                : ClipboardHtml.FromPlainText(html));
+        }
+        finally { NewFromClipboardButton.IsEnabled = true; }
+    }
 
     private void OpenEditorForNew(string html)
     {
@@ -152,18 +162,18 @@ public partial class LauncherWindow : Window
         // On save the file watcher refreshes the library; nothing else to do here.
     }
 
-    /// <summary>Read the clipboard into subset HTML: prefer HTML, fall back to wrapped plain text.</summary>
-    private static string ReadClipboardAsHtml()
+    /// <summary>Read clipboard data on the UI thread; HTML normalization then runs in the background.</summary>
+    private static (string Content, bool IsHtml) ReadClipboardContent()
     {
         try
         {
             if (Clipboard.ContainsData(DataFormats.Html))
-                return ClipboardHtml.Sanitize(Clipboard.GetData(DataFormats.Html) as string);
+                return (Clipboard.GetData(DataFormats.Html) as string ?? "", true);
             if (Clipboard.ContainsText())
-                return ClipboardHtml.FromPlainText(Clipboard.GetText());
+                return (Clipboard.GetText(), false);
         }
         catch { /* clipboard busy/locked — start empty */ }
-        return "";
+        return ("", false);
     }
 
     // --- Results context menu -----------------------------------------------

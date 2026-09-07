@@ -1,4 +1,5 @@
 using QuickReplyKit.Core.Text;
+using System.Text;
 
 namespace QuickReplyKit.Tests;
 
@@ -24,6 +25,27 @@ public class ClipboardHtmlTests
     {
         string cf = "Version:0.9\r\nStartHTML:0\r\n<html><body><p>x</p></body></html>";
         Assert.Equal("<html><body><p>x</p></body></html>", ClipboardHtml.ExtractFragment(cf));
+    }
+
+    [Fact]
+    public void ExtractFragment_UsesUtf8ByteOffsets_WhenMarkersAreMissing()
+    {
+        const string before = "<html><body>pré";
+        const string fragment = "<p>selected ✓</p>";
+        const string after = "after</body></html>";
+        string header = "Version:0.9\r\nStartHTML:AAAAAAAAAA\r\nEndHTML:BBBBBBBBBB\r\n" +
+            "StartFragment:CCCCCCCCCC\r\nEndFragment:DDDDDDDDDD\r\n";
+        int startHtml = Encoding.UTF8.GetByteCount(header);
+        int startFragment = startHtml + Encoding.UTF8.GetByteCount(before);
+        int endFragment = startFragment + Encoding.UTF8.GetByteCount(fragment);
+        int endHtml = endFragment + Encoding.UTF8.GetByteCount(after);
+        string cf = header
+            .Replace("AAAAAAAAAA", startHtml.ToString("D10"))
+            .Replace("BBBBBBBBBB", endHtml.ToString("D10"))
+            .Replace("CCCCCCCCCC", startFragment.ToString("D10"))
+            .Replace("DDDDDDDDDD", endFragment.ToString("D10")) + before + fragment + after;
+
+        Assert.Equal(fragment, ClipboardHtml.ExtractFragment(cf));
     }
 
     [Fact]
@@ -98,6 +120,30 @@ public class ClipboardHtmlTests
         Assert.Equal("<p>visible</p>",
             ClipboardHtml.Sanitize($"<p>visible<span {attribute}>secret</span></p>"));
 
+    [Fact]
+    public void Sanitize_RemovesCommonOfficeAndStylesheetHiddenContent()
+    {
+        string html = "<style>.css-hidden{display:/**/none}.collapsed{visibility:collapse}</style>" +
+            "<p>visible<span style='mso-hide:all'>office</span>" +
+            "<span class='css-hidden'>css</span><span class='collapsed'>collapsed</span></p>";
+
+        Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize(html));
+    }
+
+    [Fact]
+    public void Sanitize_DoesNotHidePartiallyTransparentContent() =>
+        Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize("<p style='opacity:.5'>visible</p>"));
+
+    [Fact]
+    public void Sanitize_RemovesSelfClosingSyntaxForBlockedContainer() =>
+        Assert.Equal("<p>beforeafter</p>",
+            ClipboardHtml.Sanitize("<p>before<script/>secret</script>after</p>"));
+
+    [Fact]
+    public void Sanitize_RemovesNestedHiddenElementsWithoutLeakingText() =>
+        Assert.Equal("<p>visibleafter</p>",
+            ClipboardHtml.Sanitize("<p>visible<span hidden>outer<span>inner</span>secret</span>after</p>"));
+
     [Theory]
     [InlineData("javascript:alert(1)")]
     [InlineData("file:///c:/secret.txt")]
@@ -111,6 +157,21 @@ public class ClipboardHtmlTests
     public void Sanitize_KeepsSafeLinks(string uri) =>
         Assert.Equal($"<p><a href=\"{uri}\">open</a></p>",
             ClipboardHtml.Sanitize($"<p><a href=\"{uri}\">open</a></p>"));
+
+    [Fact]
+    public void Sanitize_ParsesUnquotedAndEntityEncodedSafeLink() =>
+        Assert.Equal("<p><a href=\"https://example.com/a?x=1&amp;y=2\">open</a></p>",
+            ClipboardHtml.Sanitize("<p><a href=https://example.com/a?x=1&amp;y=2>open</a></p>"));
+
+    [Fact]
+    public void Sanitize_RejectsEntityEncodedUnsafeLink() =>
+        Assert.Equal("<p><a>open</a></p>",
+            ClipboardHtml.Sanitize("<p><a href=java&#x73;cript:alert(1)>open</a></p>"));
+
+    [Fact]
+    public void Sanitize_HandlesGreaterThanInsideQuotedAttribute() =>
+        Assert.Equal("<p>visible</p>",
+            ClipboardHtml.Sanitize("<p title='x>y'>visible</p>"));
 
     [Fact]
     public void Sanitize_KeepsSupportedFormattingAndDropsUnsupportedStyles() =>
