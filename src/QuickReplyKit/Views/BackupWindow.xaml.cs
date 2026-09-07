@@ -41,9 +41,16 @@ public partial class BackupWindow : Window
 
     private void BackupNow_Click(object sender, RoutedEventArgs e)
     {
-        var path = LibraryBackup.Create(_libraryRoot, AppPaths.BackupsDir, "manual");
-        if (path is null)
-            ConfirmDialog.Info(this, "Nothing to back up", "Your library is empty — no snapshot was taken.");
+        try
+        {
+            var path = LibraryBackup.Create(_libraryRoot, AppPaths.BackupsDir, "manual");
+            if (path is null)
+                ConfirmDialog.Info(this, "Nothing to back up", "Your library is empty — no snapshot was taken.");
+        }
+        catch (Exception ex)
+        {
+            ConfirmDialog.Info(this, "Backup failed", "Couldn't create a snapshot:\n" + ex.Message);
+        }
         Refresh();
     }
 
@@ -52,17 +59,26 @@ public partial class BackupWindow : Window
         if (BackupList.SelectedItem is not Row row) return;
         bool ok = ConfirmDialog.Confirm(this, "Restore library",
             $"Replace your current library with the snapshot from {row.Info.Created:yyyy-MM-dd HH:mm:ss}?\n" +
-            "Your current library is snapshotted first, so you can undo this.",
+            "Your current library is snapshotted first, so you can undo this.\n\n" +
+            "Modern snapshots also replace local settings and restart QuickReplyKit. " +
+            "The restored library stays at its current location. Legacy snapshots replace only the library.",
             "Restore", destructive: true);
         if (!ok) return;
 
         try
         {
-            LibraryBackup.Restore(row.Info.Path, _libraryRoot, AppPaths.BackupsDir);
+            bool settingsRestored = LibraryBackup.Restore(row.Info.Path, _libraryRoot, AppPaths.BackupsDir);
             _library.Reload();
             _onLibraryChanged();
             Refresh();
-            ConfirmDialog.Info(this, "Library restored", "The library was restored from the snapshot.");
+            if (settingsRestored)
+            {
+                ConfirmDialog.Info(this, "Library restored",
+                    "The library and settings were restored. QuickReplyKit will restart to apply them.");
+                (Application.Current as App)?.RestartAfterRestore();
+            }
+            else
+                ConfirmDialog.Info(this, "Library restored", "The library was restored from the legacy snapshot.");
         }
         catch (Exception ex)
         {

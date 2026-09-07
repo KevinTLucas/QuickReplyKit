@@ -27,6 +27,9 @@ public partial class LauncherWindow : Window
 
     /// <summary>Set when a --size override is in effect (screenshots) so saved bounds don't fight it.</summary>
     public bool SuppressBoundsRestore { get; set; }
+
+    /// <summary>Set during a config restore so shutdown cannot overwrite the restored file.</summary>
+    public bool SuppressBoundsSave { get; set; }
     private bool _boundsRestored;     // restore once, on the first show
 
     public LauncherWindow(LauncherViewModel vm, AppConfig config)
@@ -405,8 +408,13 @@ public partial class LauncherWindow : Window
         var policy = ImportPreviewWindow.Prompt(this, entries);
         if (policy == null) return;   // cancelled
 
-        // Auto-snapshot before a bulk write so a botched import is a one-click Restore away.
-        LibraryBackup.Create(_vm.LibraryRoot, AppPaths.BackupsDir, "before import");
+        // A bulk write never starts unless the current library can be protected first.
+        try { LibraryBackup.CreateRequired(_vm.LibraryRoot, AppPaths.BackupsDir, "before import"); }
+        catch (IOException ex)
+        {
+            ConfirmDialog.Info(this, "Import canceled", ex.Message);
+            return;
+        }
 
         var result = LibraryPorter.Import(_vm.LibraryRoot, source, target, policy.Value);
         ConfirmDialog.Info(this, "Import complete", SummaryText(result, policy.Value));
@@ -512,7 +520,7 @@ public partial class LauncherWindow : Window
     /// <summary>Persist the current normal-state bounds (and the monitor it sits on) to config.</summary>
     private void SaveBounds()
     {
-        if (!_config.RememberWindow || WindowState != WindowState.Normal || !IsVisible) return;
+        if (SuppressBoundsSave || !_config.RememberWindow || WindowState != WindowState.Normal || !IsVisible) return;
 
         _config.Window = new WindowBounds
         {

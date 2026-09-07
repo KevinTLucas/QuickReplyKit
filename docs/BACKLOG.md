@@ -9,16 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P0 - Bugs First
 
-### B02 - Backup restore correctness and completeness
-
-- **Severity:** P0
-- **Status:** Confirmed by source audit
-- **Impact:** Restore can fail or leave a partially replaced library, creating data-loss risk.
-- **Acceptance:** Protect/copy the selected archive before pre-restore pruning; stage and swap with rollback rather
-  than delete-then-copy; restoring the oldest retained backup works; forced replacement failure preserves the original
-  library; snapshots include config while older library-only archives remain restorable; retention has count plus
-  size/age bounds; required backups fail closed with a clear message before risky operations.
-
 ### B03 - Import preview/import trust and integrity
 
 - **Severity:** P0

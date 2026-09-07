@@ -127,7 +127,7 @@ Open from the ⚙ button or the tray. You can set:
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
 - **Keyboard shortcuts…** — opens the shortcuts manager (see below).
-- **Back up / Restore Library…** — create a snapshot or restore one of the 10 rolling library backups.
+- **Back up / Restore Library…** — create or restore one of the 10 rolling library-and-settings snapshots.
 - **Trash…** — restore deleted responses, remove one permanently, or empty Trash. Deleted responses
   are kept for 30 days by default.
 - **Diagnostics** — enable verbose logging, open the rolling logs folder, or open About / Diagnostics.
@@ -146,9 +146,12 @@ box — press any combination to see what it's bound to — plus a filter over t
 
 ## Backups, Trash, and diagnostics
 
-- QuickReplyKit automatically creates a rolling library backup before an import; you can create or restore a
-  snapshot from **Settings → Back up / Restore Library…**. Restore snapshots the current library first, so the
-  rollback can itself be undone.
+- QuickReplyKit automatically creates a required rolling backup before an import; if that safety copy cannot be
+  written, the import is canceled before it changes anything. You can create or restore a snapshot from
+  **Settings → Back up / Restore Library…**. Current snapshots contain the response library and app settings;
+  older library-only snapshots still work. Restore protects the selected archive, snapshots the current state, and
+  validates and swaps the staged library into place with rollback on failure. Restored settings keep the current
+  library location, and QuickReplyKit restarts after applying them. Backup extraction is bounded against oversized ZIPs.
 - Deleted responses move to **Settings → Trash…**, where they can be restored unless another response now occupies
   the original path. Permanent delete and Empty Trash require confirmation.
 - Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and never include response
@@ -161,8 +164,6 @@ box — press any combination to see what it's bound to — plus a filter over t
 - In a mixed import, identical existing files still follow the selected batch conflict policy. Use **Skip** when you
   do not want identical responses overwritten or copied; the preview/import alignment fix is tracked in the backlog.
 - Folder tags travel with direct folder copies and exports, but the current ZIP import skips their sidecar metadata.
-- Restoring the oldest retained backup can fail if creating the pre-restore snapshot prunes it. Prefer a newer backup
-  and keep an external library copy before a critical restore until the tracked restore fix ships.
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the audited state and [`docs/BACKLOG.md`](docs/BACKLOG.md) for remaining work.
 
