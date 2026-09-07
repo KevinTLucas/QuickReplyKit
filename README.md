@@ -78,6 +78,9 @@ So: copy the one exe to any supported Windows PC and it runs — no prerequisite
 
 From the launcher you can, via the `+` / clipboard buttons and the right-click menu on a response:
 
+The active folder or built-in view is marked with a slim selection edge and emphasized label, so the current search
+scope remains visible in Light, Dark, and Windows High Contrast themes.
+
 - **New** — create a response and choose (or create) its folder in the hierarchy.
 - **New from clipboard** — turn whatever you just copied into a new response, opened in the editor. Clipboard HTML
   is reduced to QuickReplyKit's supported formatting; scripts, hidden/embedded content, and unsafe links are removed.
