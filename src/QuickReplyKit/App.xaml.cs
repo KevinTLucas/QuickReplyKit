@@ -131,7 +131,7 @@ public partial class App : Application
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 var dialog = new Views.BackupWindow(
-                    _config!.LibraryPath, _library!, () => _vm!.OnLibraryUpdated());
+                    _config!.LibraryPath, _config.BackupPath, _library!, () => _vm!.OnLibraryUpdated());
                 if (_launcher is { IsVisible: true }) dialog.Owner = _launcher;
                 else dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 dialog.ShowDialog();

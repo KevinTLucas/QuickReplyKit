@@ -46,6 +46,7 @@ public partial class AboutWindow : Window
         sb.AppendLine();
         Row("Config file", AppPaths.ConfigPath);
         Row("Logs folder", AppPaths.LogsDir);
+        Row("Backup folder", config.BackupPath);
 
         DiagText.Text = sb.ToString();
         TagLine.Text = $"Response launcher · v{App.Version}";

@@ -41,6 +41,7 @@ public sealed class AppConfig
 {
     public string HotkeyGesture { get; set; } = "Ctrl+Alt+D";
     public string LibraryPath { get; set; } = AppPaths.DefaultLibraryDir;
+    public string BackupPath { get; set; } = AppPaths.BackupsDir;
     public WindowBounds Window { get; set; } = new();
     public PasteMode DefaultPasteMode { get; set; } = PasteMode.RichText;
 
@@ -84,6 +85,7 @@ public sealed class AppConfig
                     // Guard against explicit nulls in the file.
                     if (string.IsNullOrEmpty(cfg.HotkeyGesture)) cfg.HotkeyGesture = "Ctrl+Alt+D";
                     if (string.IsNullOrEmpty(cfg.LibraryPath)) cfg.LibraryPath = AppPaths.DefaultLibraryDir;
+                    if (string.IsNullOrWhiteSpace(cfg.BackupPath)) cfg.BackupPath = AppPaths.BackupsDir;
                     cfg.Window ??= new WindowBounds();
                     cfg.ResponseHotkeys ??= new();
                     return cfg;
