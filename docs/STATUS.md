@@ -6,15 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `5c30e8e` (B15 feature tip plus QA fixes; merge commit follows); use `git rev-parse HEAD` for the
+- **Current product merge:** `578847b` (B15 About / Diagnostics); use `git rev-parse HEAD` for the
   docs-inclusive tip.
 - **Current product baseline:** B01-B15 are complete.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **567 passed** after B15 independent correctness, privacy, and UI QA; build remains clean.
-- **Portable publish:** the current self-contained build is at `publish/latest/QuickReplyKit.exe` and is rebuilt after
-  every product merge. The canonical
-  `publish/QuickReplyKit.exe` was locked by the user's running instance and was deliberately not closed or replaced;
-  the next unlocked product publish promotes the latest build. No external .NET install is needed.
+- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/latest/QuickReplyKit.exe` were rebuilt from B15 `main`
+  and match at 70,013,943 bytes. The published rich-clipboard self-test exits 0. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
