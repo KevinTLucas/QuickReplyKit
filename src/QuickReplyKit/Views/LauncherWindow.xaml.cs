@@ -338,20 +338,28 @@ public partial class LauncherWindow : Window
             _vm.CurrentCategory, _vm.CategoryPaths(), allowEmpty: true);
         if (target == null) return;
 
-        var policy = ConflictPolicy.Skip;
-        int conflicts = ImportCoordinator.CountConflicts(_vm.LibraryRoot, source, target);
-        if (conflicts > 0)
+        // Preview first: show exactly what's new / changed / identical before writing anything, and
+        // (when there are conflicts) pick the policy right there.
+        List<ImportEntry> entries;
+        try { entries = ImportPreview.Analyze(_vm.LibraryRoot, source, target); }
+        catch (Exception ex)
         {
-            var choice = ConfirmDialog.AskImportConflict(this, conflicts);
-            if (choice == null) return;   // cancelled
-            policy = choice.Value;
+            ConfirmDialog.Info(this, "Can't read that file", "Import preview failed:\n" + ex.Message);
+            return;
         }
+        if (entries.Count == 0)
+        {
+            ConfirmDialog.Info(this, "Nothing to import", "No responses were found in that file.");
+            return;
+        }
+        var policy = ImportPreviewWindow.Prompt(this, entries);
+        if (policy == null) return;   // cancelled
 
         // Auto-snapshot before a bulk write so a botched import is a one-click Restore away.
         LibraryBackup.Create(_vm.LibraryRoot, AppPaths.BackupsDir, "before import");
 
-        var result = LibraryPorter.Import(_vm.LibraryRoot, source, target, policy);
-        ConfirmDialog.Info(this, "Import complete", SummaryText(result, policy));
+        var result = LibraryPorter.Import(_vm.LibraryRoot, source, target, policy.Value);
+        ConfirmDialog.Info(this, "Import complete", SummaryText(result, policy.Value));
     }
 
     /// <summary>Human summary of an import outcome, tailored to the policy that was applied.</summary>
