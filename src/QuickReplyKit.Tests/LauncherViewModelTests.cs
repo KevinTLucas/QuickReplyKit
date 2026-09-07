@@ -968,4 +968,21 @@ public class LauncherViewModelTests
             Assert.Equal(NavScope.All, vm.SelectedNav!.Scope);
         });
     }
+
+    [Fact]
+    public void SelectingDeepFolder_MarksOnlyThatNavNodeSelected()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            SeedTree(dir);
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+            var deepFolder = Nav(vm, NavScope.Category, "Cat1/Sub");
+
+            vm.SelectedNav = deepFolder;
+
+            Assert.Same(deepFolder, Assert.Single(Flatten(vm.NavRoots), n => n.IsSelected));
+        });
+    }
 }

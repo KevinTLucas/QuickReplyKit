@@ -29,7 +29,7 @@ public class AccessibilityDialogTests
     [InlineData("AssignHotkeyWindow.xaml", "ErrorText", "Assertive")]
     [InlineData("BackupWindow.xaml", "EmptyHint", "Polite")]
     [InlineData("HotkeyManagerWindow.xaml", "SearchResult", "Polite")]
-    [InlineData("ImportPreviewWindow.xaml", "Summary", "Polite")]
+    [InlineData("ImportPreviewWindow.xaml", "SelectionSummary", "Polite")]
     [InlineData("InputDialog.xaml", "ErrorText", "Assertive")]
     [InlineData("SettingsWindow.xaml", "HotkeyError", "Assertive")]
     [InlineData("SettingsWindow.xaml", "BackupPathError", "Assertive")]
@@ -54,8 +54,9 @@ public class AccessibilityDialogTests
 
         var import = Load("ImportPreviewWindow.xaml").Root!;
         Assert.Equal("CanResizeWithGrip", (string?)import.Attribute("ResizeMode"));
-        Assert.True(double.Parse((string)import.Attribute("Width")!) <= 600);
-        Assert.True(double.Parse((string)import.Attribute("MinWidth")!) <= 420);
+        Assert.True(double.Parse((string)import.Attribute("Width")!) <= 760);
+        Assert.True(double.Parse((string)import.Attribute("MinWidth")!) <= 520);
+        Assert.True(double.Parse((string)import.Attribute("Height")!) <= 540);
     }
 
     private static XDocument Load(string file) => XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/" + file));
