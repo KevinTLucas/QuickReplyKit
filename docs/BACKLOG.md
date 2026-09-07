@@ -12,7 +12,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B04 - Sanitize Create from Clipboard content
 
 - **Severity:** P1 (trust/content safety)
-- **Status:** Three security-QA rounds completed and findings corrected on `bugfix/clipboard-sanitization`; final
+- **Status:** Four security-QA rounds completed and findings corrected on `bugfix/clipboard-sanitization`; final
   verification pending
 - **Impact:** Clipboard HTML can carry scripts, event attributes, embedded objects, unsafe links, or editor-specific
   markup that should never enter a response.
@@ -21,15 +21,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   markup are removed. Legitimate visible `<code>`/`<pre>` snippets remain as safely encoded visible text; allowed
   formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
   sanitizer tests cover active content and URL schemes.
-
-### B06 - Repair Settings layout and About area
-
-- **Severity:** P1
-- **Status:** Confirmed UI defect
-- **Impact:** Settings content, especially the About/Diagnostics area, is truncated or broken at real display scales.
-- **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
-  and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;
-  screenshots and UI Automation verify every control remains reachable.
 
 ### B08 - Delete and restore folders through Trash
 
@@ -54,7 +45,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B10 - Outlook-style folder-scoped search chip
 
 - **Severity:** P1
-- **Status:** Queued; implement after B05
+- **Status:** Queued
 - **Impact:** Users need visible, predictable folder filtering while typing a global search.
 - **Acceptance:** Selecting a folder adds a removable chip in/adjacent to the search field and limits results to that
   folder subtree; selecting another folder replaces it; removing the chip or selecting All Responses returns global
@@ -105,7 +96,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B15 - Complete About / Diagnostics status
 
 - **Severity:** P2
-- **Status:** Confirmed remaining gap; foundation shipped in `23468f7`; coordinate with B06/B13/B14
+- **Status:** Confirmed remaining gap; foundation shipped in `23468f7`; coordinate with B13/B14
 - **Impact:** Support snapshot predates response hotkeys, backups, and Trash.
 - **Acceptance:** Report actual launcher registration, configured/registered/failed response-hotkey counts, library and
   watcher state, config/log/backup/Trash paths, version/OS/runtime, and logging mode; copyable and safe to attach; no

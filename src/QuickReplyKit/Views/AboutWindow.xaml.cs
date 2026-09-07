@@ -19,6 +19,10 @@ public partial class AboutWindow : Window
     public AboutWindow(AppConfig config, LibraryService library)
     {
         InitializeComponent();
+        void LimitHeight() => MaxHeight = Math.Max(MinHeight, System.Windows.Forms.Screen
+            .FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle).WorkingArea.Height
+            / System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleY);
+        Loaded += (_, _) => { LimitHeight(); LocationChanged += (_, _) => LimitHeight(); };
         _library = config.LibraryPath;
 
         var snap = library.Snapshot;

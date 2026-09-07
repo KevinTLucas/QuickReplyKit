@@ -95,6 +95,9 @@ view-models, interop, and app wiring.
 - No mouse/keyboard hooks — only `RegisterHotKey` — so other apps' right-click menus are never affected.
 
 ## Windows/UI behaviour
+- Settings uses a scrolling content region with a fixed action footer; About uses a stretchable diagnostics pane and
+  wrapping actions. Both dialogs are resizable and capped to the available work-area height so controls remain
+  reachable on short or high-scale displays.
 - Single instance; system tray (Open / Open Library / Import / Export / Settings / Exit). Global hotkey via
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).

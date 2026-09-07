@@ -38,6 +38,10 @@ public partial class SettingsWindow : Window
         _libraryPath = config.LibraryPath;
 
         InitializeComponent();
+        void LimitHeight() => MaxHeight = Math.Max(MinHeight, System.Windows.Forms.Screen
+            .FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle).WorkingArea.Height
+            / System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleY);
+        Loaded += (_, _) => { LimitHeight(); LocationChanged += (_, _) => LimitHeight(); };
 
         HotkeyBox.Text = _gesture;
         LibraryPathBox.Text = _libraryPath;
