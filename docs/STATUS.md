@@ -6,22 +6,23 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `92709d0` before this backlog-planning branch.
+- **Current `main`:** `70e3b0b` (B01 fix plus handoff update); product merge `c596e29`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
-- **Tests:** **435 passed, 0 failed, 0 skipped**.
+- **Tests:** **436 passed, 0 failed, 0 skipped**.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** every completed feature branch listed below is already an ancestor of `main`; there are no
   unmerged feature commits. Several merged branches/worktrees remain locally and may be pruned later.
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
-  16 ordered items with severity, acceptance criteria, and status. Confirmed crash/data-loss/import defects lead;
+  15 ordered items with severity, acceptance criteria, and status. Confirmed data-loss/import defects lead;
   sandboxed scripting is active but deliberately last behind its security prerequisites.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| #1 dark-mode Category ComboBox + original #6 right-click fix | `d562052` | 6/6 QA; both themes; original reentrancy path survived 80 rapid clicks | Crash reopened as B01 with a different logged cause |
+| B01 repeated right-click crash | `c596e29` | 436/436; 150 rapid cycles per theme; actions usable; log delta clean | Complete |
+| #1 dark-mode Category ComboBox + original #6 right-click fix | `d562052` | 6/6 QA; both themes; original reentrancy path survived 80 rapid clicks | Original fix; later Run crash closed by B01 |
 | #7 rolling diagnostics/logging | `8f74aa9` | 9/9 feature QA; rollover, levels, crash channels, no response-body logging | Partial: requested workflow coverage remains |
 | #2 editor palettes + #3 visible Edit action | `20d808c` | 6/6 QA; both themes; edit opens pre-filled | Complete |
 | #13 About / Diagnostics screen | `23468f7` | Both themes; values, copy, and folder actions checked | Partial: see open work |
@@ -33,7 +34,7 @@
 | #4/#5 per-response instant-paste hotkeys + manager | `a0615b2` | 9/9 QA; live no-window paste, clipboard restore, conflict/search checks | Complete |
 
 The final hotkey merge had conflicts in `AppConfig`, `App.xaml.cs`, `SettingsWindow.xaml.cs`, and this status
-file. The integrated result was rebuilt and retested during this audit: all 435 tests pass.
+file. The integrated result was rebuilt and retested during that audit at 435 tests; B01 adds the 436th test.
 
 ## What Ships Today
 
@@ -56,17 +57,21 @@ file. The integrated result was rebuilt and retested during this audit: all 435 
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B01 P0:** reproduce and fix the user-reported repeated right-click crash, including log verification.
-2. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
-3. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
-4. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
-5. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
-6. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
-7. **B16 P2:** sandboxed dynamic-variable scripts, only after its import, sanitizer, accessibility, and logging gates.
+1. **B02 P0:** correct backup restore pruning/atomicity and complete data-safety coverage.
+2. **B03 P0:** fix import preview/import containment, invalid/identical/duplicate plan integrity.
+3. **B04-B07 P1:** clipboard sanitization, search relevance, Settings/About layout, and dark hover contrast.
+4. **B08-B11 P1:** folder Trash, remove folder tags, scoped-search chip, and full accessibility.
+5. **B12-B15 P2:** clearer Import/Export UI, configurable backup path, logging, and diagnostics completion.
+6. **B16 P2:** sandboxed dynamic-variable scripts, only after its import, sanitizer, accessibility, and logging gates.
 
-**Known confirmed regressions/defects:** repeated right-click crash (user report), backup restore correctness,
-import preview/import disagreement and preview containment, search false positives, dark hover contrast, and clipped
+**Known confirmed regressions/defects:** backup restore correctness, import preview/import disagreement and preview
+containment, search false positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
+
+**Active worktrees:** `bugfix/backup-restore-integrity` contains an uncommitted B02 implementation under review;
+`bugfix/import-integrity` contains an early uncommitted B03 planner. Their agents stopped at the current usage limit,
+so resume these exact worktrees rather than starting duplicate branches. Branch names must stay human-readable and
+must not contain AI/vendor names, agent IDs, or generated session labels.
 
 ## Known Limits / Human Checks
 
@@ -87,7 +92,7 @@ Settings/About layout. Treat them as bugs, not optional polish.
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **435** green. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **436** green. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    both-theme screenshots, the four self-tests, a no-regression run, and a `--no-ff` merge.
 6. Update this file, BACKLOG, README, and ARCHITECTURE as appropriate before considering the change done.

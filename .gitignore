@@ -16,6 +16,7 @@ TestResults/
 
 ## Agent worktrees / session data
 .claude/
+.worktrees/
 
 ## OS
 Thumbs.db

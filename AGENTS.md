@@ -19,12 +19,13 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** `main` product baseline `a0615b2`; build clean; all
-feature branches through per-response hotkeys and in-app Trash are merged and independently QA'd. The app is
-launchable, but the backlog is **not empty**: the audit found import/backup correctness bugs, full accessibility is
-unstarted, and backup/Trash/import/About have completion gaps. Read `docs/STATUS.md` for the current test count and
-evidence matrix, and `docs/BACKLOG.md` for the exact next work.
+**Current state (audited 2026-09-07):** `main` includes the B01 right-click crash fix and is green at 436 tests.
+The app is launchable, but the backlog is **not empty**: backup and import integrity lead the remaining work, followed
+by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STATUS.md` for the current evidence and
+`docs/BACKLOG.md` for the exact next item.
 
 **Golden rules (detailed in `CLAUDE.md`):** `main` is always green; each change on a branch → ponytail (BCL/native
 only, no NuGet) → separate-subagent QA → merge `--no-ff`; **update the handoff docs (STATUS.md first) on every change** —
 a change isn't done until code, tests, and docs are consistent. That discipline is what preserves continuity.
+Use concise, human-readable branch names that describe the feature or bug; never include an AI/vendor name, agent UUID,
+or generated worktree/session identifier.
