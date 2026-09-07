@@ -19,8 +19,8 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** `main` includes the B01 right-click crash fix and B02 backup/restore integrity
-and is green at 443 tests. The app is launchable, but the backlog is **not empty**: import integrity leads the remaining work, followed
+**Current state (audited 2026-09-07):** `main` includes B01-B03 and is green at 452 tests. The app is launchable, but
+the backlog is **not empty**: clipboard sanitization leads the remaining work, followed
 by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STATUS.md` for the current evidence and
 `docs/BACKLOG.md` for the exact next item.
 

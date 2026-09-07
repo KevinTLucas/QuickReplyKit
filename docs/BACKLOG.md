@@ -7,19 +7,6 @@ Priority is based on crash/core-workflow impact, data-loss or trust-boundary ris
 P3 = optional polish. **Status:** Confirmed, Investigating, Queued, In progress, QA, or Blocked. A shipped foundation
 may still have a Confirmed remaining gap; its merge is noted in the item.
 
-## P0 - Bugs First
-
-### B03 - Import preview/import trust and integrity
-
-- **Severity:** P0
-- **Status:** Security re-QA passed on `bugfix/import-integrity`; current-main integration and final regression in progress
-- **Impact:** Preview and actual writes can disagree; crafted ZIP paths are probed before containment; invalid entries
-  are mislabelled; identical files may be overwritten or duplicated.
-- **Acceptance:** Preview performs canonical path containment before destination reads; invalid entries are explicitly
-  labelled and valid siblings remain importable; Identical is always a no-op; same-content duplicates at another path
-  are distinguished; per-item conflict choices work alongside apply-to-all; preview plan and import result agree in
-  adversarial mixed ZIP tests. Legacy `.qrkfolder.json` is ignored safely regardless of when B09 lands.
-
 ## P1 - Core Workflow And Major UI
 
 ### B04 - Sanitize Create from Clipboard content
@@ -147,7 +134,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B16 - Sandboxed user scripts for dynamic variables
 
 - **Severity:** P2 feature; security-critical design
-- **Status:** Queued last after B03/B04/B11/B14
+- **Status:** Queued last after B04/B11/B14
 - **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
 - **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
   scripts; persist definitions in a documented format; invoke them with explicit template syntax such as
