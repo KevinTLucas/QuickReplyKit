@@ -116,6 +116,9 @@ public partial class SettingsWindow : Window
     private void About_Click(object sender, RoutedEventArgs e) =>
         new AboutWindow(_config, _library) { Owner = this }.ShowDialog();
 
+    private void Backup_Click(object sender, RoutedEventArgs e) =>
+        new BackupWindow(_config.LibraryPath, _library, _onLibraryChanged) { Owner = this }.ShowDialog();
+
     // --- Save ---------------------------------------------------------------
 
     private void Save_Click(object sender, RoutedEventArgs e)

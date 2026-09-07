@@ -347,6 +347,9 @@ public partial class LauncherWindow : Window
             policy = choice.Value;
         }
 
+        // Auto-snapshot before a bulk write so a botched import is a one-click Restore away.
+        LibraryBackup.Create(_vm.LibraryRoot, AppPaths.BackupsDir, "before import");
+
         var result = LibraryPorter.Import(_vm.LibraryRoot, source, target, policy);
         ConfirmDialog.Info(this, "Import complete", SummaryText(result, policy));
     }

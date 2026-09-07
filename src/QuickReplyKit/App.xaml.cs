@@ -125,6 +125,10 @@ public partial class App : Application
             Dispatcher.BeginInvoke(new Action(() =>
                 new Views.AboutWindow(_config!, _library!) { Owner = _launcher }.ShowDialog()));
 
+        if (e.Args.Any(a => a.Equals("--show-backup", StringComparison.OrdinalIgnoreCase)))
+            Dispatcher.BeginInvoke(new Action(() => new Views.BackupWindow(
+                _config!.LibraryPath, _library!, () => _vm!.OnLibraryUpdated()) { Owner = _launcher }.ShowDialog()));
+
         // Run the initial library scan in the background; it populates the (already-visible) launcher
         // via Updated → Dispatcher. The window is interactive immediately, showing "Loading library…".
         Task.Run(() => _library.LoadInitial());
