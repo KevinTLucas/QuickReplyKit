@@ -33,19 +33,15 @@ public class ClipboardHtmlTests
         const string before = "<html><body>pré";
         const string fragment = "<p>selected ✓</p>";
         const string after = "after</body></html>";
-        string header = "Version:0.9\r\nStartHTML:AAAAAAAAAA\r\nEndHTML:BBBBBBBBBB\r\n" +
-            "StartFragment:CCCCCCCCCC\r\nEndFragment:DDDDDDDDDD\r\n";
-        int startHtml = Encoding.UTF8.GetByteCount(header);
-        int startFragment = startHtml + Encoding.UTF8.GetByteCount(before);
-        int endFragment = startFragment + Encoding.UTF8.GetByteCount(fragment);
-        int endHtml = endFragment + Encoding.UTF8.GetByteCount(after);
-        string cf = header
-            .Replace("AAAAAAAAAA", startHtml.ToString("D10"))
-            .Replace("BBBBBBBBBB", endHtml.ToString("D10"))
-            .Replace("CCCCCCCCCC", startFragment.ToString("D10"))
-            .Replace("DDDDDDDDDD", endFragment.ToString("D10")) + before + fragment + after;
+        Assert.Equal(fragment, ClipboardHtml.ExtractFragment(WithOffsets(before, fragment, after)));
+    }
 
-        Assert.Equal(fragment, ClipboardHtml.ExtractFragment(cf));
+    [Fact]
+    public void ExtractFragment_ValidByteOffsetsOverrideUntrustedMarkerComments()
+    {
+        const string before = "<html><body><!--StartFragment--><p>wrong</p><!--EndFragment-->";
+        const string fragment = "<p>selected</p>";
+        Assert.Equal(fragment, ClipboardHtml.ExtractFragment(WithOffsets(before, fragment, "</body></html>")));
     }
 
     [Fact]
@@ -130,6 +126,14 @@ public class ClipboardHtmlTests
         Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize(html));
     }
 
+    [Theory]
+    [InlineData("display:none!important")]
+    [InlineData("visibility:hidden !important")]
+    [InlineData("mso-hide:all !IMPORTANT")]
+    public void Sanitize_RemovesImportantHiddenContent(string style) =>
+        Assert.Equal("<p>visible</p>",
+            ClipboardHtml.Sanitize($"<p>visible<span style='{style}'>secret</span></p>"));
+
     [Fact]
     public void Sanitize_DoesNotHidePartiallyTransparentContent() =>
         Assert.Equal("<p>visible</p>", ClipboardHtml.Sanitize("<p style='opacity:.5'>visible</p>"));
@@ -189,4 +193,23 @@ public class ClipboardHtmlTests
     [InlineData("<!-- unterminated")]
     public void Sanitize_MalformedInput_NeverThrows(string html) =>
         Assert.Null(Record.Exception(() => ClipboardHtml.Sanitize(html)));
+
+    [Fact]
+    public void Sanitize_RejectsOversizedClipboardHtml() =>
+        Assert.Equal("", ClipboardHtml.Sanitize(new string('x', ClipboardHtml.MaxInputChars + 1)));
+
+    private static string WithOffsets(string before, string fragment, string after)
+    {
+        string header = "Version:0.9\r\nStartHTML:AAAAAAAAAA\r\nEndHTML:BBBBBBBBBB\r\n" +
+            "StartFragment:CCCCCCCCCC\r\nEndFragment:DDDDDDDDDD\r\n";
+        int startHtml = Encoding.UTF8.GetByteCount(header);
+        int startFragment = startHtml + Encoding.UTF8.GetByteCount(before);
+        int endFragment = startFragment + Encoding.UTF8.GetByteCount(fragment);
+        int endHtml = endFragment + Encoding.UTF8.GetByteCount(after);
+        return header
+            .Replace("AAAAAAAAAA", startHtml.ToString("D10"))
+            .Replace("BBBBBBBBBB", endHtml.ToString("D10"))
+            .Replace("CCCCCCCCCC", startFragment.ToString("D10"))
+            .Replace("DDDDDDDDDD", endFragment.ToString("D10")) + before + fragment + after;
+    }
 }

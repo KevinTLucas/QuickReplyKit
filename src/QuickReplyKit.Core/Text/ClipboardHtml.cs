@@ -14,6 +14,7 @@ namespace QuickReplyKit.Core.Text;
 /// </summary>
 public static class ClipboardHtml
 {
+    public const int MaxInputChars = 1_000_000;
     private const string StartMarker = "<!--StartFragment-->";
     private const string EndMarker = "<!--EndFragment-->";
     private static readonly HashSet<string> Blocked = new(StringComparer.OrdinalIgnoreCase)
@@ -33,6 +34,8 @@ public static class ClipboardHtml
     {
         if (string.IsNullOrEmpty(cfHtml)) return "";
 
+        if (TryOffsetFragment(cfHtml, out string fragment)) return fragment.Trim();
+
         int s = cfHtml.IndexOf(StartMarker, StringComparison.OrdinalIgnoreCase);
         int e = cfHtml.IndexOf(EndMarker, StringComparison.OrdinalIgnoreCase);
         if (s >= 0 && e > s)
@@ -40,8 +43,6 @@ public static class ClipboardHtml
             int from = s + StartMarker.Length;
             return cfHtml[from..e].Trim();
         }
-
-        if (TryOffsetFragment(cfHtml, out string fragment)) return fragment.Trim();
 
         // No fragment markers: strip a "Version:0.9\nStartHTML:…\n…" CF_HTML header if present.
         if (cfHtml.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
@@ -58,6 +59,7 @@ public static class ClipboardHtml
     /// unsupported tags and attributes.</summary>
     public static string Sanitize(string? cfHtml)
     {
+        if (cfHtml?.Length > MaxInputChars) return "";
         string html = ExtractFragment(cfHtml);
         if (html.Length == 0) return "";
         try
@@ -241,7 +243,8 @@ public static class ClipboardHtml
             int colon = declaration.IndexOf(':');
             if (colon < 0) continue;
             string key = declaration[..colon].Trim();
-            string value = declaration[(colon + 1)..].Trim();
+            string value = Regex.Replace(declaration[(colon + 1)..], @"\s*!important\s*$", "",
+                RegexOptions.IgnoreCase).Trim();
             if (key.Equals("display", StringComparison.OrdinalIgnoreCase)
                     && value.Equals("none", StringComparison.OrdinalIgnoreCase)
                 || key.Equals("visibility", StringComparison.OrdinalIgnoreCase)
