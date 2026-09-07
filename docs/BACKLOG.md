@@ -1,123 +1,193 @@
-# QuickReplyKit - Open Backlog
+# QuickReplyKit - Active Backlog
 
-Only unfinished work belongs here. Completed implementation and QA history is summarized in
-[`STATUS.md`](STATUS.md) and preserved in Git. Prioritize data safety and accessibility before optional ideas.
+Only unfinished work belongs here. Completed implementation and QA history is in [`STATUS.md`](STATUS.md) and Git.
+Priority is based on crash/core-workflow impact, data-loss or trust-boundary risk, then daily user value.
 
-## Requested Work
+**Severity:** P0 = crash/data-loss/security; P1 = core workflow or major usability; P2 = valuable enhancement;
+P3 = optional polish. **Status:** Confirmed, Investigating, Queued, In progress, QA, or Blocked. A shipped foundation
+may still have a Confirmed remaining gap; its merge is noted in the item.
 
-### P0 - Fix import preview/import integrity (original #8/#9)
+## P0 - Bugs First
 
-The 2026-09-07 independent audit found four correctness/security gaps in the merged flow:
+### B01 - Repeated right-click crash
 
-- **Identical is not a no-op.** Preview labels same-path, byte-identical files as Identical/skipped, but
-  `LibraryPorter.Import` applies the selected conflict policy to every existing destination. Overwrite rewrites the
-  file and Keep both creates a duplicate. Make import consume the preview plan or independently skip identical files.
-- **Preview lacks path containment.** A crafted ZIP entry can make `ImportPreview.Analyze` probe/read outside the
-  library before confirmation. Apply the same canonical containment rule used by `LibraryPorter.Import` before any
-  destination read.
-- **ZIP import drops folder tags.** Export includes `.qrkfolder.json`, but import treats it as a response, fails
-  `ResponseFile.Load`, and skips it. Import the sidecar through a separately validated metadata path. Direct folder
-  copying already preserves it.
-- **Invalid entries are mislabelled.** Preview classifies every `.json` by destination bytes without response
-  validation, while the importer later rejects invalid responses. Preview invalid entries explicitly and keep valid
-  siblings importable.
+- **Severity:** P0
+- **Status:** Confirmed regression; investigation first
+- **Impact:** Crashes the app during normal response management. A prior fix (`d562052`) covered one re-entrancy path,
+  but the user reports the crash still occurs.
+- **Acceptance:** Reproduce with normal and rapid right-clicks across response and folder menus; identify the logged
+  exception/root cause; fix the shared cause; menus remain functional; 200-action stress in both themes produces no
+  crash or unhandled-error log entry; regression test/harness added.
 
-Then finish the originally requested review UX: detect same-content duplicates at another path and allow per-item
-decisions for meaningful conflicts while retaining apply-to-all for ordinary responses. Add adversarial ZIP tests and
-an export-folder -> import -> folder-tags round trip.
+### B02 - Backup restore correctness and completeness
 
-**Future code security gate:** if executable variables are ever added, show the exact imported code and require
-explicit acceptance for every code-bearing item. No Yes-to-all for code. This is blocked/not applicable while
-templates remain the fixed, non-executable allow-list.
+- **Severity:** P0
+- **Status:** Confirmed by source audit
+- **Impact:** Restore can fail or leave a partially replaced library, creating data-loss risk.
+- **Acceptance:** Protect/copy the selected archive before pre-restore pruning; stage and swap with rollback rather
+  than delete-then-copy; restoring the oldest retained backup works; forced replacement failure preserves the original
+  library; snapshots include config while older library-only archives remain restorable; retention has count plus
+  size/age bounds; required backups fail closed with a clear message before risky operations.
 
-### P0 - Fix backup restore correctness (original #10)
+### B03 - Import preview/import trust and integrity
 
-The merged restore has two audit-found bugs:
+- **Severity:** P0
+- **Status:** Confirmed by source audit
+- **Impact:** Preview and actual writes can disagree; crafted ZIP paths are probed before containment; invalid entries
+  are mislabelled; identical files may be overwritten or duplicated.
+- **Acceptance:** Preview performs canonical path containment before destination reads; invalid entries are explicitly
+  labelled and valid siblings remain importable; Identical is always a no-op; same-content duplicates at another path
+  are distinguished; per-item conflict choices work alongside apply-to-all; preview plan and import result agree in
+  adversarial mixed ZIP tests. Legacy `.qrkfolder.json` is ignored safely regardless of when B09 lands.
 
-- `Restore` creates/prunes a pre-restore snapshot before opening the selected ZIP. Selecting the oldest of the 10
-  retained backups can prune that same file and make restore fail. Protect/copy the selected archive before pruning.
-- Replacement is delete-then-copy after extraction, not atomic. A copy failure can leave a partially restored
-  library. Stage and swap safely, with rollback when replacement fails.
+## P1 - Core Workflow And Major UI
 
-Add regression tests for restoring the oldest retained backup and a forced replacement failure.
+### B04 - Sanitize Create from Clipboard content
 
-### P1 - Full accessibility pass (original #14)
+- **Severity:** P1 (trust/content safety)
+- **Status:** Queued
+- **Impact:** Clipboard HTML can carry scripts, event attributes, embedded objects, unsafe links, or editor-specific
+  markup that should never enter a response.
+- **Acceptance:** Clipboard input is parsed/normalized into the supported HTML subset only; scripts, stylesheets,
+  comments, forms, iframes/objects, images, event attributes, unsafe URI schemes, hidden content, and unsupported
+  markup are removed. Legitimate visible `<code>`/`<pre>` snippets remain as safely encoded visible text; allowed
+  formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
+  sanitizer tests cover active content and URL schemes.
 
-Not started. Go beyond resize/dark mode and the launcher's existing basic automation names:
+### B05 - Search relevance correctness
 
-- Make every action and dialog operable without a mouse, with predictable tab order, visible focus, and Escape /
-  default-button behavior.
-- Add useful screen-reader names, labels, roles, and state to launcher results, navigation, preview, editor toolbar,
-  tag chips, import preview, backup, Trash, onboarding, About, and hotkey dialogs.
-- Validate Windows High Contrast. Never use color alone for invalid/import/conflict/favorite/match state; pair it
-  with text or a shape. Respect reduced motion; the current themed ComboBox uses a Slide popup animation and needs
-  reduced-motion/High-Contrast-safe behavior.
-- QA with keyboard-only walkthroughs, UI Automation inspection, both themes, High Contrast, resize/DPI checks, and
-  all four paste self-tests.
+- **Severity:** P1
+- **Status:** Confirmed by user examples; investigation required
+- **Impact:** Core find-and-paste workflow returns unrelated results, including `rostering` matching testing content
+  and `Licensing` returning unrelated IXL responses.
+- **Acceptance:** Build a realistic regression corpus for names, body, tags, app, and category; reproduce both examples;
+  remove false positives without losing intended typo tolerance; exact/prefix/name/tag matches outrank body/fuzzy;
+  fuzzy fallback never admits unrelated terms when exact matches exist; selected-folder behavior is deterministic;
+  large-library search stays responsive and existing valid search cases remain green.
 
-### P1 - Complete automatic backup coverage (original #10)
+### B06 - Repair Settings layout and About area
 
-Partially shipped in `f303524`: rolling library zip snapshots (10 retained), Restore Library, manual backup,
-and automatic backup before import.
+- **Severity:** P1
+- **Status:** Confirmed UI defect
+- **Impact:** Settings content, especially the About/Diagnostics area, is truncated or broken at real display scales.
+- **Acceptance:** Settings and About are fully visible at 100/150/200% scaling, common screen heights, both themes,
+  and High Contrast; no clipped text/buttons; content scrolls when necessary; logical grouping and keyboard tab order;
+  screenshots and UI Automation verify every control remains reachable.
 
-Remaining:
+### B07 - Dark-mode button hover contrast
 
-- Include `%APPDATA%\QuickReplyKit\config.json` in a restorable snapshot, without breaking old library-only backups.
-- Add a size and/or age retention ceiling; count-only retention can still consume unbounded space with large libraries.
-- Create a backup before recursive folder-tag batch apply. Apply the same rule to any future bulk move/delete or
-  major multi-response edit.
-- Make backup failure visible before a risky operation; do not silently continue when the safety copy was required.
+- **Severity:** P1
+- **Status:** Confirmed UI defect
+- **Impact:** Hover background is too bright and makes button text unreadable in dark mode.
+- **Acceptance:** One shared themed button hover/pressed/focus treatment is readable in Light, Dark, and High Contrast;
+  no view-specific hardcoded hover colors; text/icon contrast remains clear; disabled and destructive states remain
+  distinguishable. Prove every view inherits the shared style or capture launcher, editor, Settings, import, backup,
+  Trash, onboarding, About, input/confirm, assignment, and hotkey-manager dialogs.
 
-### P2 - Complete diagnostics logging coverage (original #7)
+### B08 - Delete and restore folders through Trash
 
-Partially shipped in `8f74aa9`: async level-gated rolling logs, session headers, crash capture, Settings toggle, and
-Open logs actions are complete. Logging is bounded and current call sites avoid response bodies.
+- **Severity:** P1 (data safety)
+- **Status:** Queued; response Trash already exists
+- **Impact:** Users cannot delete/restore a category and its nested responses as one recoverable operation.
+- **Acceptance:** Folder context menu offers Delete; confirmation states folder name and nested response count;
+  deletion creates a required backup then moves the entire subtree to app Trash; restore recreates the exact hierarchy
+  and side files without overwrite; conflicts are explained and leave Trash intact; delete-forever/retention work for
+  folders; empty/root/symlink/reparse/path-escape cases are safe; live library refreshes after delete/restore.
 
-Remaining from the original request:
+### B09 - Remove folder tags
 
-- Add source/category metadata to log entries.
-- In verbose mode, cover search, watcher events, import/export, template resolution, theme changes, and each paste
-  stage. Continue logging only identifiers/steps and errors, never response bodies, clipboard content, or customer data.
+- **Severity:** P1 (requested product correction)
+- **Status:** Queued
+- **Impact:** Folder metadata adds complexity the user no longer wants. Folders should only organize or bulk-edit
+  contained responses; response tags remain.
+- **Acceptance:** Remove Folder tags and Apply folder tags controls; stop reading/writing/applying folder tags; remove
+  dead folder-tag model/tests/code; legacy `.qrkfolder.json` files are ignored safely and never appear as responses;
+  response tag chips and search remain; direct/ZIP sharing does not treat legacy sidecars as responses.
 
-### P2 - Complete folder-tag batch UX (original #8)
+### B10 - Outlook-style folder-scoped search chip
 
-The merged UI always applies tags recursively. Let the user choose **direct children** or **this folder and all
-subfolders** before confirmation. Keep union/dedupe behavior and add tests for both scopes. The ZIP sidecar loss is
-the higher-priority import-integrity item above.
+- **Severity:** P1
+- **Status:** Queued; implement after B05
+- **Impact:** Users need visible, predictable folder filtering while typing a global search.
+- **Acceptance:** Selecting a folder adds a removable chip in/adjacent to the search field and limits results to that
+  folder subtree; selecting another folder replaces it; removing the chip or selecting All Responses returns global
+  scope; Favorites/Recent behavior is explicit; chip is keyboard-removable and screen-reader named; empty/fuzzy/body
+  searches honor scope; compact resizing does not overlap controls.
 
-### P2 - Complete in-app Trash (original #11)
+### B11 - Full accessibility pass
 
-Partially shipped in `ef5a573`: response delete moves to app-local Trash; users can restore, delete forever, or empty;
-restore refuses conflicts and path escapes; startup purge honors `TrashRetentionDays`.
+- **Severity:** P1
+- **Status:** Queued
+- **Impact:** New dialogs and workflows do not yet meet the requested keyboard, screen-reader, High Contrast, and
+  non-color-only requirements.
+- **Acceptance:** Every action is mouse-free with predictable tab order, visible focus, defaults, and Escape; useful
+  automation names/roles/states cover launcher, results, preview, editor, tags, import, backup, Trash, onboarding,
+  About, and hotkeys; High Contrast is usable; status never relies on color alone; ComboBox Slide animation is removed
+  or respects reduced motion; keyboard/UIA/both-theme/High-Contrast/DPI validation passes.
 
-Remaining:
+## P2 - High-Value Enhancements
 
-- Add folder/category deletion to Trash, preserving the full subtree for one-step restore.
-- Add a Settings retention control. The persisted setting exists today (default 30 days; `0` = keep forever) but is
-  not editable in the UI.
-- Ensure any folder delete gets an automatic backup first and is covered by live delete/restore/conflict tests.
+### B12 - Discoverable Import and Export controls
 
-### P2 - Refresh About / Diagnostics (original #13)
+- **Severity:** P2
+- **Status:** Queued
+- **Impact:** The `...` control hides important sharing actions.
+- **Acceptance:** Replace it with a clearly labelled/icon-supported Import/Export entry point that exposes Import,
+  Export response/folder/library in context; remains compact at minimum width; accessible name/tooltip and keyboard
+  access are obvious; no duplicate or ambiguous commands.
 
-The shipped screen (`23468f7`) reports version, runtime/OS, launcher hotkey, paste mode, theme, verbose logging,
-library/count/watcher state, config, and logs. It predates per-response hotkeys and later safety features.
+### B13 - Configurable backup-folder location
 
-Add the launcher's **actual Windows registration state**, configured/registered/failed response-bind counts, plus
-backup and Trash paths. Keep it read-only, copyable, and safe to attach to a support ticket; never include response
-bodies, clipboard data, or other customer content.
+- **Severity:** P2
+- **Status:** Queued; implement after the P0 B02 correctness fix
+- **Impact:** Enterprises may require backups on a managed/local/network path rather than `%APPDATA%`.
+- **Acceptance:** Settings shows current backup location with Change/Open/Reset; value persists; default remains app
+  data; path is validated and writable before save/use; unavailable paths fail clearly without blocking normal app
+  startup; backup/restore consistently use the configured path; About reports it; tests cover defaults, persistence,
+  migration, invalid/unavailable paths, and restore.
 
-## Future Ideas - Start Only When The User Explicitly Asks
+### B14 - Complete diagnostics logging coverage
 
-- **Sandboxed user scripting for variables.** Current variables are a fixed safe allow-list with no code execution.
-  Any scripting design needs a real sandbox/capability model and cannot ship before the import hard-acceptance gate
-  above. Never raw-eval code from a shareable response file.
-- **Usage analytics / most-used sort.** Local and opt-in only; worthwhile only if actual usage shows Recent/Favorites
-  are insufficient.
-- **Keyboard shortcut cheat sheet.** Small discoverability overlay after the accessibility pass if onboarding and
-  tooltips still prove insufficient.
+- **Severity:** P2
+- **Status:** Confirmed remaining gap; foundation shipped in `8f74aa9`
+- **Impact:** Existing rolling/crash logs omit source/category and several workflows needed for support diagnosis.
+- **Acceptance:** Add source/category metadata and verbose events for search, watcher, import/export, template resolve,
+  theme changes, context-menu failures, and each paste stage; continue excluding response bodies, clipboard content,
+  and customer data; keep async bounded rollover and normal/verbose toggle.
+
+### B15 - Complete About / Diagnostics status
+
+- **Severity:** P2
+- **Status:** Confirmed remaining gap; foundation shipped in `23468f7`; coordinate with B06/B13/B14
+- **Impact:** Support snapshot predates response hotkeys, backups, and Trash.
+- **Acceptance:** Report actual launcher registration, configured/registered/failed response-hotkey counts, library and
+  watcher state, config/log/backup/Trash paths, version/OS/runtime, and logging mode; copyable and safe to attach; no
+  response/clipboard/customer content; all Open buttons work and layout passes B06.
+
+### B16 - Sandboxed user scripts for dynamic variables
+
+- **Severity:** P2 feature; security-critical design
+- **Status:** Queued last after B03/B04/B11/B14
+- **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
+- **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
+  scripts; persist definitions in a documented format; invoke them with explicit template syntax such as
+  `{{script:Name}}`; resolve consistently in preview, rich paste, plain paste, copy, and edit-before-insert.
+  Never execute imported code in the main UI process and never raw-eval response content. Use either OS-enforced
+  isolation with an explicit threat model or a deliberately non-general-purpose interpreter whose operations are
+  intrinsically bounded; a separate process alone is not a sandbox. Fail closed when containment is unavailable.
+  Enforce time, memory, process, filesystem, registry, environment, clipboard, UI, network, recursion, and output-size
+  limits with default-deny capabilities; failures become visible non-crashing markers. Import preview displays exact
+  code and requires per-item acceptance with **no accept-all for code-bearing items**; accepted-code provenance is
+  local, invalidated when code changes, and never travels as trust. Security QA must prove containment cannot be
+  bypassed through path, network, process, environment, reflection/native loading, recursion, timeout, or output abuse.
+
+## P3 - Optional After Requested Work
+
+- **Usage analytics / most-used sort:** local and opt-in only; only if Recent/Favorites prove insufficient.
+- **Keyboard shortcut cheat sheet:** only after onboarding and accessibility validation show a discoverability gap.
 
 ## Explicitly Declined
 
 - Natural/numeric name sorting and number-to-pick result selection: insufficient value for named responses.
 - CRM integrations, browser extensions, page scraping, ticket automation, and AI-generated responses: outside the
-  product brief. QuickReplyKit remains a local, focused response launcher.
+  product brief. QuickReplyKit remains a local response launcher.
