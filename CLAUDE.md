@@ -40,8 +40,9 @@ Full product requirements are the original brief; the design that implements the
   export PATH="/c/Program Files/dotnet:$PATH"     # Git Bash
   ```
 - Projects:
-  - `src/QuickReplyKit.Core` — **all headless logic** (model, scanner, watcher, search, HTML/CF_HTML,
-    storage, import/export, response management, converters). No UI. Fully unit-tested.
+  - `src/QuickReplyKit.Core` — **all headless logic** (model, scanner/watcher/search, HTML/CF_HTML,
+    storage, import/export/backups, Trash, diagnostics, response/folder metadata, converters). No UI.
+    Fully unit-tested.
   - `src/QuickReplyKit` — the **WPF app** (Views, ViewModels [MVVM-lite], Interop [Win32/paste],
     Services, App wiring, tray, hotkey).
   - `src/QuickReplyKit.Tests` — **xUnit** tests over Core and the view-models.
@@ -100,12 +101,17 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   3. New user-facing capability → add tests; keep `dotnet test` green. Never leave `main` un-green or docs stale.
   A change isn't "done" until code + tests + these docs are all consistent.
 
+The audited baseline and exact expected test count live only in `docs/STATUS.md`; do not copy a changing test count
+elsewhere. A feature commit being merged is not proof that its entire original backlog wording was satisfied: compare
+the implementation against the acceptance text and leave any genuine gap in BACKLOG.md.
+
 ## Document map (this is the whole set — keep it complete and prune anything that goes stale)
 - [`docs/STATUS.md`](docs/STATUS.md) — **START HERE for current state** (what's done, what's open, known caveats, how to verify/extend).
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — design, storage contract, paste sequence, and the **code map** (where things live).
 - [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — the **original requirements** (source of truth for what the app should do).
 - [`README.md`](README.md) — user-facing guide.
-- [`docs/BACKLOG.md`](docs/BACKLOG.md) — out-of-scope **future ideas** only (everything built is in STATUS).
+- [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work and explicitly deferred future ideas
+  (completed implementation and QA history is in STATUS and Git).
 - `tools/` — `shoot.ps1` (launch+screenshot+kill), `capture-window.ps1`, `make-icon.ps1`.
 
 > Historical per-phase work orders (PHASE*, ROADMAP, V2-PLAN, UX-REVIEW) were removed once the work shipped — they'd

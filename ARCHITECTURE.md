@@ -20,14 +20,18 @@ src/
     Library/                 LibraryScanner (parallel scan), LibraryWatcher (debounced), LibrarySeeder
     LibraryService.cs        coordinator: seed + scan (deferrable/off-thread) + watch; Search/FindByName/ToggleFavorite/MarkUsed
     Search/                  ResponseSearch (ranked, in-scope, lazy fuzzy, match spans), SearchHit
-    Storage/                 ResponseFile (tolerant load/save), AppConfig, RecentStore, ResponseManager, ThemeResolver, WindowPlacement
+    Storage/                 ResponseFile, AppConfig, RecentStore, ResponseManager, FolderMeta, TrashService,
+                             ThemeResolver
+    WindowPlacement.cs       monitor-aware launcher bounds validation
+    Diagnostics/             rolling Logger + process-wide Diag facade
     Text/                    HtmlToFlowDocument, FlowDocumentToHtml, HtmlText (plain), CfHtml, ClipboardHtml
     Templates/               TemplateEngine (built-in variables + response includes)
-    ImportExport/            LibraryPorter (export/import zip, conflict + path-traversal safe)
+    ImportExport/            LibraryPorter (export/import), LibraryBackup (rolling snapshots + restore)
   QuickReplyKit/             WPF app
-    Views/                   LauncherWindow, EditorWindow, SettingsWindow, AssignHotkeyWindow, HotkeyManagerWindow,
-                             InputDialog, ConfirmDialog, HighlightText
-    ViewModels/              LauncherViewModel, ResponseRowVm, NavNodeVm, RelayCommand, ViewModelBase, ImportCoordinator
+    Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ImportPreview, Backup, Trash,
+                             About, Onboarding, Input/Confirm dialogs, HighlightText
+    ViewModels/              LauncherViewModel, ResponseRowVm, NavNodeVm, RelayCommand, ViewModelBase,
+                             ImportCoordinator, ImportPreview
     Interop/                 HotkeyRegistrar (many hotkeys, one msg-only window), HotkeyGesture, HotkeyConflicts (pure
                              dup/lookup logic), ForegroundWindow, ForegroundMonitor, ForegroundTargetTracker,
                              ClipboardWriter, ClipboardBackup, InputSender
@@ -35,7 +39,7 @@ src/
                              paste), ThemeManager, StartupRegistration
     Themes/                  Light.xaml, Dark.xaml (DynamicResource brushes)
     App.xaml(.cs)            startup, single-instance, tray, hotkey, async initial scan; SelfTest.cs (--selftest-* gates)
-  QuickReplyKit.Tests/       xUnit over Core + view-models (403 tests)
+  QuickReplyKit.Tests/       xUnit over Core, view-models, app services, and Win32 interop
 tools/                       shoot.ps1 (launch+screenshot+kill), capture-window.ps1, make-icon.ps1
 assets/DefaultLibrary/       example responses, seeded into an empty library on first run
 ```
@@ -53,10 +57,15 @@ view-models, interop, and app wiring.
   { "schema": 1, "app": "IXL", "tags": ["licensing"], "html": "<p>…</p>", "favorite": false,
     "created": "…", "modified": "…" }
   ```
-- **App config**: `%APPDATA%\QuickReplyKit\config.json` (hotkey, library path, default paste mode, window bounds,
-  **theme**, remember-window, **per-response instant-paste hotkeys** — a local `responseHotkeys` list keyed by
-  library-relative path, so shared libraries don't fight over global keys). **Recent**:
-  `%APPDATA%\QuickReplyKit\recent.json` (local-only). **Favorites** live in each response file so they travel when shared.
+- A folder may contain `.qrkfolder.json`, a `FolderMeta` sidecar holding folder tags. The scanner ignores it as a
+  response; direct folder copying preserves it. Export archives contain it, but current ZIP import incorrectly skips
+  it; that known gap is tracked in BACKLOG. Batch apply explicitly unions those tags into descendant response files.
+- **App config**: `%APPDATA%\QuickReplyKit\config.json` (launcher hotkey, library path, paste mode, window bounds,
+  theme, remember-window, verbose logging, Trash retention, onboarding flag, and **per-response instant-paste
+  hotkeys** keyed by library-relative path). **Recent** is `%APPDATA%\QuickReplyKit\recent.json`; Favorites remain
+  in response files so they travel when shared.
+- Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in `backups`, and
+  recoverable deleted responses in `trash`. None is scanned as library content.
 
 ## Rich text & templates
 - **Canonical stored form = a restricted HTML subset**: bold, italic, underline, **strikethrough**, ul/ol/li,
@@ -91,6 +100,27 @@ view-models, interop, and app wiring.
   on a background task (parallelized) and populates via the watcher's `Updated`→Dispatcher path.
 - **Theming:** `Themes/Light.xaml`/`Dark.xaml` swapped at runtime by `ThemeManager`; all views use `DynamicResource`.
   `AppConfig.Theme` = System/Light/Dark (System follows Windows). Per-Monitor-v2 DPI via `app.manifest`.
+- The editor uses a themed ComboBox template, standard text/highlight palettes, removable tag chips, and a visible
+  launcher Edit action. Category context actions edit folder tags and recursively batch-apply them.
+- Import is two-stage: `ImportPreview.Analyze` performs a destination/content comparison, then `LibraryPorter.Import`
+  applies one Skip/Overwrite/Keep-both policy after confirmation. A rolling backup is created before the write.
+  Current preview states are New, Changed, and same-path Identical. Preview/import policy alignment, preview path
+  containment, and folder-sidecar import are known gaps tracked in BACKLOG.
+- `LibraryBackup` keeps 10 library-only zip snapshots. Restore extracts to a temporary directory, then replaces the
+  library after taking a pre-restore snapshot. The oldest-snapshot pruning bug and non-atomic replacement are tracked
+  in BACKLOG. `TrashService` soft-deletes individual responses, refuses overwrite/path escape on restore, and purges
+  expired entries at startup.
+- `Logger` uses one background writer, level gating, and size rollover (about 10 MB x 5 files). AppDomain,
+  Dispatcher, and unobserved-task exceptions are recorded but not silently swallowed. Logs omit response bodies.
+- First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
+  copyable, read-only environment snapshot. Settings links to hotkeys, backups, Trash, logs, and diagnostics.
+
+## Known completion boundaries
+
+The implemented paths above are merged and tested. The remaining contract gaps are intentionally explicit in
+[`docs/BACKLOG.md`](docs/BACKLOG.md): import/backup correctness; full accessibility; backup coverage/retention;
+folder Trash and retention UI; complete logging and folder-tag scope controls; richer import review plus any future
+code-import gate; and refreshing About for actual launcher/response-hotkey state and backup/Trash paths.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,

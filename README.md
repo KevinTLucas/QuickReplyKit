@@ -76,13 +76,16 @@ From the launcher you can, via the `+` / clipboard buttons and the right-click m
 - **New** — create a response and choose (or create) its folder in the hierarchy.
 - **New from clipboard** — turn whatever you just copied into a new response, opened in the editor.
 - **Edit** — a built-in rich-text editor: bold, italic, underline, **strikethrough**, bullet/numbered
-  lists, links, paragraphs, plus **font size/heading, text color, highlight, and alignment** — no need
-  to touch markup or files.
+  lists, links, paragraphs, plus **font size/heading, standard text colors, highlight colors, and
+  alignment** — no need to touch markup or files. Tags are entered as removable colored chips.
 - **Edit & insert** — open the selected response (with variables already resolved) in the editor, tweak
   the final message, and insert it — **without** saving a new response.
 - **Duplicate**, **Rename**, **Move to…** another folder.
 - **Copy** to the clipboard, **Open containing folder** in Explorer.
-- **Delete** — with confirmation (sent to the Recycle Bin).
+- **Folder tags** — right-click a category to store tags with that folder, then batch-apply them to
+  every response below it. The metadata travels when the folder is copied.
+- **Instant-paste hotkey** — right-click a response to bind a global rich/plain paste shortcut.
+- **Delete** — with confirmation, into QuickReplyKit's recoverable in-app Trash.
 
 ## Templates: variables & reusable sections
 
@@ -101,8 +104,9 @@ Responses can contain `{{…}}` tokens that are filled in **when you insert** (a
 
 - **Copy folders/files** directly into your library — the folder hierarchy and responses appear
   automatically (no restart; the app watches the library for changes).
-- Or use **Import… / Export…** (single response, a folder, or the whole library as a `.zip`). On a
-  conflict, import lets you choose what to keep; invalid content never blocks the valid responses.
+- Or use **Import… / Export…** (single response, a folder, or the whole library as a `.zip`). Import
+  first shows a read-only New/Changed/Identical preview; changed paths can be skipped, overwritten,
+  or kept as a second copy. Invalid content never blocks valid responses.
 
 Broken/invalid `.json` files show up in **All Responses** marked with a ⚠ (muted, and not
 paste-able) with the parse error in the preview, so you can find and fix them.
@@ -123,6 +127,10 @@ Open from the ⚙ button or the tray. You can set:
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
 - **Keyboard shortcuts…** — opens the shortcuts manager (see below).
+- **Back up / Restore Library…** — create a snapshot or restore one of the 10 rolling library backups.
+- **Trash…** — restore deleted responses, remove one permanently, or empty Trash. Deleted responses
+  are kept for 30 days by default.
+- **Diagnostics** — enable verbose logging, open the rolling logs folder, or open About / Diagnostics.
 
 ## Per-response instant-paste hotkeys
 
@@ -136,13 +144,36 @@ flags conflicts (a duplicate within QuickReplyKit, or a combo another app alread
 box — press any combination to see what it's bound to — plus a filter over the list. If a hotkey can't be registered
 (already in use), the app keeps running and the manager shows it as "in use by another app".
 
+## Backups, Trash, and diagnostics
+
+- QuickReplyKit automatically creates a rolling library backup before an import; you can create or restore a
+  snapshot from **Settings → Back up / Restore Library…**. Restore snapshots the current library first, so the
+  rollback can itself be undone.
+- Deleted responses move to **Settings → Trash…**, where they can be restored unless another response now occupies
+  the original path. Permanent delete and Empty Trash require confirmation.
+- Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and never include response
+  bodies. Enable verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable environment
+  summary with version, OS/runtime, library/count/watcher state, hotkey, config path, and log path.
+- First launch shows a short three-card introduction to the hotkey, search, and paste workflow.
+
+## Current limitations before broad rollout
+
+- In a mixed import, identical existing files still follow the selected batch conflict policy. Use **Skip** when you
+  do not want identical responses overwritten or copied; the preview/import alignment fix is tracked in the backlog.
+- Folder tags travel with direct folder copies and exports, but the current ZIP import skips their sidecar metadata.
+- Restoring the oldest retained backup can fail if creating the pre-restore snapshot prunes it. Prefer a newer backup
+  and keep an external library copy before a critical restore until the tracked restore fix ships.
+
+See [`docs/STATUS.md`](docs/STATUS.md) for the audited state and [`docs/BACKLOG.md`](docs/BACKLOG.md) for remaining work.
+
 ## System tray
 
 QuickReplyKit stays available in the system tray. The tray menu offers: **Open QuickReplyKit**,
-**Open Response Library**, **Import… / Export library…**, **Settings**, and **Exit**.
+**Open Response Library**, **Import… / Export library…**, **Settings**, **Open logs folder**, and **Exit**.
 
 ## Where the library lives
 
-By default: `Documents\QuickReplyKit\Library` (configurable in Settings). App settings and the recent
-list live under `%APPDATA%\QuickReplyKit`. On first run the default example library is seeded so you
-have something to try immediately.
+By default: `Documents\QuickReplyKit\Library` (configurable in Settings). App settings, recent items,
+logs, backups, and Trash live under `%APPDATA%\QuickReplyKit`. When the optional `DefaultLibrary`
+folder is distributed beside the executable, its examples seed an empty library on first run; a
+single-exe distribution starts with an empty library instead.
