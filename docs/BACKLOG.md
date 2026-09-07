@@ -9,19 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P1 - Core Workflow And Major UI
 
-### B04 - Sanitize Create from Clipboard content
-
-- **Severity:** P1 (trust/content safety)
-- **Status:** Four security-QA rounds completed and findings corrected on `bugfix/clipboard-sanitization`; final
-  verification pending
-- **Impact:** Clipboard HTML can carry scripts, event attributes, embedded objects, unsafe links, or editor-specific
-  markup that should never enter a response.
-- **Acceptance:** Clipboard input is parsed/normalized into the supported HTML subset only; scripts, stylesheets,
-  comments, forms, iframes/objects, images, event attributes, unsafe URI schemes, hidden content, and unsupported
-  markup are removed. Legitimate visible `<code>`/`<pre>` snippets remain as safely encoded visible text; allowed
-  formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
-  sanitizer tests cover active content and URL schemes.
-
 ### B08 - Delete and restore folders through Trash
 
 - **Severity:** P1 (data safety)
