@@ -5,15 +5,18 @@
 > **Update this file on every meaningful change** — it's part of the Definition of Done (see CLAUDE.md).
 
 - **Last updated:** 2026-09-06
-- **`main` tip:** `8f74aa9` · **`dotnet test` = 407 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
+- **`main` tip:** `f303524` · **`dotnet test` = 413 passing** · `dotnet build` clean (0 warnings) · new app icon shipped.
 - **App: ✅ feature-complete & merged** — MVP + all V2 features + the end-user continuous-improvement pass are done.
   Polished, launchable, and portable.
 - **⏳ Backlog sprint in progress** (2026-09-06): working through [`BACKLOG.md`](BACKLOG.md) top-down.
-  **Merged to main:** BUG #6 (right-click crash), BUG #1 (dark ComboBox), #7 diagnostics/logging.
-  **Awaiting QA merge:** #3 Edit button + #2 Automatic colour (`feature/edit-palettes`), #13 About screen
-  (`feature/about-screen`), #10 backups + restore (`feature/backups`). **Not yet started:** #4/#5 hotkeys, #8 tags,
-  #9 import preview, #11 trash, #12 onboarding, #14 accessibility.
-- **Both known bugs are now fixed** — no open bugs. Remaining work = the queued *features* in BACKLOG.md.
+  **Merged to main:** BUG #6 (right-click crash), BUG #1 (dark ComboBox), #2 Automatic text colour, #3 Edit button,
+  #7 diagnostics/logging, #10 backups + restore, #13 About/Diagnostics screen.
+  **Done on branches, in independent QA (merge when green):** #8 tag chips + folder tags + batch-apply
+  (`feature/tags`), #9 import preview (`feature/import-preview`), #12 first-run onboarding (`feature/onboarding`),
+  #4/#5 per-response hotkeys + manager (`feature/hotkeys`).
+  **Not yet started:** #11 in-app trash, #14 accessibility pass.
+- **No open bugs.** Each feature: branch → ponytail → separate-subagent QA → `--no-ff` merge. Every feature ships with
+  tests + a `--show-<x>` QA launch override (see App.xaml.cs) so its window can be screenshotted headlessly.
 
 ## What it is / what it does
 A lightweight Windows response launcher for support teams: global hotkey (**Ctrl+Alt+D**) → search/browse a
