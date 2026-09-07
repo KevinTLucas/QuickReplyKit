@@ -33,7 +33,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B07 - Dark-mode button hover contrast
 
 - **Severity:** P1
-- **Status:** Confirmed UI defect
+- **Status:** Implementation and accessibility QA passed on `bugfix/dark-hover-contrast`; local-authorship history
+  cleanup and final integration pending
 - **Impact:** Hover background is too bright and makes button text unreadable in dark mode.
 - **Acceptance:** One shared themed button hover/pressed/focus treatment is readable in Light, Dark, and High Contrast;
   no view-specific hardcoded hover colors; text/icon contrast remains clear; disabled and destructive states remain

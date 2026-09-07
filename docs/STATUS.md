@@ -68,10 +68,10 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 **Known confirmed regressions/defects:** clipboard sanitization gaps, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** B02 and B03 are merged. `bugfix/clipboard-sanitization` is correcting second security-QA
-findings; `bugfix/dark-hover-contrast` is in final accessibility QA. `bugfix/settings-about-layout` awaits QA, and
-`feature/folder-trash` is paused cleanly
-before implementation. Resume these exact worktrees rather than starting duplicates.
+**Active worktrees:** B02, B03, and B05 are merged. `bugfix/clipboard-sanitization` is in final security QA;
+`bugfix/dark-hover-contrast` passed accessibility QA and is rebuilding its unmerged history to local authorship only;
+`bugfix/settings-about-layout` is in headless layout/accessibility QA. `feature/folder-trash` is paused cleanly before
+implementation. Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

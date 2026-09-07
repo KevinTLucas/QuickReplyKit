@@ -6,20 +6,15 @@
         ShowInTaskbar="False" Background="{DynamicResource WindowBg}"
         Foreground="{DynamicResource TextPrimary}" FontFamily="Segoe UI">
     <Window.Resources>
-        <Style x:Key="Btn" TargetType="Button">
+        <Style x:Key="Btn" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="14,6"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
             <Setter Property="MinWidth" Value="72"/>
-            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource Btn}">
-            <Setter Property="Background" Value="{DynamicResource Accent}"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBg}"/>
             <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryButtonBg}"/>
         </Style>
     </Window.Resources>
     <StackPanel Margin="24,22,24,18">
