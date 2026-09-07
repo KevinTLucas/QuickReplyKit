@@ -19,10 +19,10 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** B01-B09 are complete and green at 516 tests. The app is launchable, but
-the backlog is **not empty**: folder-scoped search leads the remaining work, followed
-by the requested UI/workflow improvements and sandboxed scripts. Read `docs/STATUS.md` for the current evidence and
-`docs/BACKLOG.md` for the exact next item.
+**Current state (audited 2026-09-07):** B01-B10 and B12-B13 are complete and green at 537 tests. The app is
+launchable, but the backlog is **not empty**: the full accessibility pass leads the remaining work, followed by
+diagnostics coverage/status and sandboxed scripts. Read `docs/STATUS.md` for current evidence and `docs/BACKLOG.md`
+for the exact next item.
 
 **Golden rules (detailed in `CLAUDE.md`):** `main` is always green; each change on a branch → ponytail (BCL/native
 only, no NuGet) → separate-subagent QA → merge `--no-ff`; **update the handoff docs (STATUS.md first) on every change** —

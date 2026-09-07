@@ -41,7 +41,7 @@ Full product requirements are the original brief; the design that implements the
   ```
 - Projects:
   - `src/QuickReplyKit.Core` — **all headless logic** (model, scanner/watcher/search, HTML/CF_HTML,
-    storage, import/export/backups, Trash, diagnostics, response/folder metadata, converters). No UI.
+    storage, import/export/backups, Trash, diagnostics, response metadata, converters). No UI.
     Fully unit-tested.
   - `src/QuickReplyKit` — the **WPF app** (Views, ViewModels [MVVM-lite], Interop [Win32/paste],
     Services, App wiring, tray, hotkey).

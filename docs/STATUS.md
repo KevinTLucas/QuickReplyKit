@@ -6,7 +6,8 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product baseline:** B01-B10 and B12-B13 are merged; use `git rev-parse HEAD` for the current docs-inclusive tip.
+- **Current product merge:** `d12208e` (B12); use `git rev-parse HEAD` for the docs-inclusive tip.
+- **Current product baseline:** B01-B10 and B12-B13 are merged.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **537 passed** after B12 independent QA on the B13 baseline; build remains clean.
 - **Portable publish:** B12's current self-contained build is at `publish/latest/QuickReplyKit.exe`. The canonical
