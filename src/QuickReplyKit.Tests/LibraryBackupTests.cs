@@ -1,4 +1,5 @@
 using System.IO;
+using System.IO.Compression;
 using QuickReplyKit.Core.ImportExport;
 
 namespace QuickReplyKit.Tests;
@@ -9,68 +10,211 @@ public class LibraryBackupTests
     public void Create_EmptyOrMissingLibrary_ReturnsNull()
     {
         using var t = new TempDir();
-        var lib = t.Of("lib");        // never created → missing
-        Assert.Null(LibraryBackup.Create(lib, t.Of("backups")));
-        Directory.CreateDirectory(lib);   // exists but empty
-        Assert.Null(LibraryBackup.Create(lib, t.Of("backups")));
+        var lib = t.Of("lib");
+        Assert.Null(LibraryBackup.Create(lib, t.Of("backups"), t.Of("config.json"), null));
+        Directory.CreateDirectory(lib);
+        Assert.Null(LibraryBackup.Create(lib, t.Of("backups"), t.Of("config.json"), null));
     }
 
     [Fact]
-    public void Create_SnapshotsLibrary_AndListsNewestFirst()
+    public void Create_SnapshotsLibraryAndConfig_InVersionedLayout()
     {
         using var t = new TempDir();
         var lib = t.Of("lib");
+        var config = t.Of("config.json");
         TestFiles.WriteResponse(Path.Combine(lib, "IXL", "Hi.json"));
-        var backups = t.Of("backups");
+        File.WriteAllText(config, """{"theme":"Dark"}""");
 
-        var z1 = LibraryBackup.Create(lib, backups);
-        System.Threading.Thread.Sleep(1100);   // distinct second-resolution timestamp
-        var z2 = LibraryBackup.Create(lib, backups);
+        var path = LibraryBackup.Create(lib, t.Of("backups"), config, "test");
 
-        Assert.NotNull(z1); Assert.NotNull(z2);
-        Assert.True(File.Exists(z2!));
-        var list = LibraryBackup.List(backups);
-        Assert.Equal(2, list.Count);
-        Assert.Equal(z2, list[0].Path);   // newest first
-        Assert.True(list[0].Bytes > 0);
+        Assert.NotNull(path);
+        using var zip = ZipFile.OpenRead(path!);
+        Assert.Contains(zip.Entries, e => e.FullName == "quickreplykit-backup.json");
+        Assert.Contains(zip.Entries, e => e.FullName == "library/IXL/Hi.json");
+        Assert.Contains(zip.Entries, e => e.FullName == "config.json");
     }
 
     [Fact]
-    public void Create_PrunesToMaxKeep()
+    public void Create_PrunesToProductionCountLimit()
     {
         using var t = new TempDir();
         var lib = t.Of("lib");
         TestFiles.WriteResponse(Path.Combine(lib, "a.json"));
         var backups = t.Of("backups");
-        // Force > MaxKeep distinct snapshots by writing timestamped names directly is slow; instead
-        // create MaxKeep+3 real zips (they collide within a second → -n suffixes keep them distinct).
-        for (int i = 0; i < LibraryBackup.MaxKeep + 3; i++) LibraryBackup.Create(lib, backups);
-        Assert.True(LibraryBackup.List(backups).Count <= LibraryBackup.MaxKeep);
+        for (int i = 0; i < LibraryBackup.MaxKeep + 3; i++)
+            LibraryBackup.Create(lib, backups, t.Of("config.json"), null);
+
+        Assert.Equal(LibraryBackup.MaxKeep, LibraryBackup.List(backups).Count);
     }
 
     [Fact]
-    public void Restore_ReplacesLibrary_AndSnapshotsCurrentFirst()
+    public void Prune_EnforcesCountSizeAndAgeBounds()
+    {
+        using var t = new TempDir();
+        var now = new DateTime(2026, 9, 7, 12, 0, 0);
+
+        string count = t.Of("count");
+        WriteBackups(count, now, 5, 4);
+        LibraryBackup.Prune(count, 2, 100, TimeSpan.FromDays(30), now);
+        Assert.Equal(2, LibraryBackup.List(count).Count);
+
+        string size = t.Of("size");
+        WriteBackups(size, now, 5, 4);
+        LibraryBackup.Prune(size, 10, 8, TimeSpan.FromDays(30), now);
+        Assert.Equal(8, LibraryBackup.List(size).Sum(b => b.Bytes));
+
+        string age = t.Of("age");
+        WriteBackups(age, now, 5, 4);
+        LibraryBackup.Prune(age, 10, 100, TimeSpan.FromDays(2), now);
+        Assert.Equal(3, LibraryBackup.List(age).Count);
+
+        string allOld = t.Of("all-old");
+        WriteBackups(allOld, now.AddDays(-100), 3, 4);
+        LibraryBackup.Prune(allOld, 10, 100, TimeSpan.FromDays(2), now);
+        Assert.Single(LibraryBackup.List(allOld));
+    }
+
+    [Fact]
+    public void Restore_OldestRetainedBackup_SurvivesPreRestorePruning()
     {
         using var t = new TempDir();
         var lib = t.Of("lib");
         var backups = t.Of("backups");
+        var config = t.Of("config.json");
+        TestFiles.WriteResponse(Path.Combine(lib, "Original.json"), html: "<p>oldest</p>");
+        File.WriteAllText(config, "old config");
 
-        // v1: one response → snapshot it.
-        TestFiles.WriteResponse(Path.Combine(lib, "Original.json"), html: "<p>v1</p>");
-        var snap = LibraryBackup.Create(lib, backups);
-        Assert.NotNull(snap);
+        for (int i = 0; i < LibraryBackup.MaxKeep; i++)
+        {
+            var path = LibraryBackup.Create(lib, backups, config, null)!;
+            File.SetLastWriteTime(path, DateTime.Now.AddMinutes(-LibraryBackup.MaxKeep + i));
+        }
+        var oldest = LibraryBackup.List(backups).Last();
 
-        // Mutate the library: delete the original, add a different one.
-        File.Delete(Path.Combine(lib, "Original.json"));
-        TestFiles.WriteResponse(Path.Combine(lib, "Changed.json"), html: "<p>v2</p>");
+        Directory.Delete(lib, recursive: true);
+        TestFiles.WriteResponse(Path.Combine(lib, "Changed.json"), html: "<p>current</p>");
+        LibraryBackup.Restore(oldest.Path, lib, backups, config, null);
 
-        int before = LibraryBackup.List(backups).Count;
-        LibraryBackup.Restore(snap!, lib, backups);
-
-        // Library is back to v1 content, and the current (v2) state was snapshotted as a safety net.
         Assert.True(File.Exists(Path.Combine(lib, "Original.json")));
         Assert.False(File.Exists(Path.Combine(lib, "Changed.json")));
-        Assert.True(LibraryBackup.List(backups).Count > before);
+    }
+
+    [Fact]
+    public void Restore_NewSnapshot_RestoresConfigAndLibrary()
+    {
+        using var t = new TempDir();
+        var lib = t.Of("lib");
+        var backups = t.Of("backups");
+        var config = t.Of("config.json");
+        TestFiles.WriteResponse(Path.Combine(lib, "Original.json"), html: "<p>v1</p>");
+        File.WriteAllText(config, """{"theme":"Dark","hotkey":"Ctrl+Alt+D"}""");
+        var snapshot = LibraryBackup.Create(lib, backups, config, null)!;
+
+        Directory.Delete(lib, recursive: true);
+        TestFiles.WriteResponse(Path.Combine(lib, "Changed.json"), html: "<p>v2</p>");
+        File.WriteAllText(config, """{"theme":"Light"}""");
+        bool restoredConfig = LibraryBackup.Restore(snapshot, lib, backups, config, null);
+
+        Assert.True(File.Exists(Path.Combine(lib, "Original.json")));
+        Assert.False(File.Exists(Path.Combine(lib, "Changed.json")));
+        Assert.True(restoredConfig);
+        Assert.Equal("""{"theme":"Dark","hotkey":"Ctrl+Alt+D"}""", File.ReadAllText(config));
+    }
+
+    [Fact]
+    public void Restore_LegacyLibraryOnlyZip_LeavesConfigUnchanged()
+    {
+        using var t = new TempDir();
+        var legacySource = t.Of("legacy");
+        TestFiles.WriteResponse(Path.Combine(legacySource, "Nested", "Old.json"), html: "<p>legacy</p>");
+        var snapshot = t.Of("qrk-backup-legacy.zip");
+        ZipFile.CreateFromDirectory(legacySource, snapshot);
+
+        var lib = t.Of("live");
+        var backups = t.Of("backups");
+        var config = t.Of("config.json");
+        TestFiles.WriteResponse(Path.Combine(lib, "Current.json"));
+        File.WriteAllText(config, "keep this config");
+
+        bool restoredConfig = LibraryBackup.Restore(snapshot, lib, backups, config, null);
+
+        Assert.True(File.Exists(Path.Combine(lib, "Nested", "Old.json")));
+        Assert.False(File.Exists(Path.Combine(lib, "Current.json")));
+        Assert.False(restoredConfig);
+        Assert.Equal("keep this config", File.ReadAllText(config));
+    }
+
+    [Fact]
+    public void Restore_ForcedPartialInstallFailure_RollsBackExactOriginal()
+    {
+        using var t = new TempDir();
+        var lib = t.Of("lib");
+        var backups = t.Of("backups");
+        var config = t.Of("config.json");
+
+        TestFiles.WriteResponse(Path.Combine(lib, "FromBackup.json"), html: "<p>backup</p>");
+        File.WriteAllText(config, "backup config");
+        var snapshot = LibraryBackup.Create(lib, backups, config, null)!;
+
+        Directory.Delete(lib, recursive: true);
+        TestFiles.WriteResponse(Path.Combine(lib, "Current", "Keep.json"), html: "<p>exact original</p>");
+        Directory.CreateDirectory(Path.Combine(lib, "Empty"));
+        File.WriteAllText(config, "current config");
+        var expected = SnapshotTree(lib);
+
+        var ex = Assert.Throws<IOException>(() => LibraryBackup.Restore(
+            snapshot, lib, backups, config,
+            (source, destination) =>
+            {
+                Directory.CreateDirectory(destination);
+                File.Copy(Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories).First(),
+                    Path.Combine(destination, "partial.json"));
+                throw new IOException("forced install failure");
+            }));
+
+        Assert.Contains("original library was restored", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(expected, SnapshotTree(lib));
+        Assert.Equal("current config", File.ReadAllText(config));
+    }
+
+    [Fact]
+    public void Restore_UnsafeOrMalformedSnapshot_DoesNotTouchLiveLibrary()
+    {
+        using var t = new TempDir();
+        var zipPath = t.Of("bad.zip");
+        using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            using (var writer = new StreamWriter(zip.CreateEntry("quickreplykit-backup.json").Open()))
+                writer.Write("""{"Schema":2,"ConfigIncluded":false}""");
+            using (var writer = new StreamWriter(zip.CreateEntry("library/../../escape.json").Open()))
+                writer.Write("{}");
+        }
+
+        var lib = t.Of("lib");
+        TestFiles.WriteResponse(Path.Combine(lib, "Keep.json"), html: "<p>untouched</p>");
+        var expected = SnapshotTree(lib);
+
+        Assert.Throws<InvalidDataException>(() =>
+            LibraryBackup.Restore(zipPath, lib, t.Of("backups"), t.Of("config.json"), null));
+        Assert.Equal(expected, SnapshotTree(lib));
+        Assert.False(File.Exists(t.Of("escape.json")));
+    }
+
+    [Fact]
+    public void CreateRequired_UnwritableDestination_FailsClosedWithClearMessage()
+    {
+        using var t = new TempDir();
+        var lib = t.Of("lib");
+        TestFiles.WriteResponse(Path.Combine(lib, "Keep.json"), html: "<p>still here</p>");
+        var expected = SnapshotTree(lib);
+        var blocked = t.Of("not-a-folder");
+        File.WriteAllText(blocked, "file blocks directory creation");
+
+        var ex = Assert.Throws<IOException>(() =>
+            LibraryBackup.CreateRequired(lib, blocked, t.Of("config.json"), "before import"));
+
+        Assert.Contains("No changes were made", ex.Message);
+        Assert.Equal(expected, SnapshotTree(lib));
     }
 
     [Fact]
@@ -79,5 +223,26 @@ public class LibraryBackupTests
         using var t = new TempDir();
         Assert.Throws<FileNotFoundException>(() =>
             LibraryBackup.Restore(t.Of("nope.zip"), t.Of("lib"), t.Of("backups")));
+    }
+
+    private static void WriteBackups(string directory, DateTime now, int count, int bytes)
+    {
+        Directory.CreateDirectory(directory);
+        for (int i = 0; i < count; i++)
+        {
+            string path = Path.Combine(directory, $"qrk-backup-{i}.zip");
+            File.WriteAllBytes(path, Enumerable.Repeat((byte)i, bytes).ToArray());
+            File.SetLastWriteTime(path, now.AddDays(-i));
+        }
+    }
+
+    private static string SnapshotTree(string root)
+    {
+        var dirs = Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories)
+            .Select(p => "D:" + Path.GetRelativePath(root, p).Replace('\\', '/'));
+        var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            .Select(p => "F:" + Path.GetRelativePath(root, p).Replace('\\', '/') + ":" +
+                Convert.ToBase64String(File.ReadAllBytes(p)));
+        return string.Join("\n", dirs.Concat(files).OrderBy(x => x, StringComparer.Ordinal));
     }
 }

@@ -26,6 +26,7 @@ public partial class App : Application
     private LauncherWindow? _launcher;
     private HotkeyService? _hotkeys;
     private ForegroundMonitor? _foregroundMonitor;
+    private bool _restartAfterExit;
 
     private AppConfig _config = new();
     private LibraryService? _library;
@@ -372,6 +373,14 @@ public partial class App : Application
         dlg.ShowDialog();
     }
 
+    /// <summary>Restart after a backup restore so the restored config becomes the live state.</summary>
+    public void RestartAfterRestore()
+    {
+        _restartAfterExit = true;
+        if (_launcher is not null) _launcher.SuppressBoundsSave = true;
+        Shutdown(0);
+    }
+
     private static string? ArgValue(string[] args, string name)
     {
         for (int i = 0; i < args.Length - 1; i++)
@@ -393,11 +402,15 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        string? restart = _restartAfterExit ? Environment.ProcessPath : null;
         _foregroundMonitor?.Dispose();
         _hotkeys?.Dispose();
         if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
         _library?.Dispose();
         _mutex?.Dispose();
         base.OnExit(e);
+        if (restart is not null)
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(restart, "--show") { UseShellExecute = true }); }
+            catch (Exception ex) { Diag.Error("could not restart after restore", ex); }
     }
 }

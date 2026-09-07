@@ -41,9 +41,16 @@ public partial class BackupWindow : Window
 
     private void BackupNow_Click(object sender, RoutedEventArgs e)
     {
-        var path = LibraryBackup.Create(_libraryRoot, AppPaths.BackupsDir, "manual");
-        if (path is null)
-            ConfirmDialog.Info(this, "Nothing to back up", "Your library is empty — no snapshot was taken.");
+        try
+        {
+            var path = LibraryBackup.Create(_libraryRoot, AppPaths.BackupsDir, "manual");
+            if (path is null)
+                ConfirmDialog.Info(this, "Nothing to back up", "Your library is empty — no snapshot was taken.");
+        }
+        catch (Exception ex)
+        {
+            ConfirmDialog.Info(this, "Backup failed", "Couldn't create a snapshot:\n" + ex.Message);
+        }
         Refresh();
     }
 
@@ -58,11 +65,18 @@ public partial class BackupWindow : Window
 
         try
         {
-            LibraryBackup.Restore(row.Info.Path, _libraryRoot, AppPaths.BackupsDir);
+            bool settingsRestored = LibraryBackup.Restore(row.Info.Path, _libraryRoot, AppPaths.BackupsDir);
             _library.Reload();
             _onLibraryChanged();
             Refresh();
-            ConfirmDialog.Info(this, "Library restored", "The library was restored from the snapshot.");
+            if (settingsRestored)
+            {
+                ConfirmDialog.Info(this, "Library restored",
+                    "The library and settings were restored. QuickReplyKit will restart to apply them.");
+                (Application.Current as App)?.RestartAfterRestore();
+            }
+            else
+                ConfirmDialog.Info(this, "Library restored", "The library was restored from the legacy snapshot.");
         }
         catch (Exception ex)
         {
