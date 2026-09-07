@@ -9,8 +9,8 @@
 - **Current `main` at this branch sync:** `afeabd5`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **519 passed, 0 failed, 0 skipped** after B08 integration QA.
-- **Portable publish:** refresh pending for the current documentation merge; the workflow now requires a fresh
-  self-contained `publish/QuickReplyKit.exe` after every `main` merge and records its source tip here.
+- **Portable publish:** rebuilt from green `main` on 2026-09-07; `publish/QuickReplyKit.exe` is 69,998,763 bytes,
+  SHA-256 `2EE8144015B25F21B4C0297E0DDA4C7C3C97A08BE5BCDD64402A6917F832F9BD`.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
