@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics;
 using System.Threading;
 using QuickReplyKit.Core.Storage;
 
@@ -312,5 +313,33 @@ public class TrashServiceTests
         TrashService.TrashFolder(Folder(t), lib, trash, t.Of("backups"));
         Assert.Equal(1, TrashService.Purge(trash, TimeSpan.Zero));
         Assert.Empty(TrashService.List(trash));
+    }
+
+    [Fact]
+    public void TrashRoot_BeneathJunctionIsRejected()
+    {
+        using var t = new TempDir();
+        string outside = t.Of("outside");
+        string junction = t.Of("junction");
+        Directory.CreateDirectory(outside);
+        using var process = Process.Start(new ProcessStartInfo("cmd.exe")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            ArgumentList = { "/d", "/c", "mklink", "/J", junction, outside },
+        });
+        process!.WaitForExit();
+        if (process.ExitCode != 0) return;
+
+        string trash = Path.Combine(junction, "trash");
+        string entry = Path.Combine(outside, "trash", "entry");
+        Directory.CreateDirectory(entry);
+        File.WriteAllText(Path.Combine(entry, "meta.json"),
+            "{\"name\":\"x\",\"originalRelativePath\":\"x.json\",\"deletedUtc\":\"2026-01-01T00:00:00Z\"}");
+        File.WriteAllText(Path.Combine(entry, "x.json"), "{}");
+
+        Assert.Empty(TrashService.List(trash));
+        Assert.False(TrashService.DeleteForever("entry", trash));
+        Assert.True(Directory.Exists(entry));
     }
 }

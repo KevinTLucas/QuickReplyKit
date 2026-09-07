@@ -219,10 +219,26 @@ public static class TrashService
     {
         try
         {
-            if (create) Directory.CreateDirectory(path);
-            return Directory.Exists(path) && !IsReparsePoint(path);
+            string full = Path.GetFullPath(path);
+            if (HasReparsePointInPath(full)) return false;
+            if (create) Directory.CreateDirectory(full);
+            return Directory.Exists(full) && !HasReparsePointInPath(full);
         }
         catch { return false; }
+    }
+
+    private static bool HasReparsePointInPath(string path)
+    {
+        string full = Path.GetFullPath(path);
+        string root = Path.GetPathRoot(full)!;
+        string current = root;
+        foreach (string part in full[root.Length..]
+                     .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+        {
+            current = Path.Combine(current, part);
+            if ((Directory.Exists(current) || File.Exists(current)) && IsReparsePoint(current)) return true;
+        }
+        return false;
     }
 
     private static bool IsStrictlyInside(string root, string full)
