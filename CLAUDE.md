@@ -88,7 +88,9 @@ src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
   use **git worktree isolation** for agents that would otherwise collide on `bin/obj` or files.
 - **Git workflow (strict):**
   - `main` is **always green and launchable.** Never commit half-done work to `main`.
-  - Every phase/feature is a branch: `phase-N-name` (e.g. `phase-3-paste`) or `feature/x`.
+  - Every change is on a concise, human-readable branch that names the work, such as
+    `bugfix/backup-restore-integrity` or `feature/folder-trash`. Do not include an AI/vendor name, agent UUID,
+    worktree identifier, or other generated session label in a branch name.
   - Merge to `main` with `--no-ff` **only after** build + tests + QA are green. Delete the branch after.
   - Commit messages end with: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
   - `.claude/` (agent worktrees/session data), `bin/`, `obj/`, `*.png`, `publish/` are git-ignored.

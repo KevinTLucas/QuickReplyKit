@@ -482,11 +482,21 @@ public partial class LauncherWindow : Window
                 Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
     }
 
-    private static T? FindAncestor<T>(DependencyObject? node) where T : DependencyObject
+    internal static T? FindAncestor<T>(DependencyObject? node) where T : DependencyObject
     {
-        while (node != null && node is not T)
-            node = VisualTreeHelper.GetParent(node);
-        return node as T;
+        while (node != null)
+        {
+            if (node is T found) return found;
+            node = node switch
+            {
+                ContentElement content => ContentOperations.GetParent(content)
+                    ?? (content as FrameworkContentElement)?.Parent,
+                Visual => VisualTreeHelper.GetParent(node),
+                System.Windows.Media.Media3D.Visual3D => VisualTreeHelper.GetParent(node),
+                _ => LogicalTreeHelper.GetParent(node),
+            };
+        }
+        return null;
     }
 
     // --- Window memory (size + position, always reopened on-screen) ----------

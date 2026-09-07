@@ -9,16 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P0 - Bugs First
 
-### B01 - Repeated right-click crash
-
-- **Severity:** P0
-- **Status:** Confirmed regression; investigation first
-- **Impact:** Crashes the app during normal response management. A prior fix (`d562052`) covered one re-entrancy path,
-  but the user reports the crash still occurs.
-- **Acceptance:** Reproduce with normal and rapid right-clicks across response and folder menus; identify the logged
-  exception/root cause; fix the shared cause; menus remain functional; 200-action stress in both themes produces no
-  crash or unhandled-error log entry; regression test/harness added.
-
 ### B02 - Backup restore correctness and completeness
 
 - **Severity:** P0
