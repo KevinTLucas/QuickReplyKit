@@ -73,6 +73,9 @@ view-models, interop, and app wiring.
   additively via inline styles/simple tags; **older files still load**). Converters in `Core/Text`:
   `HtmlToFlowDocument` (render/edit), `FlowDocumentToHtml` (serialize), `HtmlText.ToPlainText` (plain), and
   `CfHtml` (CF_HTML clipboard payload with a byte-exact StartHTML/EndHTML/StartFragment/EndFragment header).
+- **New from Clipboard** routes CF_HTML through `ClipboardHtml.Sanitize`: active, hidden, and non-content blocks are
+  removed, then the existing parser/serializer normalizes the remainder to the stored subset. Hyperlinks are limited
+  to `http`, `https`, and `mailto`; plain clipboard text is HTML-encoded before editing.
 - **Templates** (`Core/Templates/TemplateEngine`): content may contain `{{…}}` tokens resolved at insert/preview/copy:
   built-in variables (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) and **includes**
   (`{{Response Name}}` splices another response's resolved HTML). Cycle detection, a fan-out expansion budget, and

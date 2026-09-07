@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -115,7 +114,7 @@ public static class HtmlToFlowDocument
                     if (closing) { PopSpan(); break; }
                     var link = new Hyperlink();
                     string? href = Attr(tag, "href");
-                    if (href != null && Uri.TryCreate(href, UriKind.Absolute, out var uri))
+                    if (href != null && Uri.TryCreate(href, UriKind.Absolute, out var uri) && SafeLink(uri))
                     {
                         link.NavigateUri = uri;
                         link.RequestNavigate += OnNavigate;
@@ -151,7 +150,7 @@ public static class HtmlToFlowDocument
         {
             if (html[i] == '<')
             {
-                int end = html.IndexOf('>', i);
+                int end = ClipboardHtml.TagEnd(html, i + 1);
                 if (end < 0) { AddText(html[i..]); break; }
                 HandleTag(html[i..(end + 1)]);
                 i = end + 1;
@@ -172,6 +171,11 @@ public static class HtmlToFlowDocument
         catch { /* ignore navigation failures */ }
         e.Handled = true;
     }
+
+    private static bool SafeLink(Uri uri) =>
+        uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+        uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+        uri.Scheme.Equals(Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase);
 
     // <span style="color:…; background-color:…; font-size:…px"> → a Span carrying those local
     // properties. Unknown/unparseable declarations are ignored (best effort, never throws).
@@ -241,12 +245,7 @@ public static class HtmlToFlowDocument
             System.Globalization.CultureInfo.InvariantCulture, out size) && size > 0;
     }
 
-    private static string? Attr(string tag, string name)
-    {
-        var m = Regex.Match(tag, name + @"\s*=\s*(""([^""]*)""|'([^']*)')", RegexOptions.IgnoreCase);
-        if (!m.Success) return null;
-        return m.Groups[2].Success ? m.Groups[2].Value : m.Groups[3].Value;
-    }
+    private static string? Attr(string tag, string name) => ClipboardHtml.Attribute(tag, name);
 
     private static string CollapseWhitespace(string s)
     {

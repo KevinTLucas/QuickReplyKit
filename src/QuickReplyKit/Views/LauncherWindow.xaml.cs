@@ -146,8 +146,31 @@ public partial class LauncherWindow : Window
     private void NewButton_Click(object sender, RoutedEventArgs e) =>
         OpenEditorForNew("");
 
-    private void NewFromClipboardButton_Click(object sender, RoutedEventArgs e) =>
-        OpenEditorForNew(ReadClipboardAsHtml());
+    private async void NewFromClipboardButton_Click(object sender, RoutedEventArgs e)
+    {
+        NewFromClipboardButton.IsEnabled = false;
+        try
+        {
+            var (html, needsSanitizing) = ReadClipboardContent();
+            if (html.Length > ClipboardHtml.MaxInputChars)
+            {
+                ConfirmDialog.Info(this, "Clipboard content is too large",
+                    "QuickReplyKit can import up to 250,000 characters of clipboard content.");
+                return;
+            }
+            string sanitized = needsSanitizing
+                ? await Task.Run(() => ClipboardHtml.Sanitize(html))
+                : ClipboardHtml.FromPlainText(html);
+            if (html.Length > 0 && sanitized.Length == 0)
+            {
+                ConfirmDialog.Info(this, "Clipboard content wasn't imported",
+                    "The clipboard content was too complex or could not be converted safely.");
+                return;
+            }
+            OpenEditorForNew(sanitized);
+        }
+        finally { NewFromClipboardButton.IsEnabled = true; }
+    }
 
     private void OpenEditorForNew(string html)
     {
@@ -155,18 +178,18 @@ public partial class LauncherWindow : Window
         // On save the file watcher refreshes the library; nothing else to do here.
     }
 
-    /// <summary>Read the clipboard into subset HTML: prefer HTML, fall back to wrapped plain text.</summary>
-    private static string ReadClipboardAsHtml()
+    /// <summary>Read clipboard data on the UI thread; HTML normalization then runs in the background.</summary>
+    private static (string Content, bool IsHtml) ReadClipboardContent()
     {
         try
         {
             if (Clipboard.ContainsData(DataFormats.Html))
-                return ClipboardHtml.ExtractFragment(Clipboard.GetData(DataFormats.Html) as string);
+                return (Clipboard.GetData(DataFormats.Html) as string ?? "", true);
             if (Clipboard.ContainsText())
-                return ClipboardHtml.FromPlainText(Clipboard.GetText());
+                return (Clipboard.GetText(), false);
         }
         catch { /* clipboard busy/locked — start empty */ }
-        return "";
+        return ("", false);
     }
 
     // --- Results context menu -----------------------------------------------

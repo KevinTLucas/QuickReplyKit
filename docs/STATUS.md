@@ -6,7 +6,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current `main`:** `5e49979`.
+- **Current `main` at this branch sync:** `0e4139a`.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **455 passed, 0 failed, 0 skipped** after B05 integration QA.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
@@ -69,8 +69,8 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 **Known confirmed regressions/defects:** clipboard sanitization gaps. Treat them as bugs, not optional polish.
 
-**Active worktrees:** B02, B03, B05, B06, and B07 are merged. `bugfix/clipboard-sanitization` is correcting final
-security-QA findings; `feature/folder-trash` is implementing B08.
+**Active worktrees:** B02, B03, B05, B06, and B07 are merged. `bugfix/clipboard-sanitization` has corrected all four
+security-QA rounds and awaits final verification; `feature/folder-trash` is implementing B08.
 Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.

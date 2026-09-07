@@ -12,7 +12,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B04 - Sanitize Create from Clipboard content
 
 - **Severity:** P1 (trust/content safety)
-- **Status:** Queued
+- **Status:** Four security-QA rounds completed and findings corrected on `bugfix/clipboard-sanitization`; final
+  verification pending
 - **Impact:** Clipboard HTML can carry scripts, event attributes, embedded objects, unsafe links, or editor-specific
   markup that should never enter a response.
 - **Acceptance:** Clipboard input is parsed/normalized into the supported HTML subset only; scripts, stylesheets,
