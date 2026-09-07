@@ -69,10 +69,10 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 positives, dark hover contrast, and clipped
 Settings/About layout. Treat them as bugs, not optional polish.
 
-**Active worktrees:** B02 is complete and ready to merge; its worktree can be removed afterward.
-`bugfix/import-integrity` contains the committed B03 validated-plan implementation and awaits security/UI QA;
-`bugfix/dark-hover-contrast` and `bugfix/search-relevance` contain their isolated P1 fixes and await QA. Resume these
-exact worktrees rather than starting duplicates.
+**Active worktrees:** `bugfix/import-integrity`, `bugfix/clipboard-sanitization`, `bugfix/search-relevance`, and
+`bugfix/dark-hover-contrast` contain their isolated changes under review. `bugfix/settings-about-layout` contains only
+B06's resizable/scrolling Settings and About layouts; live compact/Light/Dark screenshots pass and independent
+UI/accessibility QA is pending. Resume these exact worktrees rather than starting duplicates.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
