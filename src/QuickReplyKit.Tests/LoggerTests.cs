@@ -24,6 +24,7 @@ public class LoggerTests
     {
         var dir = TempDir();
         var log = new Logger(dir, LogLevel.Info);
+        Assert.True(log.IsEnabled);
         log.Info("Test", "Gate", "keep-info");
         log.Warn("Test", "Gate", "keep-warn");
         log.Debug("Test", "Gate", "drop-debug");
@@ -78,9 +79,23 @@ public class LoggerTests
         var file = Path.Combine(Path.GetTempPath(), "qrk-notadir-" + Guid.NewGuid().ToString("N"));
         File.WriteAllText(file, "x");
         var log = new Logger(Path.Combine(file, "logs"), LogLevel.Info);
+        Assert.False(log.IsEnabled);
         log.Info("Test", "Filesystem", "should not throw");     // must not throw
         log.Dispose();
         File.Delete(file);
+    }
+
+    [Fact]
+    public void RolloverFailure_MarksLoggerUnavailable()
+    {
+        var dir = TempDir();
+        Directory.CreateDirectory(Path.Combine(dir, "quickreplykit.1.log"));
+        var log = new Logger(dir, LogLevel.Info, maxBytes: 1, maxFiles: 2);
+        log.Info("Test", "Filesystem", "force rollover");
+
+        Assert.True(SpinWait.SpinUntil(() => !log.IsEnabled, 5000));
+        log.Dispose();
+        Directory.Delete(dir, true);
     }
 
     [Fact]

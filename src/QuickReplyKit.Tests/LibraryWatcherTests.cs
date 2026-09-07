@@ -38,6 +38,7 @@ public class LibraryWatcherTests
         using var w = new LibraryWatcher(root, debounceMs: 100);
         w.Changed += () => Interlocked.Increment(ref events);
 
+        Assert.False(w.IsAttached);
         Assert.False(Directory.Exists(parent), "watcher fabricated an offline mount's parent folder");
         Assert.False(Directory.Exists(root), "watcher fabricated the offline library folder");
         Thread.Sleep(200);
@@ -54,6 +55,7 @@ public class LibraryWatcherTests
         using var w = new LibraryWatcher(root, debounceMs: 150);
         w.Changed += () => fired.Set();
 
+        Assert.True(w.IsAttached);
         Assert.True(Directory.Exists(root), "watcher should create a library folder under an existing parent");
         File.WriteAllText(Path.Combine(root, "x.json"), "{\"schema\":1,\"html\":\"<p>x</p>\"}");
 
@@ -65,7 +67,28 @@ public class LibraryWatcherTests
     {
         using var t = new TempDir();
         var w = new LibraryWatcher(t.Path);
+        Assert.True(w.IsAttached);
         w.Dispose();
+        Assert.False(w.IsAttached);
         w.Dispose(); // idempotent, no throw
+    }
+
+    [Fact]
+    public void IsAttached_DoesNotWaitForChangedHandler()
+    {
+        using var t = new TempDir();
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        using var w = new LibraryWatcher(t.Path, debounceMs: 50);
+        w.Changed += () => { entered.Set(); release.Wait(5000); };
+        File.WriteAllText(t.Of("x.json"), "{\"schema\":1,\"html\":\"<p>x</p>\"}");
+        Assert.True(entered.Wait(5000));
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Assert.True(w.IsAttached);
+        sw.Stop();
+        release.Set();
+
+        Assert.True(sw.ElapsedMilliseconds < 100, $"status read blocked for {sw.ElapsedMilliseconds} ms");
     }
 }

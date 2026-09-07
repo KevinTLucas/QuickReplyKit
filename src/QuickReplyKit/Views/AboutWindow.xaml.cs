@@ -1,10 +1,9 @@
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Storage;
+using QuickReplyKit.Services;
 
 namespace QuickReplyKit.Views;
 
@@ -15,8 +14,9 @@ namespace QuickReplyKit.Views;
 public partial class AboutWindow : Window
 {
     private readonly string _library;
+    private readonly string _backup;
 
-    public AboutWindow(AppConfig config, LibraryService library)
+    public AboutWindow(AppConfig config, LibraryService library, HotkeyService hotkeys)
     {
         InitializeComponent();
         void LimitHeight() => MaxHeight = Math.Max(MinHeight, System.Windows.Forms.Screen
@@ -24,37 +24,16 @@ public partial class AboutWindow : Window
             / System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleY);
         Loaded += (_, _) => { LimitHeight(); LocationChanged += (_, _) => LimitHeight(); };
         _library = config.LibraryPath;
-
-        var snap = library.Snapshot;
-        int valid = 0, invalid = 0;
-        foreach (var r in snap.AllResponses) { if (r.IsValid) valid++; else invalid++; }
-
-        var sb = new StringBuilder();
-        void Row(string k, string v) => sb.Append(k.PadRight(18)).Append(": ").AppendLine(v);
-        Row("Version", App.Version);
-        Row("Runtime", RuntimeInformation.FrameworkDescription);
-        Row("OS", RuntimeInformation.OSDescription + " (" + RuntimeInformation.OSArchitecture + ")");
-        sb.AppendLine();
-        Row("Global hotkey", config.HotkeyGesture);
-        Row("Default paste", config.DefaultPasteMode.ToString());
-        Row("Theme", config.Theme.ToString());
-        Row("Verbose logging", config.VerboseLogging ? "on" : "off");
-        sb.AppendLine();
-        Row("Library folder", config.LibraryPath);
-        Row("Responses", $"{snap.AllResponses.Count} ({valid} valid, {invalid} invalid)");
-        Row("Watching library", library.IsWatching ? "yes" : "no");
-        sb.AppendLine();
-        Row("Config file", AppPaths.ConfigPath);
-        Row("Logs folder", AppPaths.LogsDir);
-        Row("Backup folder", config.BackupPath);
-
-        DiagText.Text = sb.ToString();
+        _backup = config.BackupPath;
+        DiagText.Text = DiagnosticsReport.Build(config, library, hotkeys.Entries, App.Version);
         TagLine.Text = $"Response launcher · v{App.Version}";
     }
 
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => App.OpenLogsFolder();
     private void OpenConfig_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.AppDataDir);
     private void OpenLibrary_Click(object sender, RoutedEventArgs e) => OpenFolder(_library);
+    private void OpenBackup_Click(object sender, RoutedEventArgs e) => OpenFolder(_backup);
+    private void OpenTrash_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.TrashDir);
 
     private void Copy_Click(object sender, RoutedEventArgs e)
     {

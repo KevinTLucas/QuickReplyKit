@@ -155,7 +155,7 @@ public partial class SettingsWindow : Window
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => App.OpenLogsFolder();
 
     private void About_Click(object sender, RoutedEventArgs e) =>
-        new AboutWindow(_config, _library) { Owner = this }.ShowDialog();
+        new AboutWindow(_config, _library, _hotkeys) { Owner = this }.ShowDialog();
 
     private void Backup_Click(object sender, RoutedEventArgs e) =>
         new BackupWindow(_config.LibraryPath, _config.BackupPath, _library, _onLibraryChanged) { Owner = this }.ShowDialog();

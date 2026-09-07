@@ -19,9 +19,9 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** B01-B14 are complete and green at 563 tests. The app is launchable, but the
-backlog is **not empty**: the About/Diagnostics status refresh and sandboxed scripts remain. Read `docs/STATUS.md` for current
-evidence and `docs/BACKLOG.md` for the exact next item.
+**Current state (audited 2026-09-07):** B01-B15 are complete and green at 567 tests. The app is launchable, but the
+backlog is **not empty**: the import redesign is next, followed by sandboxed scripts, selected-folder polish, and the
+enterprise UI audit. Read `docs/STATUS.md` for current evidence and `docs/BACKLOG.md` for the exact acceptance criteria.
 
 **Golden rules (detailed in `CLAUDE.md`):** `main` is always green; each change on a branch → ponytail (BCL/native
 only, no NuGet) → separate-subagent QA → merge `--no-ff`; **update the handoff docs (STATUS.md first) on every change** —
@@ -41,6 +41,7 @@ Record successful verification in `docs/STATUS.md` rather than a non-reproducibl
 **Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
 Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.
 
-**Current QA boundary:** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated input, or
-other desktop-driving tools. Do not move, focus, or close the user's windows. Use command-line build/tests, focused
-headless harnesses, self-test output when it will not disturb the desktop, and static XAML/code review.
+**Current QA boundary:** app launches, repository screenshot/capture scripts, and direct inspection of test-created
+QuickReplyKit windows are allowed. Do not use GPT Computer Use/UIAutomation or touch unrelated user windows. Close
+every test-created window normally; if paste verification genuinely needs Notepad, reuse one tab and close it with
+**Don't save**. Continue command-line tests and static review alongside visual QA.
