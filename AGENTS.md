@@ -37,3 +37,7 @@ and never override the repository's Git author configuration.
 **QA cleanup:** reuse a single Notepad tab for paste verification and close every test-created tab normally with
 **Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
 Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.
+
+**Current QA boundary:** do not use Computer Use, UIAutomation, screenshots, screen capture, simulated input, or
+other desktop-driving tools. Do not move, focus, or close the user's windows. Use command-line build/tests, focused
+headless harnesses, self-test output when it will not disturb the desktop, and static XAML/code review.
