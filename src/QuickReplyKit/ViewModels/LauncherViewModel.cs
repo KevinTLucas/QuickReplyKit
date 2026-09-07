@@ -73,6 +73,8 @@ public sealed class LauncherViewModel : ViewModelBase
         set
         {
             if (!Set(ref _selectedNav, value)) return;
+            foreach (var node in Flatten(NavRoots))
+                node.IsSelected = node == value;
             OnPropertyChanged(nameof(CurrentCategory));
             OnPropertyChanged(nameof(HasSearchScope));
             OnPropertyChanged(nameof(SearchScopeLabel));

@@ -188,11 +188,23 @@
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <TreeView.Resources>
                         <HierarchicalDataTemplate DataType="{x:Type vm:NavNodeVm}" ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Icon}" Margin="0,0,6,0"/>
-                                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
-                                           ToolTip="{Binding Title}"/>
-                            </StackPanel>
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Icon}" Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="NavTitle" Text="{Binding Title}"
+                                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+                                </StackPanel>
+                                <Border x:Name="SelectionBar" Width="3" Margin="-2,1,0,1"
+                                        HorizontalAlignment="Left" Background="Transparent"
+                                        IsHitTestVisible="False"/>
+                            </Grid>
+                            <HierarchicalDataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                    <Setter TargetName="SelectionBar" Property="Background"
+                                            Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    <Setter TargetName="NavTitle" Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                            </HierarchicalDataTemplate.Triggers>
                         </HierarchicalDataTemplate>
                     </TreeView.Resources>
                     <TreeView.ItemContainerStyle>
