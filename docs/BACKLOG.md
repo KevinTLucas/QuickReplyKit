@@ -12,12 +12,18 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B08 - Delete and restore folders through Trash
 
 - **Severity:** P1 (data safety)
-- **Status:** Queued; response Trash already exists
+- **Status:** Implementation and independent data-safety QA complete on `feature/folder-trash`; integrated regression
+  check pending before merge
 - **Impact:** Users cannot delete/restore a category and its nested responses as one recoverable operation.
 - **Acceptance:** Folder context menu offers Delete; confirmation states folder name and nested response count;
   deletion creates a required backup then moves the entire subtree to app Trash; restore recreates the exact hierarchy
   and side files without overwrite; conflicts are explained and leave Trash intact; delete-forever/retention work for
   folders; empty/root/symlink/reparse/path-escape cases are safe; live library refreshes after delete/restore.
+- **Implementation evidence:** Required backup is enforced inside `TrashService.TrashFolder` before mutation; folder
+  payloads retain every nested file and subfolder; old response-only `meta.json` remains readable; restore returns
+  explicit Restored/Conflict/Invalid outcomes and never overwrites. Headless build is clean and the full branch suite
+  was 469/469 before current-main integration. Independent QA also proved a Trash path beneath a real junction cannot
+  enumerate or delete external data; B08 stays here until the integrated suite passes.
 
 ### B09 - Remove folder tags
 

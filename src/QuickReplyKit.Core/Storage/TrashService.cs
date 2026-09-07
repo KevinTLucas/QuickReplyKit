@@ -1,27 +1,32 @@
 using System.IO;
 using System.Text.Json;
+using QuickReplyKit.Core.ImportExport;
+using FileSystem = Microsoft.VisualBasic.FileIO.FileSystem;
 
 namespace QuickReplyKit.Core.Storage;
 
-/// <summary>One soft-deleted response sitting in the app-local trash.</summary>
-public sealed record TrashedItem(string Id, string Name, string OriginalRelativePath, DateTime DeletedUtc, long Bytes);
+public enum TrashItemKind { Response, Folder }
+public enum TrashRestoreResult { Restored, Conflict, Invalid }
+
+/// <summary>One soft-deleted response or folder sitting in the app-local trash.</summary>
+public sealed record TrashedItem(string Id, string Name, string OriginalRelativePath, DateTime DeletedUtc,
+    long Bytes, TrashItemKind Kind = TrashItemKind.Response);
 
 /// <summary>
-/// App-local trash for responses: a soft delete that keeps the file for a retention window with
-/// first-class Restore / Empty, so "I deleted our whole IXL folder" is an in-product undo rather than
-/// a support ticket. Each trashed response lives in its own <c>trash/&lt;id&gt;/</c> folder alongside a
-/// <c>meta.json</c> recording where it came from; Restore puts it back at its original library path.
-/// (This replaces the Recycle-Bin delete for responses — the launcher's Delete now moves here.)
+/// App-local soft delete. Each item lives in its own <c>trash/&lt;id&gt;/</c> directory beside metadata
+/// recording its original library-relative path. Folder deletion requires a safety backup first.
 /// </summary>
 public static class TrashService
 {
     private const string MetaName = "meta.json";
+    private const string FolderPayload = "payload";
 
     private sealed class Meta
     {
         public string Name { get; set; } = "";
         public string OriginalRelativePath { get; set; } = "";
         public DateTime DeletedUtc { get; set; }
+        public string? Kind { get; set; }
     }
 
     private static readonly JsonSerializerOptions Options = new()
@@ -31,78 +36,102 @@ public static class TrashService
         WriteIndented = true,
     };
 
-    /// <summary>Move a response file into the trash; returns the new trash id.</summary>
+    /// <summary>Move one response into Trash. Existing file-only metadata remains compatible.</summary>
     public static string Trash(string responseFullPath, string libraryRoot, string trashDir)
     {
-        string rel = Path.GetRelativePath(libraryRoot, responseFullPath).Replace('\\', '/');
-        string id = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" + Guid.NewGuid().ToString("N")[..8];
-        string dir = Path.Combine(trashDir, id);
-        Directory.CreateDirectory(dir);
-
-        File.Move(responseFullPath, Path.Combine(dir, Path.GetFileName(responseFullPath)), overwrite: true);
-        var meta = new Meta
-        {
-            Name = Path.GetFileNameWithoutExtension(responseFullPath),
-            OriginalRelativePath = rel,
-            DeletedUtc = DateTime.UtcNow,
-        };
-        File.WriteAllText(Path.Combine(dir, MetaName), JsonSerializer.Serialize(meta, Options));
-        return id;
+        string source = RequireLibraryItem(responseFullPath, libraryRoot, folder: false);
+        return MoveToTrash(source, libraryRoot, trashDir, TrashItemKind.Response);
     }
 
-    /// <summary>Trashed items, newest first. Malformed entries are skipped, never fatal.</summary>
+    /// <summary>Back up the library, then move one category subtree into Trash.</summary>
+    public static string TrashFolder(string folderFullPath, string libraryRoot, string trashDir, string backupsDir)
+    {
+        string source = RequireLibraryItem(folderFullPath, libraryRoot, folder: true);
+        if (ContainsReparsePoint(libraryRoot))
+            throw new IOException("The library contains a link or junction and the folder was not deleted.");
+
+        LibraryBackup.CreateRequired(libraryRoot, backupsDir, "before deleting folder");
+
+        // The tree could have changed while the backup was written. Fail closed before moving it.
+        source = RequireLibraryItem(source, libraryRoot, folder: true);
+        if (ContainsReparsePoint(source))
+            throw new IOException("The folder contains a link or junction and was not deleted.");
+        return MoveToTrash(source, libraryRoot, trashDir, TrashItemKind.Folder);
+    }
+
+    /// <summary>Trashed items, newest first. Malformed or linked entries are skipped, never fatal.</summary>
     public static IReadOnlyList<TrashedItem> List(string trashDir)
     {
-        if (!Directory.Exists(trashDir)) return System.Array.Empty<TrashedItem>();
+        if (!SafeRoot(trashDir, create: false)) return Array.Empty<TrashedItem>();
         var items = new List<TrashedItem>();
-        foreach (var dir in Directory.EnumerateDirectories(trashDir))
+        string[] directories;
+        try { directories = Directory.GetDirectories(trashDir); }
+        catch { return items; }
+        foreach (var dir in directories)
         {
+            if (IsReparsePoint(dir)) continue;
             var meta = ReadMeta(dir);
-            if (meta is null) continue;
-            var file = ResponseFileIn(dir);
-            long bytes = file is not null ? new FileInfo(file).Length : 0;
-            items.Add(new TrashedItem(Path.GetFileName(dir), meta.Name, meta.OriginalRelativePath, meta.DeletedUtc, bytes));
+            if (meta is null || !TryKind(meta, out var kind)) continue;
+            string? payload = PayloadIn(dir, kind);
+            if (payload is null || ContainsReparsePoint(payload)) continue;
+            items.Add(new TrashedItem(Path.GetFileName(dir), meta.Name, meta.OriginalRelativePath,
+                meta.DeletedUtc, SizeOf(payload), kind));
         }
         items.Sort((a, b) => b.DeletedUtc.CompareTo(a.DeletedUtc));
         return items;
     }
 
-    /// <summary>
-    /// Restore a trashed response to its original library path. Returns false (leaving the item in the
-    /// trash) if something already exists at that path, so the caller can resolve the conflict.
-    /// </summary>
-    public static bool Restore(string id, string libraryRoot, string trashDir)
+    /// <summary>Compatibility wrapper: true only when the item was restored.</summary>
+    public static bool Restore(string id, string libraryRoot, string trashDir) =>
+        RestoreDetailed(id, libraryRoot, trashDir) == TrashRestoreResult.Restored;
+
+    /// <summary>Restore without overwrite; malformed, linked, or escaping metadata fails closed.</summary>
+    public static TrashRestoreResult RestoreDetailed(string id, string libraryRoot, string trashDir)
     {
-        string dir = Path.Combine(trashDir, id);
+        if (!Directory.Exists(libraryRoot) || IsReparsePoint(libraryRoot) ||
+            !TryEntryDirectory(trashDir, id, out string dir)) return TrashRestoreResult.Invalid;
+
         var meta = ReadMeta(dir);
-        var file = ResponseFileIn(dir);
-        if (meta is null || file is null) return false;
+        if (meta is null || !TryKind(meta, out var kind)) return TrashRestoreResult.Invalid;
+        string? payload = PayloadIn(dir, kind);
+        if (payload is null || ContainsReparsePoint(payload) ||
+            !TryLibraryTarget(libraryRoot, meta.OriginalRelativePath, out string target))
+            return TrashRestoreResult.Invalid;
 
-        string target = Path.GetFullPath(Path.Combine(libraryRoot, meta.OriginalRelativePath.Replace('/', Path.DirectorySeparatorChar)));
-        // Defence in depth: a hand-edited meta.json must never let a restore escape the library root.
-        string root = Path.GetFullPath(libraryRoot);
-        if (!target.StartsWith(root + Path.DirectorySeparatorChar, System.StringComparison.OrdinalIgnoreCase)) return false;
-        if (File.Exists(target)) return false;
+        if (File.Exists(target) || Directory.Exists(target)) return TrashRestoreResult.Conflict;
+        string parent = Path.GetDirectoryName(target)!;
+        if (HasReparsePoint(libraryRoot, parent)) return TrashRestoreResult.Invalid;
 
-        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-        File.Move(file, target);
-        Directory.Delete(dir, recursive: true);
-        return true;
+        if (HasFileInPath(libraryRoot, parent)) return TrashRestoreResult.Conflict;
+        try
+        {
+            Directory.CreateDirectory(parent);
+            if (HasReparsePoint(libraryRoot, parent)) return TrashRestoreResult.Invalid;
+            if (kind == TrashItemKind.Folder) FileSystem.MoveDirectory(payload, target);
+            else FileSystem.MoveFile(payload, target);
+        }
+        catch
+        {
+            return File.Exists(target) || Directory.Exists(target)
+                ? TrashRestoreResult.Conflict : TrashRestoreResult.Invalid;
+        }
+        try { Directory.Delete(dir, recursive: true); } catch { /* payload already restored */ }
+        return TrashRestoreResult.Restored;
     }
 
-    /// <summary>Permanently remove one trashed item.</summary>
-    public static void DeleteForever(string id, string trashDir)
+    /// <summary>Permanently remove one safe Trash entry.</summary>
+    public static bool DeleteForever(string id, string trashDir)
     {
-        string dir = Path.Combine(trashDir, id);
-        if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+        if (!TryEntryDirectory(trashDir, id, out string dir) || ContainsReparsePoint(dir)) return false;
+        try { Directory.Delete(dir, recursive: true); return true; }
+        catch { return false; }
     }
 
-    /// <summary>Permanently remove everything in the trash.</summary>
+    /// <summary>Permanently remove every safe item in Trash.</summary>
     public static void Empty(string trashDir)
     {
-        if (!Directory.Exists(trashDir)) return;
-        foreach (var dir in Directory.EnumerateDirectories(trashDir))
-            try { Directory.Delete(dir, recursive: true); } catch { /* best effort */ }
+        foreach (var item in List(trashDir))
+            try { DeleteForever(item.Id, trashDir); } catch { /* best effort */ }
     }
 
     /// <summary>Auto-purge items older than <paramref name="retention"/>; returns how many were removed.</summary>
@@ -111,8 +140,161 @@ public static class TrashService
         int n = 0;
         var cutoff = DateTime.UtcNow - retention;
         foreach (var item in List(trashDir))
-            if (item.DeletedUtc < cutoff) { DeleteForever(item.Id, trashDir); n++; }
+            if (item.DeletedUtc < cutoff && DeleteForever(item.Id, trashDir)) n++;
         return n;
+    }
+
+    private static string MoveToTrash(string source, string libraryRoot, string trashDir, TrashItemKind kind)
+    {
+        if (!SafeRoot(trashDir, create: true)) throw new IOException("The Trash folder is unavailable or unsafe.");
+        string id = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" + Guid.NewGuid().ToString("N")[..8];
+        string dir = Path.Combine(Path.GetFullPath(trashDir), id);
+        Directory.CreateDirectory(dir);
+        var meta = new Meta
+        {
+            Name = kind == TrashItemKind.Folder ? Path.GetFileName(source) : Path.GetFileNameWithoutExtension(source),
+            OriginalRelativePath = Path.GetRelativePath(libraryRoot, source).Replace('\\', '/'),
+            DeletedUtc = DateTime.UtcNow,
+            Kind = kind == TrashItemKind.Folder ? "folder" : "response",
+        };
+
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, MetaName), JsonSerializer.Serialize(meta, Options));
+            if (kind == TrashItemKind.Folder) FileSystem.MoveDirectory(source, Path.Combine(dir, FolderPayload));
+            else FileSystem.MoveFile(source, Path.Combine(dir, Path.GetFileName(source)));
+            return id;
+        }
+        catch
+        {
+            try
+            {
+                if (Directory.Exists(dir) &&
+                    !Directory.EnumerateFileSystemEntries(dir).Any(p => p != Path.Combine(dir, MetaName)))
+                    Directory.Delete(dir, true);
+            }
+            catch { /* keep any recoverable payload */ }
+            throw;
+        }
+    }
+
+    private static string RequireLibraryItem(string path, string libraryRoot, bool folder)
+    {
+        string root = Path.GetFullPath(libraryRoot);
+        string full = Path.GetFullPath(path);
+        if (!Directory.Exists(root) || IsReparsePoint(root) || !IsStrictlyInside(root, full) ||
+            HasReparsePoint(root, full) || (folder ? !Directory.Exists(full) : !File.Exists(full)))
+            throw new IOException(folder ? "The folder is missing or unsafe and was not deleted."
+                                         : "The response is missing or unsafe and was not deleted.");
+        return full;
+    }
+
+    private static bool TryLibraryTarget(string libraryRoot, string relative, out string target)
+    {
+        target = "";
+        if (string.IsNullOrWhiteSpace(relative) || Path.IsPathRooted(relative)) return false;
+        try
+        {
+            string root = Path.GetFullPath(libraryRoot);
+            target = Path.GetFullPath(Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar)));
+            return IsStrictlyInside(root, target);
+        }
+        catch { return false; }
+    }
+
+    private static bool TryEntryDirectory(string trashDir, string id, out string dir)
+    {
+        dir = "";
+        if (string.IsNullOrWhiteSpace(id) || id != Path.GetFileName(id) || !SafeRoot(trashDir, create: false)) return false;
+        try
+        {
+            string root = Path.GetFullPath(trashDir);
+            dir = Path.GetFullPath(Path.Combine(root, id));
+            return IsStrictlyInside(root, dir) && Directory.Exists(dir) && !IsReparsePoint(dir);
+        }
+        catch { return false; }
+    }
+
+    private static bool SafeRoot(string path, bool create)
+    {
+        try
+        {
+            string full = Path.GetFullPath(path);
+            if (HasReparsePointInPath(full)) return false;
+            if (create) Directory.CreateDirectory(full);
+            return Directory.Exists(full) && !HasReparsePointInPath(full);
+        }
+        catch { return false; }
+    }
+
+    private static bool HasReparsePointInPath(string path)
+    {
+        string full = Path.GetFullPath(path);
+        string root = Path.GetPathRoot(full)!;
+        string current = root;
+        foreach (string part in full[root.Length..]
+                     .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+        {
+            current = Path.Combine(current, part);
+            if ((Directory.Exists(current) || File.Exists(current)) && IsReparsePoint(current)) return true;
+        }
+        return false;
+    }
+
+    private static bool IsStrictlyInside(string root, string full)
+    {
+        string rel = Path.GetRelativePath(root, full);
+        return rel != "." && rel != ".." && !Path.IsPathRooted(rel) &&
+            !rel.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+    }
+
+    private static bool HasReparsePoint(string root, string path)
+    {
+        if (IsReparsePoint(root)) return true;
+        string current = root;
+        foreach (string part in Path.GetRelativePath(root, path)
+                     .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+        {
+            current = Path.Combine(current, part);
+            if ((Directory.Exists(current) || File.Exists(current)) && IsReparsePoint(current)) return true;
+        }
+        return false;
+    }
+
+    private static bool HasFileInPath(string root, string path)
+    {
+        string current = root;
+        foreach (string part in Path.GetRelativePath(root, path)
+                     .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+        {
+            current = Path.Combine(current, part);
+            if (File.Exists(current)) return true;
+        }
+        return false;
+    }
+
+    private static bool ContainsReparsePoint(string path)
+    {
+        try
+        {
+            var pending = new Stack<string>();
+            pending.Push(path);
+            while (pending.Count > 0)
+            {
+                string current = pending.Pop();
+                if (IsReparsePoint(current)) return true;
+                if (!Directory.Exists(current)) continue;
+                foreach (string child in Directory.EnumerateFileSystemEntries(current)) pending.Push(child);
+            }
+            return false;
+        }
+        catch { return true; }
+    }
+
+    private static bool IsReparsePoint(string path)
+    {
+        try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; }
+        catch { return true; }
     }
 
     private static Meta? ReadMeta(string dir)
@@ -125,7 +307,36 @@ public static class TrashService
         catch { return null; }
     }
 
-    private static string? ResponseFileIn(string dir) =>
-        Directory.EnumerateFiles(dir, "*.json").FirstOrDefault(f =>
-            !string.Equals(Path.GetFileName(f), MetaName, System.StringComparison.OrdinalIgnoreCase));
+    private static bool TryKind(Meta meta, out TrashItemKind kind)
+    {
+        kind = TrashItemKind.Response;
+        if (string.IsNullOrEmpty(meta.Kind) || meta.Kind.Equals("response", StringComparison.OrdinalIgnoreCase)) return true;
+        if (meta.Kind.Equals("folder", StringComparison.OrdinalIgnoreCase)) { kind = TrashItemKind.Folder; return true; }
+        return false;
+    }
+
+    private static string? PayloadIn(string dir, TrashItemKind kind)
+    {
+        try
+        {
+            return kind == TrashItemKind.Folder
+                ? Directory.Exists(Path.Combine(dir, FolderPayload)) ? Path.Combine(dir, FolderPayload) : null
+                : Directory.EnumerateFiles(dir, "*.json").FirstOrDefault(f =>
+                    !Path.GetFileName(f).Equals(MetaName, StringComparison.OrdinalIgnoreCase));
+        }
+        catch { return null; }
+    }
+
+    private static long SizeOf(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) return new FileInfo(path).Length;
+            long total = 0;
+            foreach (string file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+                total = checked(total + new FileInfo(file).Length);
+            return total;
+        }
+        catch { return 0; }
+    }
 }

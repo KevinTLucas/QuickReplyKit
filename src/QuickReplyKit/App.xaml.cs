@@ -150,7 +150,7 @@ public partial class App : Application
 
         if (e.Args.Any(a => a.Equals("--show-trash", StringComparison.OrdinalIgnoreCase)))
             Dispatcher.BeginInvoke(new Action(() => new Views.TrashWindow(
-                _config!.LibraryPath, _config.TrashRetentionDays, () => _vm!.OnLibraryUpdated()) { Owner = _launcher }.ShowDialog()));
+                _config!.LibraryPath, _config.TrashRetentionDays, () => _vm!.ReloadLibrary()) { Owner = _launcher }.ShowDialog()));
 
         // Auto-purge expired Trash in the background (retention 0 = keep forever).
         if (_config.TrashRetentionDays > 0)

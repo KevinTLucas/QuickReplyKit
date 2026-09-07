@@ -17,6 +17,8 @@
 - **State:** launchable, but a new user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) now contains
   9 ordered items with severity, acceptance criteria, and status. Folder Trash is next; sandboxed scripting remains
   deliberately last behind its security prerequisites.
+- **B08 branch:** `feature/folder-trash` passed independent data-safety QA at 469/469, including real junction probes,
+  and is integrated with current `main`; the combined regression gate is the only step before merge.
 
 ## Merged And QA'd
 
@@ -69,9 +71,9 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** B01-B07 are merged. `feature/folder-trash` has implemented B08; independent QA found and the
-branch corrected a Trash-parent junction escape, so final headless re-verification is in progress. Resume that exact
-worktree rather than starting a duplicate.
+**Active worktrees:** B01-B07 are merged. `feature/folder-trash` has implemented and independently QA'd B08, corrected
+the Trash-parent junction escape, and is running the final current-main regression gate. Resume that exact worktree
+rather than starting a duplicate.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -96,7 +98,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **505** green. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **505** green on `main`. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. Do not drive or capture the user's desktop.

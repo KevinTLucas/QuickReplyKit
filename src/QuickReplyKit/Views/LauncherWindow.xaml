@@ -36,6 +36,8 @@
             <MenuItem Header="Apply folder tags to responses…" Click="MenuApplyFolderTags_Click"/>
             <Separator/>
             <MenuItem Header="Export folder…" Click="MenuExportFolder_Click"/>
+            <Separator/>
+            <MenuItem Header="_Delete folder…" Click="MenuDeleteFolder_Click"/>
         </ContextMenu>
     </Window.Resources>
 
