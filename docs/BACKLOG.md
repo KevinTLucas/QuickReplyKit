@@ -21,17 +21,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   formatting and https/mailto links remain; plain text is encoded; malformed input never crashes; adversarial
   sanitizer tests cover active content and URL schemes.
 
-### B05 - Search relevance correctness
-
-- **Severity:** P1
-- **Status:** Independent correctness/performance QA passed on `bugfix/search-relevance`; current-main integration in progress
-- **Impact:** Core find-and-paste workflow returns unrelated results, including `rostering` matching testing content
-  and `Licensing` returning unrelated IXL responses.
-- **Acceptance:** Build a realistic regression corpus for names, body, tags, app, and category; reproduce both examples;
-  remove false positives without losing intended typo tolerance; exact/prefix/name/tag matches outrank body/fuzzy;
-  fuzzy fallback never admits unrelated terms when exact matches exist; selected-folder behavior is deterministic;
-  large-library search stays responsive and existing valid search cases remain green.
-
 ### B06 - Repair Settings layout and About area
 
 - **Severity:** P1
