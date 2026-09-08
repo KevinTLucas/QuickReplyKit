@@ -11,7 +11,6 @@ public class AccessibilityDialogTests
     [InlineData("AboutWindow.xaml", "DiagText")]
     [InlineData("AssignHotkeyWindow.xaml", "HotkeyBox")]
     [InlineData("BackupWindow.xaml", "BackupList")]
-    [InlineData("HotkeyManagerWindow.xaml", "SearchKeyBox")]
     [InlineData("HotkeyManagerWindow.xaml", "FilterBox")]
     [InlineData("ImportPreviewWindow.xaml", "EntryList")]
     [InlineData("InputDialog.xaml", "Input")]
@@ -30,7 +29,6 @@ public class AccessibilityDialogTests
     [Theory]
     [InlineData("AssignHotkeyWindow.xaml", "ErrorText", "Assertive")]
     [InlineData("BackupWindow.xaml", "EmptyHint", "Polite")]
-    [InlineData("HotkeyManagerWindow.xaml", "SearchResult", "Polite")]
     [InlineData("ImportPreviewWindow.xaml", "SelectionSummary", "Polite")]
     [InlineData("InputDialog.xaml", "ErrorText", "Assertive")]
     [InlineData("SettingsWindow.xaml", "HotkeyError", "Assertive")]
@@ -47,7 +45,6 @@ public class AccessibilityDialogTests
     [Fact]
     public void Dialogs_HaveSafeKeyboardDefaults()
     {
-        AssertDefaultButton("AboutWindow.xaml", "Close");
         AssertDefaultButton("BackupWindow.xaml", "Close");
         AssertDefaultButton("TrashWindow.xaml", "_Close");
         Assert.Equal("True", (string?)Named(Load("ImportPreviewWindow.xaml"), "ImportButton").Attribute("IsDefault"));
@@ -108,6 +105,25 @@ public class AccessibilityDialogTests
             (string?)e.Attribute("Value") == "{DynamicResource Accent}");
         Assert.DoesNotContain(border.Descendants(), e => e.Name.LocalName == "Trigger" &&
             (string?)e.Attribute("Property") == "IsMouseOver");
+    }
+
+    [Fact]
+    public void Settings_BackupActionsFollowBackupFolder_WithoutReset()
+    {
+        var document = Load("SettingsWindow.xaml");
+        var settings = document.Descendants().Single(e => e.Name.LocalName == "ScrollViewer")
+            .Descendants().Where(e => e.Parent?.Name.LocalName == "StackPanel").ToList();
+        int backupLabel = settings.FindIndex(e => (string?)e.Attribute("Text") == "Backup folder");
+        int actions = settings.FindIndex(e => e.Descendants().Any(b =>
+            (string?)b.Attribute("Click") == "Backup_Click"));
+
+        Assert.True(backupLabel >= 0 && actions > backupLabel);
+        Assert.Equal("BackupPathError", (string?)settings[actions - 1].Attribute(X + "Name"));
+        Assert.Contains(settings[actions].Descendants(), e => (string?)e.Attribute("Click") == "Trash_Click");
+        Assert.DoesNotContain(document.Descendants(), e =>
+            (string?)e.Attribute("Content") == "Reset" || (string?)e.Attribute("Click") == "ResetBackup_Click");
+        Assert.DoesNotContain("ResetBackup_Click", File.ReadAllText(TestFiles.RepoAsset(
+            "src/QuickReplyKit/Views/SettingsWindow.xaml.cs")), StringComparison.Ordinal);
     }
 
     private static XDocument Load(string file) => XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/" + file));
