@@ -316,6 +316,9 @@ public static class LibraryPorter
         ScriptTrustLedger? trust)
     {
         string destination = action == ImportAction.KeepBoth ? entry.KeepBothFullPath! : entry.DestinationFullPath!;
+        if (entry.Kind == ImportItemKind.Script)
+            return WriteScript(root, entry, action, trust!, destination);
+
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
@@ -326,18 +329,6 @@ public static class LibraryPorter
                 File.Move(temp, destination, action == ImportAction.Overwrite);
             }
             finally { try { if (File.Exists(temp)) File.Delete(temp); } catch { /* best effort */ } }
-
-            if (entry.Kind == ImportItemKind.Script)
-            {
-                var installed = ScriptDefinitionFile.Load(destination);
-                if (!installed.Success || !File.ReadAllBytes(destination).AsSpan().SequenceEqual(entry.Content))
-                    return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
-                        "Installed script could not be verified; it was not trusted.");
-                var accepted = trust!.Trust(installed.Value!);
-                if (!accepted.Success)
-                    return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
-                        "Script was written but could not be trusted: " + (accepted.Error ?? accepted.Marker));
-            }
 
             var kind = action switch
             {
@@ -352,6 +343,65 @@ public static class LibraryPorter
         {
             return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
                 $"Failed: {entry.DestinationPath} ({ex.Message})");
+        }
+    }
+
+    private static ImportOutcome WriteScript(string root, ImportPlanEntry entry, ImportAction action,
+        ScriptTrustLedger trust, string destination)
+    {
+        string temp = destination + ".tmp-" + Guid.NewGuid().ToString("N");
+        string? previous = null;
+        bool committed = false;
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.WriteAllBytes(temp, entry.Content);
+            if (File.Exists(destination))
+            {
+                previous = destination + ".rollback-" + Guid.NewGuid().ToString("N");
+                File.Move(destination, previous);
+            }
+            File.Move(temp, destination);
+
+            var installed = ScriptDefinitionFile.Load(destination);
+            if (!installed.Success || !File.ReadAllBytes(destination).AsSpan().SequenceEqual(entry.Content))
+                return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
+                    "Installed script could not be verified; no library change was kept.");
+
+            var accepted = trust.Trust(installed.Value!);
+            if (!accepted.Success)
+                return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
+                    "Script could not be trusted; no library change was kept: " +
+                    (accepted.Error ?? accepted.Marker));
+
+            var kind = action switch
+            {
+                ImportAction.Overwrite => ImportOutcomeKind.Overwritten,
+                ImportAction.KeepBoth => ImportOutcomeKind.KeptBoth,
+                _ => ImportOutcomeKind.Imported,
+            };
+            string relative = Path.GetRelativePath(root, destination).Replace('\\', '/');
+            committed = true;
+            return new(entry.Id, relative, kind, $"{kind}: {relative}");
+        }
+        catch (Exception ex)
+        {
+            return new(entry.Id, entry.DestinationPath, ImportOutcomeKind.Failed,
+                $"Failed: {entry.DestinationPath} ({ex.Message})");
+        }
+        finally
+        {
+            try
+            {
+                if (!committed)
+                {
+                    if (File.Exists(destination)) File.Delete(destination);
+                    if (previous is not null && File.Exists(previous)) File.Move(previous, destination);
+                }
+                else if (previous is not null && File.Exists(previous)) File.Delete(previous);
+            }
+            catch { /* pre-import backup remains the final recovery boundary */ }
+            try { if (File.Exists(temp)) File.Delete(temp); } catch { /* best effort */ }
         }
     }
 
