@@ -51,6 +51,22 @@ public class AppConfigTests
     }
 
     [Fact]
+    public void Load_PreservesSavedCustomLibraryAndBackupPaths()
+    {
+        using var t = new TempDir();
+        string path = t.Of("config.json");
+        const string library = @"D:\Shared Support\Responses";
+        const string backups = @"\\fileserver\QuickReplyKit\Backups";
+        File.WriteAllText(path,
+            """{"libraryPath":"D:\\Shared Support\\Responses","backupPath":"\\\\fileserver\\QuickReplyKit\\Backups"}""");
+
+        var loaded = AppConfig.Load(path);
+
+        Assert.Equal(library, loaded.LibraryPath);
+        Assert.Equal(backups, loaded.BackupPath);
+    }
+
+    [Fact]
     public void Load_CorruptFile_ReturnsDefaults()
     {
         using var t = new TempDir();

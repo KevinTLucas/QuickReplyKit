@@ -8,7 +8,7 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `ba621f5` (B20 import crash containment and transactional script-import rollback);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 are complete. B21-B29 remain active in priority order.
+- **Current product baseline:** B01-B20 are complete. B22 is in QA; B21 and B23-B29 remain active.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **729 passed** after B20 independent import/stability QA.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `ba621f5` at 69,921,413 bytes (SHA-256
@@ -86,7 +86,7 @@
 
 ## Remaining Work
 
-B21-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21/B22 first; then the focused
+B21-B29 are active in [`BACKLOG.md`](BACKLOG.md); B22 is currently in QA. Work in severity order: B21/B22 first; then the focused
 UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
