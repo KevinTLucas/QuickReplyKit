@@ -11,7 +11,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B32 - End-user GitHub README and complete visual guide
 
-- **Severity / status:** P2 · Requested · Queued last
+- **Severity / status:** P2 · Documentation · QA complete; ready to merge
 - **Acceptance:** make the root `README.md` a polished end-user landing page that presents QuickReplyKit clearly and
   documents every shipped workflow: installation and portable distribution, first run, launcher hotkey, search and
   folder navigation, preview, rich/plain paste and copy, instant response hotkeys, creating/editing/organizing
@@ -20,6 +20,12 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   screenshots from the shipping UI in both themes where useful. Move detailed build, architecture, dependency, and
   contributor material into appropriately named internal docs without losing it. Keep the README easy to scan,
   accurate for the final executable, and attractive on GitHub.
+- **Implementation:** branch `end-user-readme` contains the end-user-first guide, 10 curated shipping-UI screenshots
+  plus the app icon, a separate maintainer guide at [`DEVELOPMENT.md`](DEVELOPMENT.md), narrow documentation-image
+  tracking, and corrected documentation links/completion boundaries. Independent QA verified every user-facing claim
+  against shipping code; corrected supported-Windows wording, exact UI labels, clipboard wording, and handoff privacy;
+  recaptured the editor and shortcut manager with healthy safe examples; inspected every image; validated all local
+  links/Markdown/HTML; and reran the clean Release build plus all 785 tests. Ready for `--no-ff` merge.
 
 ## Deferred Ideas
 

@@ -1,242 +1,488 @@
-# QuickReplyKit
+<div align="center">
+  <img src="docs/images/quickreplykit-icon.png" alt="QuickReplyKit lightning-bolt icon" width="104">
+  <h1>QuickReplyKit</h1>
+  <p><strong>Find the right support response. Paste it where you are already working. Keep moving.</strong></p>
+  <p>A fast, local Windows response launcher for support teams.</p>
+</div>
 
-A lightweight Windows desktop **response launcher** for support teams. Press a global hotkey, find a
-prewritten response, and insert it at your cursor in whatever app you were using — rich text or plain —
-**without disturbing your clipboard** and **without leaving your content in Windows clipboard history**.
+![QuickReplyKit launcher in Light mode](docs/images/launcher-light.png)
 
-Responses are just a folder tree of `.json` files, so sharing is as simple as copying files or folders.
+QuickReplyKit keeps approved replies in a simple folder library. Press a global shortcut, search or browse, preview
+the response, and insert it into Outlook, Teams, a browser, a CRM, or another Windows application. The launcher gets
+out of the way and returns you to your work.
 
-## The workflow (press Ctrl+Alt+D)
+- **Fast:** keyboard-first launcher, background library loading, and responsive search for large libraries.
+- **Local:** no account, hosted service, browser extension, CRM integration, or AI-generated content.
+- **Portable:** the self-contained Windows build needs no separate .NET or Visual C++ installation.
+- **Shareable:** a response is one JSON file; folders are categories and can be copied between teammates.
+- **Recoverable:** rolling backups, import safety checks, and an in-app Trash protect the library.
+- **Flexible:** rich text, tags, reusable sections, variables, and carefully controlled scripts.
 
-1. You're working in another app (browser, CRM, Outlook, Teams, …).
-2. Press **Ctrl+Alt+D** — the launcher pops up instantly.
-3. **Type a few characters** to search (by name, app, folder, tags, or body).
-4. **Arrow up/down** to the response you want; the preview updates as you go.
-5. Press **Enter** to insert it at your cursor. (**Shift+Enter** inserts as plain text; **Ctrl+C** copies.)
-6. The launcher hides and focus returns to your app — your original clipboard is left intact.
+## Quick start
 
-Search checks response names, apps, folders, tags, and body text. Selecting a folder adds a removable filter chip and
-searches only that folder and its descendants; selecting **All Responses** or removing the chip returns to global
-search without clearing what you typed. Favorites and Recent search only those views. Minor misspellings are
-considered only when a token has no exact match in the active view, keeping ordinary searches precise and fast.
+### 1. Get and run the app
 
-The hotkey is configurable in Settings. Single-click selects and previews a response (it never
-auto-inserts); double-click inserts.
+Use the `QuickReplyKit.exe` supplied by your administrator or project maintainer. Put it in a stable folder such as
+`C:\Tools\QuickReplyKit`, then double-click it. QuickReplyKit remains available in the Windows notification area.
 
-## Build & run (from source)
+The portable build supports **Windows 11 x64 and Microsoft-supported Windows 10 Enterprise/LTSC x64 releases**. A
+clean PC does not need a separate .NET runtime, SDK, or Visual C++ Redistributable.
 
-Requires the **.NET 10 SDK** (Windows). WPF app, C#, no third-party packages.
+You can distribute either:
 
-```bash
-# Build and test
-dotnet build QuickReplyKit.slnx -c Debug
-dotnet test  QuickReplyKit.slnx
+| Package | First-run result |
+|---|---|
+| `QuickReplyKit.exe` only | Starts with an empty response library. Users can create or import responses. |
+| `QuickReplyKit.exe` plus `DefaultLibrary\` beside it | Seeds the supplied starter responses and optional examples, but only when the user's library is empty. |
 
-# Run (starts in the system tray; --show pops the launcher immediately)
-dotnet run --project src/QuickReplyKit -- --show
+Existing libraries are never replaced by `DefaultLibrary`. To add the optional examples after an upgrade, copy the
+`DefaultLibrary\Examples` folder into the configured response library.
+
+> **Windows may show SmartScreen for an unsigned build.** Use software supplied by a source you trust. An
+> organization distributing QuickReplyKit broadly should code-sign the executable.
+
+Build and dependency details for maintainers are in [Development and distribution](docs/DEVELOPMENT.md).
+
+### 2. Complete the first-run tour
+
+The first launch shows three short cards covering the launcher shortcut, search, and paste workflow. QuickReplyKit
+then continues running in the notification area. The tour appears once.
+
+### 3. Make your first paste
+
+1. Place the cursor in the destination application.
+2. Press **Ctrl+Alt+D** (the configurable default launcher shortcut).
+3. Type part of a response name, folder, app, tag, or message text.
+4. Use **Up/Down** to select a result and review the preview.
+5. Press **Enter** to use the configured paste behavior (**Rich text** by default).
+
+QuickReplyKit hides, restores the destination app, and pastes at the existing cursor position. Common clipboard
+formats from before the paste are restored. Temporary paste content is marked so Windows **should not retain it** in
+clipboard history or cloud clipboard. Use **Paste plain** or **Shift+Enter** when formatting is not wanted.
+
+## Keyboard reference
+
+QuickReplyKit is designed so the normal workflow does not require a mouse.
+
+| Where | Key | Action |
+|---|---|---|
+| Any application | **Ctrl+Alt+D** | Open the launcher. Change this in Settings. |
+| Launcher search | **Up / Down** | Move through results and update the preview. |
+| Launcher search | **Enter** | Insert using the configured default paste mode. |
+| Launcher search | **Shift+Enter** | Insert as plain text. |
+| Launcher search | **Ctrl+C** | Copy the selected response when no search text is selected. |
+| Launcher | **Ctrl+F** or **Ctrl+L** | Return focus to search and select the query. |
+| Empty search with a folder filter | **Backspace** | Remove the active folder scope. |
+| Launcher | **Escape** | Hide QuickReplyKit and return to the prior app. |
+| Lists and dialogs | **Tab / Shift+Tab**, arrows, **Enter**, **Space** | Move focus and activate standard controls. |
+| Rich editor | **Ctrl+B / Ctrl+I / Ctrl+U** | Toggle bold, italic, or underline. |
+
+Pointer users can single-click a response to select and preview it. A single click never inserts. Double-clicking a
+response performs the default insert. Right-click a response or category for its management menu.
+
+## Find and paste responses
+
+### Browse the library
+
+The left pane mirrors the real folder structure on disk. It also contains:
+
+- **Favorites** for starred responses.
+- **Recent** for responses pasted or intentionally copied recently.
+- **All Responses** for the whole library, including visible warnings for invalid files.
+
+Click the star beside a response to add it to or remove it from Favorites.
+
+Select a folder to limit results to that folder and its descendants. A removable scope chip appears by search; its
+label uses the selected folder's short name while the full nested path remains the actual filter. The selected folder
+uses the native Windows selection background plus emphasized text, so the state is visible in Light, Dark, and High
+Contrast modes. At narrow window widths the folder pane collapses automatically and can be reopened with the menu
+button.
+
+### Search
+
+Search checks response name, app, folder path, tags, and body text. Multiple words are ANDed, so `ixl license`
+requires both terms somewhere in the searchable fields. Name hits are emphasized and body-only hits show a short
+matching snippet. Small typo tolerance is used only when a word has no exact match, keeping normal results
+predictable. Search stays inside the selected folder, Favorites, or Recent scope until that scope is removed.
+
+Malformed response files do not block the library. They can be found by filename in All Responses, appear with a
+warning symbol and error preview, and remain non-pasteable and non-copyable.
+
+### Preview and choose an action
+
+The right pane renders the rich response as it will be inserted, including resolved variables and reusable response
+sections. The action row provides:
+
+- **Paste:** insert using the configured default behavior, then hide the launcher.
+- **Paste plain:** strip formatting, insert text, then hide the launcher.
+- **Copy:** put the resolved response on the clipboard and keep the launcher open. Because Copy is intentional, it
+  replaces the clipboard normally and may appear in clipboard history.
+- **Edit:** edit and save the selected library response.
+
+Paste temporarily uses the clipboard because that is the most compatible way to preserve formatted content across
+Windows applications. QuickReplyKit snapshots common formats, restores focus, writes the temporary payload, sends
+paste, and restores the snapshot. If the saved destination window no longer exists, QuickReplyKit falls back to an
+ordinary plain-text Copy so the response is not lost. Focus/clipboard restoration remains best-effort when another
+program blocks automation, Windows denies foreground activation, or a clipboard format cannot be detached safely.
+
+![QuickReplyKit launcher in Dark mode](docs/images/launcher-dark.png)
+
+The launcher, editor, and management windows follow the System, Light, or Dark appearance selected in Settings.
+
+## Create and organize responses
+
+Use **+** for a blank response or the clipboard button to start from copied content. Clipboard HTML is reduced to the
+supported format; active content, hidden blocks, embedded objects, and unsafe links are removed.
+
+Right-click a response for every response-level command:
+
+| Command | What it does |
+|---|---|
+| **Edit…** | Opens the saved response with name, category, app, tags, and content filled in. Saving updates the library file. |
+| **Edit Response Text…** | Resolves the template, lets you change this one final message, and inserts it without saving or changing the original. |
+| **Duplicate** | Creates a copy with a safe numbered name. |
+| **Rename…** | Renames the response and its JSON file. |
+| **Move to…** | Moves the response to an existing or new folder path. |
+| **Copy** | Copies the resolved response and leaves the launcher open. |
+| **Instant-paste hotkey…** | Assigns a global rich-text or plain-text shortcut to this response. |
+| **Clear instant-paste hotkey** | Appears when assigned and removes that response shortcut. |
+| **Open containing folder** | Selects the source file in Windows Explorer. |
+| **Export response…** | Saves one portable response JSON file. |
+| **Delete…** | Moves the response to QuickReplyKit Trash after confirmation. |
+
+Right-click a category for **Export folder…** or **Delete folder…**. Folder deletion first creates a required safety
+backup, then moves the entire subtree—including nested responses and side files—into Trash. The toolbar's two-arrow
+menu provides **Import responses…** and **Export full library…**.
+
+### Folders and shared libraries
+
+Folders are categories; subfolders create deeper categories. For example:
+
+```text
+Clever Apps
+└── IXL
+    └── Licensing
+        └── No Campus License.json
 ```
 
-## Build a portable single-file exe
+The app watches the library and recognizes added, changed, moved, and removed files without being rebuilt or
+restarted. A teammate can share one response, a category, or a larger library by copying files/folders into your
+library. Empty folders are valid.
 
-```bash
-dotnet publish src/QuickReplyKit -c Release -r win-x64 --self-contained true \
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none
+### Response tags
+
+In the editor, type a tag and press **Enter**, comma, or **Tab**. Each tag becomes a colored chip below the field;
+use its **×** button to remove it. When the tag field is empty, **Backspace** removes the last chip. Tags are stored
+with the response, travel when it is shared, and are included in search. Duplicates are ignored case-insensitively.
+
+QuickReplyKit does not apply tags to folders. Older `.qrkfolder.json` sidecar files are safely ignored.
+
+## Rich-text editor
+
+![Rich response editor in Dark mode](docs/images/editor-dark.png)
+
+The focused editor supports the formatting normally needed in support communication:
+
+- bold, italic, underline, and strikethrough;
+- small, normal, large, and heading text;
+- standard text and highlight color palettes;
+- left, center, and right paragraph alignment;
+- bulleted and numbered lists;
+- hyperlinks, paragraphs, and line breaks;
+- clear formatting;
+- built-in variable insertion.
+
+Choose a response name, optional app, tags, and destination category. The Category field accepts an existing folder
+from the dropdown or a new nested path such as `Clever Apps/IXL/Licensing`; missing folders are created on Save.
+
+**New from clipboard** prefers cleaned rich text when available and falls back to encoded plain text. **Edit Response
+Text…** uses the same editor in transient compose mode: library metadata is hidden and the bottom actions become
+Insert / Insert plain instead of Save.
+
+## Templates, variables, and reusable sections
+
+QuickReplyKit resolves `{{...}}` tokens in previews, paste, plain paste, copy, one-off editing, and instant hotkeys.
+The saved source remains unchanged.
+
+### Built-in variables
+
+| Token | Result |
+|---|---|
+| `{{greeting}}` | `Good morning`, `Good afternoon`, or `Good evening` based on local time. |
+| `{{date}}` | Current short date using Windows regional settings. |
+| `{{time}}` | Current short time using Windows regional settings. |
+| `{{day}}` | Current day name. |
+| `{{date:yyyy-MM-dd}}` | Current date using the supplied .NET date format. |
+
+Insert common tokens from the editor's **`{{ }}`** menu.
+
+### Include another response
+
+Use another response's name as a token to reuse approved sections:
+
+```text
+{{Shared Welcome}}
+
+Main response content.
+
+{{Shared Closing}}
 ```
 
-Output is a single **`QuickReplyKit.exe`** (~67 MB, self-contained — no .NET install needed on the
-target machine), plus an optional `DefaultLibrary` folder beside it. Trimming is intentionally not
-enabled (WPF is not trim-safe); `-p:DebugType=none` keeps the folder clean (no `.pdb`).
+Includes can be nested. Missing references, ambiguity, and cycles produce visible markers rather than freezing the
+launcher. Keep response names unique across the library for predictable includes.
 
-**To distribute: give end users just `QuickReplyKit.exe`.** It runs on its own — copy that one file to
-any Windows 10/11 PC and run it. The `DefaultLibrary` folder is optional: include it to seed a few
-example responses on first run; omit it and the app simply starts with an empty library (users create
-or import their own). Notes: the first launch self-extracts native libraries to a temp folder (a few
-seconds, once), and Windows SmartScreen may prompt for an unsigned exe (**More info → Run anyway**, or
-code-sign the exe for smoother distribution).
+### Restricted expressions
 
-## Runtime requirements & dependencies (works on a clean PC with nothing installed)
+`{{script:Name}}` calls an enabled, locally trusted script definition. The recommended `qrk-expr-1` language is a
+small expression evaluator for bounded text/date logic. It supports literals, clock values, comparisons, Boolean
+operators, and pure functions such as `if`, `concat`, `upper`, `lower`, `date`, and `time`.
 
-The portable build is **self-contained**: the entire .NET runtime, WPF, and all native runtime libraries
-are **bundled inside `QuickReplyKit.exe`** and extracted to a per-user temp folder on first run. A target
-PC needs **only Windows** — no .NET, no Visual C++ Redistributable, no other packages.
+It cannot access files, processes, the network, environment variables, registry, clipboard, UI, reflection, or
+native code. Invalid, missing, disabled, changed, ambiguous, or untrusted definitions fail closed with a marker.
 
-**Requirement:** 64-bit **Windows 10 (1607+) or Windows 11**. (x64. Not for ARM/32-bit or older Windows.)
+### Full-trust Windows PowerShell
 
-**Bundled inside the exe (you do NOT install these):** the full .NET 10 runtime + WPF (~250 framework
-assemblies) and the native runtime — `coreclr.dll`, `clrjit.dll`, `hostfxr/hostpolicy.dll`,
-**`vcruntime140_cor3.dll`** (its own C++ runtime — so no separate VC++ Redistributable is required),
-`PresentationNative_cor3.dll`, `wpfgfx_cor3.dll`, `D3DCompiler_47_cor3.dll`, `System.IO.Compression.Native.dll`.
+> **Full-trust PowerShell is not sandboxed.** A trusted `powershell-1` definition runs as the signed-in Windows user
+> and can read, change, or delete files; access the network, registry, environment, credentials, and processes; and
+> start programs. Review every line and trust only code from a source you fully understand.
 
-**External DLLs used (all are standard Windows system libraries, present on every Windows 10/11):**
-`user32.dll`, `kernel32.dll`, `gdi32.dll` (windowing/input/graphics), `dwmapi.dll` (dark title bar),
-`shell32/ole32` (Explorer + shell), plus WPF's OS-provided DirectX/DirectWrite. No third-party or
-redistributable DLLs are required.
+Full-trust definitions require the inbox **Windows PowerShell** executable. QuickReplyKit runs approved source out of
+process, without a profile or visible console, and applies source, output, time, cancellation, and concurrency limits.
+Those limits protect app responsiveness; they do not remove the script's Windows permissions.
 
-So: copy the one exe to any supported Windows PC and it runs — no prerequisites to install.
+Open **Settings > Scripts…** to create, validate, enable, inspect, trust, export, or delete definitions. New scripts
+default to the restricted language. Trust is local and tied to the exact language and source; editing either revokes
+trust. Trust is never stored in exported definitions.
 
-## Managing responses
+![Script Manager showing an untrusted full-trust example](docs/images/scripts-dark.png)
 
-From the launcher you can, via the `+` / clipboard buttons and the right-click menu on a response:
+The optional Examples folder demonstrates built-ins, includes, a restricted expression, and a clearly labeled
+PowerShell greeting that randomly chooses from ten phrases and adds a separate Friday line. The PowerShell example
+remains untrusted until reviewed and explicitly approved.
 
-The active folder or built-in view uses the native selection background and an emphasized label, so the current search
-scope remains visible without relying on color alone in Light, Dark, and Windows High Contrast themes. The search-scope
-chip uses the selected folder's short display name while filtering with its complete nested path.
+## Instant per-response hotkeys
 
-- **New** — create a response and choose (or create) its folder in the hierarchy.
-- **New from clipboard** — turn whatever you just copied into a new response, opened in the editor. Clipboard HTML
-  is reduced to QuickReplyKit's supported formatting; scripts, hidden/embedded content, and unsafe links are removed.
-- **Edit** — a built-in rich-text editor: bold, italic, underline, **strikethrough**, bullet/numbered
-  lists, links, paragraphs, plus **font size/heading, standard text colors, highlight colors, and
-  alignment** — no need to touch markup or files. Tags are entered as removable colored chips.
-- **Edit Response Text…** — open the selected response (with variables already resolved) in the editor, tweak
-  the final message, and insert it — **without** saving a new response.
-- **Duplicate**, **Rename**, **Move to…** another folder.
-- **Copy** to the clipboard, **Open containing folder** in Explorer.
-- **Instant-paste hotkey** — right-click a response to bind a global rich/plain paste shortcut.
-- **Delete** — with confirmation, into QuickReplyKit's recoverable in-app Trash. Right-click a category to delete
-  and later restore its complete folder tree, including nested responses and side files.
+An instant-paste hotkey inserts one response into the active application **without opening the launcher**.
 
-Older libraries may contain `.qrkfolder.json` files from a retired folder-tag feature. QuickReplyKit leaves these
-legacy sidecars in place but ignores them; they never appear as responses or affect response tags.
+1. Right-click a valid response and choose **Instant-paste hotkey…**.
+2. Focus the capture box and press a modifier-plus-key combination such as `Ctrl+Alt+1`.
+3. Choose **Rich text** or **Plain text**, then Save.
 
-## Templates: variables & reusable sections
+Open **Settings > Keyboard shortcuts…** to review every registration. The manager shows the launcher shortcut and
+all response shortcuts, filters by shortcut or response name, and labels duplicate combinations or shortcuts already
+in use by another application. Use Edit to reassign a response shortcut or Clear to remove it.
 
-Responses can contain `{{…}}` tokens that are filled in **when you insert** (and shown resolved in the preview):
+![Keyboard shortcut manager with launcher and response hotkeys](docs/images/keyboard-shortcuts-light.png)
 
-- **Built-in variables:** `{{greeting}}` (Good morning/afternoon/evening by time of day), `{{date}}`,
-  `{{time}}`, `{{day}}`, and `{{date:yyyy-MM-dd}}` (any .NET date format). Insert them from the editor's
-  **`{{ }}`** menu.
-- **Includes:** reference another response by name to reuse sections — e.g. a template of
-  `{{Welcome}}` / body / `{{Closing}}` keeps greetings and sign-offs consistent everywhere. Cycles and
-  missing references are shown as clear inline markers, never a hang.
-- **Restricted expressions (recommended):** trusted local definitions can supply computed text with
-  `{{script:Name}}`. The intentionally small `qrk-expr-1` language supports literals, clock values, comparisons,
-  boolean logic, and bounded pure functions such as `if`, `concat`, `upper`, `lower`, `date`, and `time`. It cannot
-  access files, processes, the network, environment, registry, clipboard, UI, reflection, or native code. Example:
-  `if(hour < 12, "Good morning", "Hello")`.
-- **Full-trust Windows PowerShell:** `powershell-1` definitions can perform local data-processing tasks that the
-  restricted language cannot. They run as the signed-in Windows user and can read, change, or delete files; access
-  the network, registry, environment, and credentials; and start processes. Only create or trust source you have
-  reviewed. QuickReplyKit launches the system Windows PowerShell out of process with no profile or visible window,
-  limits source to 4,096 characters and output to 8,192 characters, stops it after 5 seconds, and allows at most two
-  concurrent runs. These limits protect app responsiveness; they do not sandbox trusted PowerShell.
+Response hotkeys are local settings keyed by the response's relative path. They do not travel with shared response
+files. If a response is moved, renamed, deleted, or unavailable, the manager reports that the target was not found.
 
-Open **Settings → Scripts…** to create, validate, enable, review, export, or delete definitions. New definitions use
-the restricted language unless you explicitly select full-trust PowerShell. Trust is local and tied to the exact
-language and source: editing either revokes trust, and QuickReplyKit never exports approval state.
+## Import and export
 
-The optional `DefaultLibrary/Examples` seed folder contains small, removable demonstrations of built-in variables,
-reusable response includes, one restricted expression, and one clearly labeled full-trust PowerShell script. The
-PowerShell example stays untrusted after seeding: review its exact source under **Settings → Scripts…** and explicitly
-trust it before it can run. Each example is a separate file, so the demos are easy to copy or delete; the composed
-response needs its two `Shared …` include files. Existing libraries are never modified automatically; to add these
-examples after an upgrade, copy the `Examples` folder from `DefaultLibrary` into your response library. Ordinary
-support examples do not depend on the demos.
+Open the **Import / Export** toolbar menu (two-arrow icon) to import responses/scripts or export the full library.
+Use a response context menu to export one JSON file, or a category context menu to export that folder as a ZIP.
 
-## Sharing responses
+### Import review
 
-- **Copy folders/files** directly into your library — the folder hierarchy and responses appear
-  automatically (no restart; the app watches the library for changes).
-- Use the launcher's **⇄** menu (tooltip: Import responses or export the full library) to import responses or export
-  the full library. Export one
-  response from its result context menu, or export one folder from its folder context menu. Import first shows a
-  selectable New/Changed/Duplicate/Identical/Invalid/Unsafe review list; changed paths can be skipped, overwritten,
-  or kept as a second copy. Invalid content never blocks valid responses. Script definitions identify restricted versus
-  full-trust code, show their exact source, start unchecked, and require a separate explicit acceptance for every item;
-  Select all never accepts code. Imported PowerShell is not trusted until that exact written definition is verified.
+Import accepts a response JSON file or ZIP library. Before writing anything, QuickReplyKit builds one review plan and
+classifies each entry as **New**, **Changed**, **Duplicate**, **Identical**, **Invalid**, or **Unsafe**.
 
-Broken/invalid `.json` files show up in **All Responses** marked with a ⚠ (muted, and not
-paste-able) with the parse error in the preview, so you can find and fix them.
+- New/Changed/Duplicate ordinary responses have explicit checkboxes.
+- **Select all safe** selects ordinary eligible files; **Clear** clears those selections.
+- Each selected conflict uses its own **Overwrite** or safer **Keep both** choice.
+- Identical, Invalid, and Unsafe rows are disabled and remain Skip.
+- A required rolling backup is created after review acceptance and before any write.
+- Source and destination fingerprints are rechecked; an entry changed after preview is reported **Stale** instead of
+  being overwritten.
 
-## Favorites & recent
+Script definitions always require separate review. Their language and exact source are shown, every row starts
+unchecked, and each item must be accepted individually. **Select all safe never accepts code.** There is no Yes to
+all for code-bearing items. Full-trust PowerShell displays an additional Windows-permission warning. Accepted code is
+trusted only after the exact destination is successfully written, reloaded, and byte-verified.
 
-- Tap the ★ on any response to favorite it; the **Favorites** view gives fast access.
-- The **Recent** view lists responses you've recently inserted.
+![Import review showing a full-trust PowerShell definition and its warning](docs/images/import-review-dark.png)
 
-## Settings
+Invalid, unsafe, stale, or failed entries do not prevent valid siblings from importing. The completion dialog reports
+imported, overwritten, kept-as-copy, skipped, invalid/unsafe, stale, and failed counts.
 
-Open from the ⚙ button or the tray. You can set:
+## Protect and recover the library
 
-- **Global hotkey** (default **Ctrl+Alt+D**).
-- **Library folder** location.
-- **Backup folder** location, with Change/Open. The default is `%USERPROFILE%\Documents\QuickReplyKit\Backups`;
-  managed local or network paths are accepted when they are absolute, writable, and outside the response library.
-- **Default paste behavior** (rich text or plain text).
-- **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).
-- **Accessibility** — keyboard-first navigation, named controls and live status for screen readers, High Contrast
-  compatible theme resources, keyboard-visible focus, readable active formatting states, and reduced popup motion.
-- **Remember window** size and position (restored on-screen even if monitors change).
-- **Launch at startup**.
-- **Keyboard shortcuts…** — opens the shortcuts manager (see below).
-- **Scripts…** — opens the restricted-expression and full-trust PowerShell manager for
-  create/edit/validate/trust/enable/export/delete workflows.
-- **Back up / Restore Library…** — create or restore one of the 10 rolling library-and-settings snapshots.
-- **Trash…** — restore deleted responses or folders, remove one permanently, or empty Trash. Deleted items
-  are kept for 30 days by default.
-- **Diagnostics** — enable verbose logging, open the rolling logs folder, or open About / Diagnostics.
+### Rolling backups
 
-## Per-response instant-paste hotkeys
+Open **Settings > Back up / Restore Library…** to create a snapshot, restore the selected snapshot, or open the
+configured folder. QuickReplyKit also requires a backup before imports and category-folder deletion.
 
-Bind a global hotkey to a **specific** response and it pastes straight into whatever app you're in — **without
-opening QuickReplyKit**. Right-click a response → **Instant-paste hotkey…**, press a combination, and choose rich
-or plain text. These binds are stored locally (in your `config.json`, keyed by the response's path), so a shared
-library never fights over global keys.
+A current snapshot contains the response library and app settings; older library-only backups remain supported.
+Restore protects the selected archive, validates and size-bounds extraction, snapshots the current state, stages the
+replacement, and rolls the exact original library back if installation fails. The app restarts after restored settings
+are applied.
 
-Open **Settings → Keyboard shortcuts…** for the manager: it lists the launcher hotkey and every per-response bind,
-flags conflicts (a duplicate within QuickReplyKit, or a combo another app already owns), and provides a text filter
-over shortcut combinations and response names. If a hotkey can't be registered
-(already in use), the app keeps running and the manager shows it as "in use by another app".
+Retention keeps **up to 10 snapshots**, subject to **500 MB total** and **90-day** limits while preserving at least the
+newest. The backup folder can be a writable local or network path outside the library. If unavailable, QuickReplyKit
+still launches but safely refuses the affected backup, restore, import, or folder-delete operation.
 
-## Backups, Trash, and diagnostics
+### Trash
 
-- QuickReplyKit automatically creates a required rolling backup before an import; if that safety copy cannot be
-  written, the import is canceled before it changes anything. You can create or restore a snapshot from
-  **Settings → Back up / Restore Library…**. Current snapshots contain the response library and app settings;
-  older library-only snapshots still work. Restore protects the selected archive, snapshots the current state, and
-  validates and swaps the staged library into place with rollback on failure. Restored settings keep the current
-  library location, and QuickReplyKit restarts after applying them. Backup extraction is bounded against oversized ZIPs.
-  Every manual and required snapshot uses the configured backup folder. If that folder is offline or read-only,
-  QuickReplyKit starts normally but clearly refuses the affected backup, restore, import, or folder-delete operation.
-- Deleted responses and category folders move to **Settings → Trash…**, where each item is labeled by type and can
-  be restored to its exact original path unless a file or folder now occupies that location. Folder deletion first
-  creates a required rolling backup and fails without changing the library if that backup cannot be written.
-  Permanent delete and Empty Trash require confirmation; retention applies to both response and folder items.
-- Diagnostic logs live under `%APPDATA%\QuickReplyKit\logs`, roll at about 50 MB total, and record structured workflow
-  stages, counts, timings, modes, and safe crash frames. They exclude search text, response names/tags/content,
-  template token names, clipboard data, hotkey values, window handles, user paths, and exception messages. Enable
-  verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable support summary with
-  version, OS/runtime, aggregate hotkey-registration counts, library/count/watcher state, actual logging status, and
-  one-click access to the library, config, logs, backups, and Trash. The copied report shows the resolved filesystem
-  paths needed for troubleshooting while excluding response details, individual response hotkeys, and
-  clipboard/customer content.
-- First launch shows a short three-card introduction to the hotkey, search, and paste workflow.
+Delete moves responses and complete categories into Trash instead of erasing them immediately. Open **Settings >
+Trash…** to restore an item to its exact path, delete one permanently, or empty Trash.
 
-## Current limitations before broad rollout
+Restore never overwrites an existing file/folder and keeps the Trash copy on conflict or unsafe path. Items are kept
+for **30 days by default**; retention 0 keeps them until manually removed.
 
-- Import preview classifies each response as New, Duplicate elsewhere, Changed, Identical, Invalid, or Unsafe. Check
-  only the responses you want, use Select all/Clear for ordinary files, and choose Overwrite or the safer Keep both
-  option per selected conflict. Identical, invalid, and unsafe files stay disabled. Select all never accepts
-  code-bearing definitions; those display exact source and language and require individual review and acceptance.
-  Full-trust PowerShell rows state their Windows-user access explicitly. The accepted preview is the exact plan that
-  executes, and files changed after preview are reported stale rather than overwritten.
-- Legacy folder-tag sidecars are ignored during import and never appear as responses.
+<table>
+  <tr>
+    <td><img src="docs/images/backups-dark.png" alt="Backup and Restore Library window"></td>
+    <td><img src="docs/images/trash-light.png" alt="Trash window with deleted responses"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Rolling snapshots</em></td>
+    <td align="center"><em>Recoverable deletion</em></td>
+  </tr>
+</table>
 
-See [`docs/STATUS.md`](docs/STATUS.md) for the audited state and [`docs/BACKLOG.md`](docs/BACKLOG.md) for remaining work.
+## Settings and desktop integration
 
-## System tray
+Open Settings from the launcher's gear button or tray menu. Closing the launcher hides it while QuickReplyKit remains
+available in the notification area; choose **Exit** from the tray menu to stop the application.
 
-QuickReplyKit stays available in the system tray. The tray menu offers: **Open QuickReplyKit**,
-**Open Response Library**, **Import… / Export library…**, **Settings**, **Open logs folder**, and **Exit**.
+![Settings in Dark mode with safe sample paths](docs/images/settings-dark.png)
 
-## Where the library lives
+Defaults are **Ctrl+Alt+D**, **Rich text**, **System** appearance, **Remember window** on, and **Verbose logging** off.
 
-By default: `%USERPROFILE%\Documents\QuickReplyKit\Library` (configurable in Settings). Backups default to
-`%USERPROFILE%\Documents\QuickReplyKit\Backups` and are separately configurable. App settings, recent items, logs,
-Trash, and script trust live under `%APPDATA%\QuickReplyKit`.
-When the optional `DefaultLibrary`
-folder is distributed beside the executable, its examples seed an empty library on first run; a
-single-exe distribution starts with an empty library instead.
+| Setting or tool | Purpose |
+|---|---|
+| **Global hotkey** | Change the launcher shortcut. Invalid or occupied combinations are reported safely. |
+| **Keyboard shortcuts…** | Review launcher/instant-paste registrations and conflicts. |
+| **Scripts…** | Manage restricted-expression and full-trust PowerShell definitions. |
+| **Response library folder** | Change or open the watched library location. |
+| **Backup folder** | Change or open the rolling-snapshot location. |
+| **Back up / Restore Library…** | Create and restore snapshots. |
+| **Trash…** | Restore or permanently remove deleted responses/categories. |
+| **Default paste behavior** | Choose Rich text or Plain text for Enter/Paste. |
+| **Appearance** | Follow Windows (System) or force Light/Dark; Cancel reverts the live preview. |
+| **Remember window size & position** | Restore useful visible bounds after monitor changes. |
+| **Launch at Windows startup** | Register QuickReplyKit for the current Windows user. |
+| **Verbose logging** | Add bounded troubleshooting counts/timings without response/customer content. |
+| **About / Diagnostics…** | Show version, environment, registration counts, state, and support locations. |
 
-## License
+The tray menu provides **Open QuickReplyKit**, **Open Response Library**, **Import…**, **Export library…**,
+**Settings**, **Open logs folder**, and **Exit**. Double-click the tray icon to open the launcher. Only one app instance
+runs; starting the EXE again asks the existing instance to show itself.
+
+## Diagnostics, logs, and support
+
+![About and Diagnostics status summary with local paths omitted](docs/images/diagnostics-light.png)
+
+When reporting a problem:
+
+1. Open **Settings > About / Diagnostics…**.
+2. Use **Copy** to copy the support summary.
+3. Use **Open logs folder** and include the current session log if your support policy permits it.
+4. Describe the failed action and approximate time.
+
+Logs roll at roughly 10 MB per file and five files (about 50 MB total). Normal logging records lifecycle and safe
+workflow stages; verbose adds bounded counts/timings. Logs exclude search text, response names/tags/content, template
+token names, clipboard data, hotkey values, window handles, user paths, and exception messages. The copied diagnostic
+report includes resolved support paths but excludes response content, individual response hotkeys, script source, and
+clipboard/customer data. Review files under your organization's support/privacy policy before sharing.
+
+## Storage and privacy
+
+QuickReplyKit requires no account and sends no library data to a QuickReplyKit service. Normal operation is local.
+Full-trust PowerShell can access external resources with the signed-in user's permissions, which is why exact-source
+local trust is mandatory.
+
+| Data | Default location | Travels with copied responses? |
+|---|---|---|
+| Response library | `%USERPROFILE%\Documents\QuickReplyKit\Library` | Yes—when its JSON files/folders are copied. |
+| Backups | `%USERPROFILE%\Documents\QuickReplyKit\Backups` | No, unless a snapshot is deliberately shared. |
+| Settings/hotkeys | `%APPDATA%\QuickReplyKit\config.json` | No. |
+| Recent | `%APPDATA%\QuickReplyKit\recent.json` | No. |
+| Logs | `%APPDATA%\QuickReplyKit\logs` | No. |
+| Trash | `%APPDATA%\QuickReplyKit\trash` | No. |
+| Script trust | `%APPDATA%\QuickReplyKit\script-trust.json` | **Never.** Trust is local/source-bound. |
+
+Favorites are stored in response files, so they travel when those files are shared. Library/backup paths are
+configurable.
+
+## Accessibility
+
+- Complete launcher workflow is keyboard-operable.
+- Controls and collection rows expose screen-reader names, help text, and live status where appropriate.
+- Keyboard focus remains visible even where pointer hover is deliberately minimal.
+- Selected folders and warning/error states use text, weight, or symbols in addition to color.
+- Light, Dark, Windows High Contrast, and per-monitor DPI changes are supported.
+- Long paths, shortcuts, and response names expose full-value tooltips when clipped.
+- Dialogs scroll/resize so actions remain reachable on compact or high-scale displays.
+
+For a screen-reader issue, include the Windows version, scaling, assistive technology/version, and affected window in
+the support report.
+
+## Troubleshooting
+
+### Ctrl+Alt+D does not open QuickReplyKit
+
+- Confirm the tray icon is present and open the launcher from its menu.
+- Open **Settings > Keyboard shortcuts…** and check the launcher row.
+- Another app may own the combination. Choose another global hotkey and Save.
+- If the app is not running, start `QuickReplyKit.exe` again.
+
+### An instant hotkey does nothing
+
+- Check Keyboard Shortcuts for **Duplicate**, **In use by another app**, or **not found**.
+- Confirm the response remains at the same library-relative path, then reassign if needed.
+- A slow full-trust script may return a timeout marker instead of pasting.
+
+### Paste goes to the wrong place or does not insert
+
+- Click the destination field before opening QuickReplyKit.
+- Try **Paste plain** to separate formatting restrictions from focus problems.
+- Elevated, secure, full-screen, remote-session, or automation-resistant apps may deny focus/input.
+- Use **Copy** as a fallback, paste manually, and collect the log after reproducing the issue.
+
+### Formatting changes after paste
+
+- The destination decides how clipboard HTML maps into its editor. Use Paste plain when rich text is unsupported.
+- Highlight colors are absolute. Highlighted text with Automatic color can have lower contrast between light/dark
+  editors; choose an explicit text color when needed.
+
+### A response is missing
+
+- Clear folder/Favorites/Recent scope and search All Responses.
+- Check Trash, then open the library folder and confirm the JSON file exists.
+- Invalid files remain visible by filename with a warning instead of disappearing silently.
+
+### Import or folder deletion is canceled
+
+- The required backup could not be written. Check backup-folder access and free space, then retry.
+- Review disabled Invalid/Unsafe rows and Stale outcomes instead of forcing the operation.
+
+### A script shows a marker instead of text
+
+- In Scripts, check that the definition is valid, enabled, unique, and trusted for its exact source.
+- Editing source/language revokes trust by design. Never bypass review for unfamiliar code.
+- Full-trust scripts also require inbox Windows PowerShell to be available.
+
+### The EXE will not start on another computer
+
+- Use the **win-x64 self-contained single-file** publish, not a framework-dependent development output.
+- Confirm supported x64 Windows and that security software has not quarantined the unsigned executable.
+- The portable build is approximately **70 MB (about 66.7 MiB)** and needs no separate .NET/VC++ installation.
+
+## Known limits
+
+- Windows-only: Windows 11 x64 and Microsoft-supported Windows 10 Enterprise/LTSC x64 releases.
+- The executable is unsigned, so SmartScreen or organizational controls may prompt or block it.
+- Rich rendering depends on the destination application's clipboard support.
+- Focus and common-format clipboard restoration are best-effort across privilege, app, and remote-session boundaries.
+- A same-user malicious process can modify another app's local files, including the trust ledger; this is outside the
+  application-level trust boundary.
+- QuickReplyKit intentionally excludes CRM integrations, browser extensions, page scraping, ticket automation, and
+  AI-generated responses.
+
+## Development and license
+
+Maintainers: see [Development and distribution](docs/DEVELOPMENT.md), [Architecture](ARCHITECTURE.md), and
+[current status](docs/STATUS.md). Original requirements are preserved in [Project brief](docs/PROJECT-BRIEF.md).
 
 QuickReplyKit is available under the [MIT License](LICENSE).

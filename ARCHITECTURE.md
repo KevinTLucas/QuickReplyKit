@@ -1,15 +1,17 @@
 # QuickReplyKit — Architecture & Design
 
 A lightweight Windows "response launcher": global hotkey → find a prewritten response → insert it at the
-cursor in whatever app was focused, **preserving the user's clipboard** and **keeping the content out of
-Windows clipboard history**. This doc is the current design + a map of where things live in the code.
-For the running state, see [`docs/STATUS.md`](docs/STATUS.md); for how to build/run, see [`README.md`](README.md).
+cursor in whatever app was focused, **preserving the user's clipboard** and marking temporary content so Windows
+**should not retain it in clipboard history**. This doc is the current design + a map of where things live in the code.
+For the running state, see [`docs/STATUS.md`](docs/STATUS.md); for build, test, packaging, and dependencies, see
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). The root [`README.md`](README.md) is the end-user guide.
 
 ## Stack
 - **WPF, C#, .NET 10** (`net10.0-windows`, `UseWPF=true`). Solution: **`QuickReplyKit.slnx`** (XML solution format).
-- **No third-party packages** — BCL / native WPF only (Win32 via hand-rolled P/Invoke; zips via
+- **No third-party product/runtime packages** — BCL / native WPF only (Win32 via hand-rolled P/Invoke; zips via
   `System.IO.Compression`; JSON via `System.Text.Json`; tray via WinForms `NotifyIcon`; recycle-bin delete via
-  `Microsoft.VisualBasic.FileIO`). Keeps the portable exe lean.
+  `Microsoft.VisualBasic.FileIO`). The test project uses xUnit/Test SDK packages only; none ships. This keeps the
+  portable exe lean.
 - Distribution: `dotnet publish` self-contained, single-file, portable `.exe`.
 
 ## Projects & where things live
@@ -203,9 +205,9 @@ view-models, interop, and app wiring.
 
 ## Known completion boundaries
 
-The implemented paths above are merged and tested. [`docs/BACKLOG.md`](docs/BACKLOG.md) is the source of truth for
-future requested work. B21 is awaiting independent QA and B25-B30 remain active; see that file for priority and
-acceptance criteria.
+The implemented product paths above are merged and tested through B31. B32 is documentation-only and does not change
+these contracts. [`docs/STATUS.md`](docs/STATUS.md) records the exact audited baseline, and
+[`docs/BACKLOG.md`](docs/BACKLOG.md) contains unfinished requested work only.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
