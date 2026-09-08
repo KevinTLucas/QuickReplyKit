@@ -54,7 +54,7 @@ dotnet build QuickReplyKit.slnx -c Debug          # must be clean, 0 warnings
 dotnet test  QuickReplyKit.slnx --nologo          # must be fully green
 # Run the app (opens to the system tray; use --show to pop the launcher immediately):
 dotnet run --project src/QuickReplyKit -- --show
-# Paste engine end-to-end self-test (launches Notepad, pastes, checks clipboard restore):
+# Paste engine end-to-end self-test (uses one temporary Notepad document, closes it normally):
 src/QuickReplyKit/bin/Debug/net10.0-windows/QuickReplyKit.exe --selftest-paste
 #   → must print:  PASTE=ok CLIPBOARD_RESTORED=ok
 # Refresh the user-distributable build after every successful main merge:
@@ -68,6 +68,8 @@ test-created windows normally. If paste verification genuinely requires Notepad,
 - **Notepad QA hygiene:** if a paste check is explicitly needed, reuse one QA-created Notepad window/tab and close it
   normally in cleanup (`finally` where applicable), choosing **Don't save**. Never launch one Notepad per iteration,
   use force-kill as normal cleanup, move/focus the user's windows, or close a pre-existing user Notepad window.
+  The built-in `--selftest-*` gates are the exception: each invocation creates one isolated temporary document and
+  must undo its change and close that exact window normally before returning.
 
 ## Conventions & guardrails (do not violate without a note in STATUS.md)
 - **No third-party packages.** BCL / native WPF only — no NuGet for the app or runtime. (Win32 via

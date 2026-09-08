@@ -39,6 +39,8 @@ Record successful verification in `docs/STATUS.md` rather than a non-reproducibl
 **QA cleanup:** reuse a single Notepad tab for paste verification and close every test-created tab normally with
 **Don't save** before finishing. Do not spawn a new Notepad per loop or use force-kill as normal cleanup, because
 Windows 11 session restore preserves those tabs. Verify no QA-created Notepad/QuickReplyKit windows remain.
+The built-in `--selftest-*` gates may create one isolated temporary document per invocation; they must undo the test
+paste and close that exact window normally before returning.
 
 **Current QA boundary:** app launches, repository screenshot/capture scripts, and direct inspection of test-created
 QuickReplyKit windows are allowed. Do not use GPT Computer Use/UIAutomation or touch unrelated user windows. Close

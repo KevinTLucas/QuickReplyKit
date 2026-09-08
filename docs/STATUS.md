@@ -6,16 +6,18 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product feature tip:** `79692a5` (B19 enterprise UI standards polish); use `git rev-parse HEAD` for the
-  docs-inclusive `main` tip after the recorded `--no-ff` merge.
+- **Current product merge:** `1bf0d66` (B19 enterprise UI standards polish). The scoped Notepad self-test reliability
+  fix is `4221380`; use `git rev-parse HEAD` for the docs-inclusive tip after its recorded `--no-ff` merge.
 - **Current product baseline:** B01-B19 are complete. The active backlog is empty.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **724 passed** after the B19 combined regression and independent UI/accessibility review.
-- **Portable publish:** the current `main` release is rebuilt after the B19 merge. Until that publish completes,
-  `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` remain the last B16 release. The older
-  `publish/latest/QuickReplyKit.exe` is running and locked; do not close it. No external .NET install is needed.
+- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` are the B19 `main` release
+  at 69,920,116 bytes (SHA-256 `DE6F5A0798057D3EE0AAE5C6B3C4C6393C4A5A1468C787A10F422A17BEEB9A88`).
+  Rebuild them after merging `4221380`. The older `publish/latest/QuickReplyKit.exe` is running and locked; do not
+  close it. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
-  `--selftest-foreground` all returned exit code 0.
+  `--selftest-foreground` all returned exit code 0 for three consecutive rounds on `4221380`; every temporary
+  Notepad window closed normally and no visible Notepad remained.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
@@ -25,6 +27,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| Notepad self-test reliability/cleanup | `4221380` feature tip | 724/724; all four self-tests x3; foreground-denied fallback; exact temp window closes normally | Complete; merge pending |
 | B19 enterprise UI standards audit | `79692a5` feature tip | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
 | B16 sandboxed dynamic-variable scripts | `db07f5e` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete |
 | B17 import review selection | `ca730f6` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
@@ -99,8 +102,10 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
   **Automatic (theme default)** text-color option restores inherited text color.
 - `--selftest-paste-rich` proves byte-correct CF_HTML on the clipboard; Win11 RichEdit does not import HTML, so it
   is not an independent rich-render target.
-- The independent audit saw `--selftest-paste-ui` fail once and pass immediately on retry. Treat this as a
-  focus-sensitive test-harness flake unless a user-facing paste failure reproduces; keep watching it.
+- The Notepad-driven self-tests use real Ctrl+V when Windows grants the test process foreground access. When an
+  automation host is correctly denied foreground input, they use a test-only `WM_PASTE` trigger while retaining the
+  real clipboard snapshot/write/restore and launcher-command paths. Each run opens one empty temporary document,
+  undoes the paste, and closes that exact window normally.
 - Before broad rollout, manually confirm a real Ctrl+Alt+D paste into Outlook/Teams/browser/CRM and verify the
   transient response does not appear in the Win+V history flyout.
 - Script trust protects against unreviewed portable definitions, accidental source changes, malformed files, and

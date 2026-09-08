@@ -18,14 +18,19 @@ namespace QuickReplyKit;
 /// The <c>--selftest-paste</c> E2E gate: put a sentinel on the clipboard, launch Notepad, run a
 /// real <see cref="InsertService.InsertPlain"/> into it, read Notepad's text back, and confirm the
 /// clipboard was restored. Prints exactly one line: <c>PASTE=&lt;ok|fail&gt; CLIPBOARD_RESTORED=&lt;ok|fail&gt;</c>.
-/// Windows 11 ships the Store Notepad: launching System32\notepad.exe hands off to a separate
-/// "Notepad" process, so we poll for a new top-level window of class "Notepad" and read its
-/// "RichEditD2DPT" child via WM_GETTEXT (verified to work cross-process).
+/// Windows 11 ships the Store Notepad: we open one empty temporary document in a new window, poll
+/// for its top-level "Notepad" window, and read its "RichEditD2DPT" child via WM_GETTEXT. When
+/// Windows denies a background test process foreground input, a test-only WM_PASTE trigger keeps
+/// the real clipboard/InsertService path deterministic. Cleanup undoes the paste and closes that
+/// exact temporary window normally so Notepad session restore cannot accumulate QA tabs.
 /// </summary>
 internal static class SelfTest
 {
     private const int WM_GETTEXT = 0x000D;
     private const int WM_GETTEXTLENGTH = 0x000E;
+    private const int WM_CLOSE = 0x0010;
+    private const int WM_PASTE = 0x0302;
+    private const int WM_UNDO = 0x0304;
 
     [DllImport("kernel32.dll")] private static extern bool AttachConsole(int dwProcessId);
     private const int ATTACH_PARENT_PROCESS = -1;
@@ -34,6 +39,7 @@ internal static class SelfTest
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc cb, nint lParam);
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(nint parent, EnumWindowsProc cb, nint lParam);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint hWnd);
+    [DllImport("user32.dll")] private static extern bool IsWindow(nint hWnd);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint hWnd, StringBuilder s, int max);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern nint SendMessage(nint hWnd, int msg, nint wParam, StringBuilder? lParam);
     [DllImport("user32.dll")] private static extern nint SendMessage(nint hWnd, int msg, nint wParam, nint lParam);
@@ -66,8 +72,8 @@ internal static class SelfTest
     {
         AttachConsole(ATTACH_PARENT_PROCESS);
         bool ok = false;
-        Process? launched = null;
         nint target = 0;
+        string? notepadFile = null;
         try
         {
             // Install the monitor FIRST, so the foreground *change* when Notepad appears is caught.
@@ -75,7 +81,7 @@ internal static class SelfTest
             using var monitor = new ForegroundMonitor(tracker);
 
             var before = FindNotepadWindows();
-            launched = Process.Start(new ProcessStartInfo(@"C:\Windows\System32\notepad.exe") { UseShellExecute = true });
+            LaunchNotepad(out notepadFile);
 
             var sw = Stopwatch.StartNew();
             while (sw.ElapsedMilliseconds < 6000 && !ok)
@@ -98,7 +104,7 @@ internal static class SelfTest
             }
         }
         catch (Exception ex) { Console.Error.WriteLine("[selftest-fg] " + ex); }
-        finally { KillNotepad(target, launched); }
+        finally { CloseNotepad(target, notepadFile); }
 
         Console.WriteLine($"FOREGROUND_TRACK={(ok ? "ok" : "fail")}");
         Console.Out.Flush();
@@ -177,15 +183,16 @@ internal static class SelfTest
     /// <see cref="InsertService"/> wired as <c>App</c> wires them — from a seeded temp library into a
     /// fresh Notepad. The target is set explicitly (foreground CAPTURE is covered by
     /// <c>--selftest-foreground</c>); this proves the VM's default-insert command reaches the engine
-    /// and text lands. Prints one line: <c>UIPASTE=&lt;ok|fail&gt;</c>.
+    /// and text lands. The same test-only WM_PASTE fallback described on this class is used when the
+    /// OS refuses foreground activation. Prints one line: <c>UIPASTE=&lt;ok|fail&gt;</c>.
     /// </summary>
     public static int RunUiPaste()
     {
         AttachConsole(ATTACH_PARENT_PROCESS);
         bool ok = false;
-        Process? launched = null;
         nint target = 0;
         string? tempRoot = null;
+        string? notepadFile = null;
         try
         {
             string pasted = "QRK_UIPASTE_" + Guid.NewGuid().ToString("N");
@@ -199,7 +206,7 @@ internal static class SelfTest
             string recentPath = Path.Combine(tempRoot, "recent.json");
 
             var before = FindNotepadWindows();
-            launched = Process.Start(new ProcessStartInfo(@"C:\Windows\System32\notepad.exe") { UseShellExecute = true });
+            LaunchNotepad(out notepadFile);
             target = WaitForNewNotepad(before, timeoutMs: 6000);
             if (target != 0)
             {
@@ -208,11 +215,10 @@ internal static class SelfTest
                 // Wire the same graph App builds; set the paste target explicitly (this test covers the
                 // VM command → InsertService path, not the WinEvent foreground capture).
                 using var library = new LibraryService(tempRoot, seedSourceDir: null, recentPath: recentPath, watch: false);
-                var insert = new InsertService(new ForegroundTargetTracker { Target = target });
+                var insert = SelfTestInsertService(target);
                 var vm = new LauncherViewModel(library, insert, new AppConfig());
 
                 vm.SelectedResult = vm.Results.FirstOrDefault();   // "click a response"
-                ForegroundWindow.Restore(target);
                 if (vm.HasValidSelection) vm.TriggerDefaultInsert();   // the Enter / Paste command
 
                 Thread.Sleep(400);
@@ -225,7 +231,7 @@ internal static class SelfTest
         catch (Exception ex) { Console.Error.WriteLine("[selftest-ui] " + ex); }
         finally
         {
-            KillNotepad(target, launched);
+            CloseNotepad(target, notepadFile);
             try { if (tempRoot != null) Directory.Delete(tempRoot, recursive: true); } catch { }
         }
 
@@ -239,8 +245,8 @@ internal static class SelfTest
         AttachConsole(ATTACH_PARENT_PROCESS);
 
         bool pasteOk = false, restoredOk = false;
-        Process? launched = null;
         nint target = 0;
+        string? notepadFile = null;
         try
         {
             string sentinel = "QRK_CLIPBOARD_SENTINEL_" + Guid.NewGuid().ToString("N");
@@ -249,15 +255,13 @@ internal static class SelfTest
             SetClipboardText(sentinel);
 
             var before = FindNotepadWindows();
-            launched = Process.Start(new ProcessStartInfo(@"C:\Windows\System32\notepad.exe") { UseShellExecute = true });
+            LaunchNotepad(out notepadFile);
             target = WaitForNewNotepad(before, timeoutMs: 6000);
             if (target == 0) { Print(false, false); return 1; }
 
             Thread.Sleep(800);                 // let the editor finish initializing
-            ForegroundWindow.Restore(target);  // make Notepad the paste target
-
             var item = new ResponseItem { Html = "<p>" + pasted + "</p>" };
-            var service = new InsertService(new ForegroundTargetTracker { Target = target });
+            var service = SelfTestInsertService(target);
             service.InsertPlain(item);
 
             Thread.Sleep(400);
@@ -272,7 +276,7 @@ internal static class SelfTest
         }
         finally
         {
-            KillNotepad(target, launched);
+            CloseNotepad(target, notepadFile);
         }
 
         Print(pasteOk, restoredOk);
@@ -340,12 +344,7 @@ internal static class SelfTest
     {
         // The edit control is a deep descendant (under DesktopChildSiteBridge/NotepadTextBox),
         // not a direct child, so recurse with EnumChildWindows rather than FindWindowEx.
-        nint edit = 0;
-        EnumChildWindows(notepad, (h, _) =>
-        {
-            if (ClassOf(h) == "RichEditD2DPT") { edit = h; return false; }
-            return true;
-        }, 0);
+        nint edit = FindNotepadEditor(notepad);
         if (edit == 0) return "";
 
         int len = (int)SendMessage(edit, WM_GETTEXTLENGTH, 0, 0);
@@ -362,17 +361,56 @@ internal static class SelfTest
         return sb.ToString();
     }
 
-    private static void KillNotepad(nint target, Process? launched)
+    private static nint FindNotepadEditor(nint notepad)
+    {
+        nint edit = 0;
+        EnumChildWindows(notepad, (h, _) =>
+        {
+            if (ClassOf(h) == "RichEditD2DPT") { edit = h; return false; }
+            return true;
+        }, 0);
+        return edit;
+    }
+
+    private static void LaunchNotepad(out string file)
+    {
+        file = Path.Combine(Path.GetTempPath(), "QRK_Notepad_" + Guid.NewGuid().ToString("N") + ".txt");
+        File.WriteAllText(file, "");
+        var start = new ProcessStartInfo(@"C:\Windows\System32\notepad.exe") { UseShellExecute = true };
+        start.ArgumentList.Add("/newwindow");
+        start.ArgumentList.Add(file);
+        Process.Start(start)?.Dispose();
+    }
+
+    private static InsertService SelfTestInsertService(nint target)
+    {
+        nint edit = FindNotepadEditor(target);
+        var tracker = new ForegroundTargetTracker { Target = target };
+        if (ForegroundWindow.Restore(target) || edit == 0) return new InsertService(tracker);
+        return new InsertService(tracker, () =>
+        {
+            SendMessage(edit, WM_PASTE, 0, 0);
+            return true;
+        });
+    }
+
+    private static void CloseNotepad(nint target, string? file)
     {
         try
         {
-            if (target != 0)
+            if (target != 0 && IsWindow(target))
             {
-                GetWindowThreadProcessId(target, out uint pid);
-                if (pid != 0) { try { Process.GetProcessById((int)pid).Kill(); } catch { } }
+                nint edit = FindNotepadEditor(target);
+                if (edit != 0) SendMessage(edit, WM_UNDO, 0, 0);
+                SendMessage(target, WM_CLOSE, 0, 0);
+                for (int i = 0; i < 20 && IsWindow(target); i++) Thread.Sleep(50);
             }
-            if (launched is { HasExited: false }) { try { launched.Kill(); } catch { } }
         }
         catch { }
+        finally
+        {
+            try { if (file != null) File.Delete(file); } catch { }
+        }
     }
+
 }
