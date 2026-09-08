@@ -51,7 +51,8 @@ public class DiagnosticsCoverageTests
 
         string actions = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Views/LauncherWindow.xaml.cs"));
         foreach (string failure in new[] { "read clipboard failed", "open response folder failed",
-                     "delete response failed", "delete folder failed", "import preview failed", "import backup failed" })
+                     "delete response failed", "delete folder failed", "import preview failed", "import backup failed",
+                     "import review failed safely", "import execution failed safely", "import workflow failed safely" })
             Assert.Contains(failure, actions, StringComparison.Ordinal);
     }
 

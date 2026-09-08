@@ -9,17 +9,9 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-### B20 - Import workflow crash
-
-- **Severity / status:** P0 · Confirmed · Investigation in progress
-- **Problem:** an import failure can escape the UI workflow and terminate the application.
-- **Acceptance:** every import-stage failure is caught at the UI boundary, produces a useful safe error, is recorded in
-  diagnostics without customer content, leaves the current library/config intact, and keeps QuickReplyKit usable.
-  Regression coverage must exercise malformed, inaccessible, stale, and failed-write inputs.
-
 ### B21 - Explicitly trusted native scripts
 
-- **Severity / status:** P1 · Requested · Queued after B20
+- **Severity / status:** P1 · Requested · Next
 - **Problem:** `qrk-expr-1` intentionally cannot read files or perform the internal data-processing workflows now
   requested by users.
 - **Acceptance:** add an explicitly identified native script type that can access local files, parse data, and return
@@ -27,20 +19,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   the app process so syntax/runtime failures cannot crash or hang QuickReplyKit. Trust remains local and source-bound;
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
-
-### B22 - Per-user default paths and truthful diagnostics
-
-- **Severity / status:** P1 · Requested · Queued
-- **Acceptance:** defaults resolve from the installed user's Windows profile: library and backup locations under the
-  intended user-profile folders; config, logs, Trash, and script trust under `%APPDATA%\QuickReplyKit`. About and
-  Diagnostics display the actual resolved filesystem paths rather than environment-variable or privacy placeholders.
-  Configured custom locations remain supported and upgrades do not silently move existing data.
-
-### B23 - About / Diagnostics window chrome cleanup
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** remove the redundant in-content Close button from About / Diagnostics; the standard window close
-  control remains keyboard- and pointer-accessible, with no layout gap.
 
 ### B24 - Remove shortcut-combination lookup
 
