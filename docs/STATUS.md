@@ -7,13 +7,12 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `08de27d` (B31 whole-app UI and interaction consistency);
-  **current documentation merge:** `1f9839b` (B32 end-user guide). Use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B32 are complete on `main`; plus current branch work is `feature/rtf-clipboard-format` (CRM/Word formatting parity via `CF_RTF` in rich paste/copy).
+- **Current product merge:** `c755601` (B33 CF_RTF compatibility + release refresh).
+- **Current product baseline:** B01-B33 are complete on `main`; no active feature worktree.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **785 passed** on merged `main` after B32, independently rerun after documentation QA.
-- **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip after `1f9839b` at 69,932,895 bytes (SHA-256
-  `86EF685893579E0C248FBD569862EA53231BE0906BB1413736001A39ECD6C0BE`). It is self-contained; no external .NET or
+- **Tests:** **786 passed** on merged `main` after B33, independently rerun after merge and exe refresh.
+- **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip (`c755601`) at 69,933,764 bytes (SHA-256
+  `06D4687E64E0E872630CAC5A2971CAAB20AB20D12C99A9570C62EC332A3BFDC5`). It is self-contained; no external .NET or
   Visual C++ installation is needed.
 - **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
   This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
