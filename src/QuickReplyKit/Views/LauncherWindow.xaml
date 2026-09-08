@@ -212,6 +212,7 @@
             </Border>
 
             <GridSplitter Grid.Column="1" x:Name="NavSplitter" Width="6" Background="Transparent"
+                          AutomationProperties.Name="Resize navigation pane"
                           HorizontalAlignment="Center" VerticalAlignment="Stretch"
                           ResizeBehavior="PreviousAndNext"/>
 
@@ -307,6 +308,7 @@
             </Border>
 
             <GridSplitter Grid.Column="3" Width="6" Background="Transparent"
+                          AutomationProperties.Name="Resize response preview"
                           HorizontalAlignment="Center" VerticalAlignment="Stretch"
                           ResizeBehavior="PreviousAndNext"/>
 

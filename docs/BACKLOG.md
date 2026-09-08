@@ -11,13 +11,20 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B31 - Whole-app UI and interaction consistency pass
 
-- **Severity / status:** P2 · Requested · Queued second-to-last
+- **Severity / status:** P2 · QA on `ui-consistency-audit` · Queued second-to-last
 - **Acceptance:** inspect every user-facing window, menu, context menu, dialog, toolbar, button, icon, tooltip, hover,
   pressed, disabled, selected, and keyboard-focus state in Light, Dark, compact, and normal layouts. Exercise the real
   workflows rather than reviewing screenshots in isolation. Fix only small, low-risk inconsistencies that improve
   clarity or consistency, such as an isolated border, mismatched hover color, unclear icon state, spacing drift, or
   missing accessible label. Preserve native High Contrast behavior and avoid broad redesigns or scope expansion.
   Validate the resulting UI with representative screenshots and focused interaction tests.
+- **Current pass:** shared hover/pressed/disabled/focus states, favorite behavior, ComboBox theming, and system-color
+  High Contrast behavior were rechecked and intentionally left unchanged. Confirmed fixes are limited to hotkey-field
+  keyboard navigation, monitor-aware dialog height, item/splitter accessibility text, clipped-value tooltips, shortcut
+  filter clarity, menu placement, affirmative-action consistency, and Backup footer alignment. WPF does not support the
+  suggested `AutomationProperties.AccessibilityView`; decorative glyphs therefore remain unchanged rather than adding
+  custom automation peers. Implementation is complete with 20/20 focused checks, a clean Release build, 785/785 full
+  tests, and representative Light/Dark/compact captures; it remains unmerged pending independent QA.
 
 ### B32 - End-user GitHub README and complete visual guide
 

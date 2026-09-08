@@ -29,6 +29,7 @@ public partial class HotkeyManagerWindow : Window
         _library = library;
         _app = app;
         InitializeComponent();
+        WindowSizing.LimitHeightToCurrentScreen(this);
         Rebuild();
     }
 

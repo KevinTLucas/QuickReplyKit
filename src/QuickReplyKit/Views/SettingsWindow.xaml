@@ -23,6 +23,11 @@
             <Setter Property="Margin" Value="8,0,0,0"/>
             <Setter Property="MinWidth" Value="80"/>
         </Style>
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryButtonBg}"/>
+        </Style>
         <Style x:Key="Input" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource CardBg}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
@@ -58,8 +63,8 @@
                 ToolTip="See every shortcut, assign per-response instant-paste keys, and check for conflicts."/>
         <Button Content="Scripts…" HorizontalAlignment="Left" Margin="0,8,0,0"
                 Style="{StaticResource ActionButton}" Click="ManageScripts_Click"
-                AutomationProperties.Name="Manage sandboxed scripts"
-                ToolTip="Create, review, validate, trust, and export restricted template scripts."/>
+                AutomationProperties.Name="Manage template scripts"
+                ToolTip="Create, review, validate, trust, and export restricted or full-trust template scripts."/>
 
         <!-- Library path -->
         <TextBlock Text="Response library folder" Style="{StaticResource SectionLabel}"/>
@@ -148,9 +153,8 @@
         <Border Grid.Row="1" BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,1,0,0"
                 Padding="18,10,18,12" Background="{DynamicResource WindowBg}">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Save" Style="{StaticResource ActionButton}" Margin="0,0,0,0"
-                    IsDefault="True" Click="Save_Click"/>
             <Button Content="Cancel" Style="{StaticResource ActionButton}" IsCancel="True"/>
+            <Button Content="Save" Style="{StaticResource PrimaryButton}" IsDefault="True" Click="Save_Click"/>
         </StackPanel>
         </Border>
     </Grid>

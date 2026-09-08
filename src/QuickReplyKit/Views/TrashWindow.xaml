@@ -32,7 +32,8 @@
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Margin="2,3">
+                        <StackPanel Margin="2,3" AutomationProperties.Name="{Binding Name}"
+                                    AutomationProperties.HelpText="{Binding Sub}">
                             <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}"
                                        FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                             <TextBlock Text="{Binding Sub}" FontSize="11" Foreground="{DynamicResource TextMuted}"

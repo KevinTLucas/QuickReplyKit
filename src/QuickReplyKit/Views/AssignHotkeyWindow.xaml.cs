@@ -52,10 +52,13 @@ public partial class AssignHotkeyWindow : Window
 
     private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        e.Handled = true;   // never let the box receive/echo the keystroke
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (key is Key.Tab or Key.Escape || key == Key.F4 && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+            return;
+
+        e.Handled = true;   // never let the box receive/echo a captured keystroke
 
         // Alt-combos surface the real key via SystemKey; a bare modifier keeps us waiting.
-        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
         string? gesture = HotkeyGesture.Format(Keyboard.Modifiers, key);
         if (gesture is null) return;
 

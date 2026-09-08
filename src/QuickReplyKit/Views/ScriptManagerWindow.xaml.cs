@@ -29,6 +29,7 @@ public partial class ScriptManagerWindow : Window
     public ScriptManagerWindow(LibraryService library, Action onLibraryChanged)
     {
         InitializeComponent();
+        WindowSizing.LimitHeightToCurrentScreen(this);
         var opened = ScriptTrustLedger.Open();
         _model = new ScriptManagerModel(library.Snapshot.LibraryRoot, opened.Value!, () =>
         {

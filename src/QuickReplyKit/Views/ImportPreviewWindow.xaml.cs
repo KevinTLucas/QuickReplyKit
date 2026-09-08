@@ -12,6 +12,7 @@ public partial class ImportPreviewWindow : Window
     private ImportPreviewWindow(ImportPlan plan, Func<ImportPlanEntry, bool>? canBulkSelect = null)
     {
         InitializeComponent();
+        WindowSizing.LimitHeightToCurrentScreen(this);
         _review = new ImportReviewModel(plan, canBulkSelect);
         DataContext = _review;
 
