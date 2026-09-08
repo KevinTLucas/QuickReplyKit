@@ -418,6 +418,30 @@ public partial class LauncherWindow : Window
     /// (also reachable from the tray). The watcher refreshes the library on its own.</summary>
     public void ImportFlow()
     {
+        RunImportSafely(ImportFlowCore, ex =>
+        {
+            Diag.Error("LauncherWindow", "Import", "import workflow failed safely", ex);
+            ConfirmDialog.Info(this, "Import failed",
+                "QuickReplyKit stopped the import safely. The app and your existing library remain available. " +
+                "Some selected items may not have been imported. If execution had started, its safety backup is " +
+                "available from Settings. " +
+                "See About / Diagnostics for the log location.");
+        });
+    }
+
+    internal static bool RunImportSafely(Action import, Action<Exception> showFailure)
+    {
+        try { import(); return true; }
+        catch (Exception ex)
+        {
+            // A broken error dialog must not turn an already-handled import failure into an app crash.
+            try { showFailure(ex); } catch { }
+            return false;
+        }
+    }
+
+    private void ImportFlowCore()
+    {
         var open = new OpenFileDialog
         {
             Title = "Import responses and scripts",
@@ -446,7 +470,16 @@ public partial class LauncherWindow : Window
             ConfirmDialog.Info(this, "Nothing to import", "No responses or scripts were found in that file.");
             return;
         }
-        var review = ImportPreviewWindow.Prompt(this, plan);
+        ImportReviewDecision? review;
+        try { review = ImportPreviewWindow.Prompt(this, plan); }
+        catch (Exception ex)
+        {
+            Diag.Error("LauncherWindow", "Import", "import review failed safely", ex);
+            ConfirmDialog.Info(this, "Import review failed",
+                "QuickReplyKit couldn't open the import review. No changes were made. " +
+                "See About / Diagnostics for the log location.");
+            return;
+        }
         if (review == null) return;
 
         // A bulk write never starts unless the current library can be protected first.
@@ -458,7 +491,16 @@ public partial class LauncherWindow : Window
             return;
         }
 
-        var result = LibraryPorter.Import(plan, review.Actions, review.AcceptedScriptEntries);
+        ImportResult result;
+        try { result = LibraryPorter.Import(plan, review.Actions, review.AcceptedScriptEntries); }
+        catch (Exception ex)
+        {
+            Diag.Error("LauncherWindow", "Import", "import execution failed safely", ex);
+            ConfirmDialog.Info(this, "Import stopped",
+                "QuickReplyKit stopped the import safely. Some selected items may not have been imported. " +
+                "Your pre-import backup is available from Settings. See About / Diagnostics for the log location.");
+            return;
+        }
         ConfirmDialog.Info(this, "Import complete", SummaryText(result));
     }
 
