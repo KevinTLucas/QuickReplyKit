@@ -11,11 +11,14 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B20 - Import workflow crash
 
-- **Severity / status:** P0 · Confirmed · Investigation in progress
+- **Severity / status:** P0 · Confirmed · QA
 - **Problem:** an import failure can escape the UI workflow and terminate the application.
 - **Acceptance:** every import-stage failure is caught at the UI boundary, produces a useful safe error, is recorded in
   diagnostics without customer content, leaves the current library/config intact, and keeps QuickReplyKit usable.
   Regression coverage must exercise malformed, inaccessible, stale, and failed-write inputs.
+- **Implementation:** `bug/import-crash` fixes the crashing read-only source binding (`Mode=OneWay`), adds a single
+  non-throwing boundary around the complete WPF import workflow, records privacy-safe review/execution stage errors,
+  and adds recovery dialogs plus tests proving the library and subsequent actions remain usable.
 
 ### B21 - Explicitly trusted native scripts
 

@@ -209,7 +209,7 @@ public class ScriptImportExportTests
         var source = document.Descendants().Single(element =>
             (string?)element.Attribute("AutomationProperties.Name") == "Exact executable expression");
 
-        Assert.Equal("{Binding CodeSource}", (string?)source.Attribute("Text"));
+        Assert.Equal("{Binding CodeSource, Mode=OneWay}", (string?)source.Attribute("Text"));
         Assert.Equal("True", (string?)source.Attribute("IsReadOnly"));
         Assert.Equal("Consolas", (string?)source.Attribute("FontFamily"));
         Assert.Contains(document.Descendants(), element =>

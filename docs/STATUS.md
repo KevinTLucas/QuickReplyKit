@@ -87,15 +87,16 @@
 
 ## Remaining Work
 
-B20-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B20 first; then B21/B22; then the focused
+B20-B29 are active in [`BACKLOG.md`](BACKLOG.md). B20 is implemented on `bug/import-crash` with 727 tests passing and
+awaits independent QA. Work in severity order: B20 first; then B21/B22; then the focused
 UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** B20, an import failure can crash the entire application. Treat it as the
 current release blocker until a safe-failure regression proves the app and library remain usable and uncorrupted.
 
-**Active worktrees:** no active implementation worktree at this planning baseline. A stale interrupted historical
-hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** `bug/import-crash` owns B20. Read-only investigations cover B21/B22 and UI grouping without
+editing. A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
