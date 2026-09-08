@@ -8,8 +8,8 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `99d8efd` (B28 icon-only Import / Export trigger);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B28 are complete. B21 passed independent QA and awaits current-main
-  regression; B29 passed branch QA and awaits current-main integration; B30 remains queued last.
+- **Current product baseline:** B01-B20 and B22-B28 are complete. B21 passed independent QA and current-main regression
+  and awaits merge; B29 passed branch QA and awaits current-main integration; B30 remains queued last.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **732 passed** on merged `main` after B28.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `99d8efd` at 69,920,438 bytes (SHA-256
@@ -95,13 +95,13 @@
 
 ## Remaining Work
 
-B21 and B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 passed independent security/UI QA and awaits current-main
-regression; B29 passed independent wording/interaction QA and awaits current-main integration; B30 is explicitly last.
+B21 and B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 passed independent security/UI QA and current-main
+regression with 760/760 tests; B29 passed independent wording/interaction QA and awaits current-main integration; B30 is explicitly last.
 Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **B21 branch evidence:** `feature/native-script-runtime` builds Release with 0 warnings / 0 errors and passes
-757/757 tests after integration with current `main`. Independent QA found and fixed three root causes: redirected
+760/760 tests after integration with current `main`. Independent QA found and fixed three root causes: redirected
 PowerShell stdin now uses UTF-8, rapid instant-hotkey presses cannot overlap, and the Script Manager uses the shared
 dark-safe ComboBox plus a compact-height scroll path. Runtime/security tests cover source/output/time/concurrency
 bounds, Unicode, generic failures, privacy-safe diagnostics, cancellation, process-tree cleanup, exact source-bound
