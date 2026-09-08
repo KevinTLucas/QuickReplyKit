@@ -145,7 +145,7 @@ Open from the ⚙ button or the tray. You can set:
 - **Default paste behavior** (rich text or plain text).
 - **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).
 - **Accessibility** — keyboard-first navigation, named controls and live status for screen readers, High Contrast
-  compatible theme resources, and reduced popup motion.
+  compatible theme resources, keyboard-visible focus, readable active formatting states, and reduced popup motion.
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
 - **Keyboard shortcuts…** — opens the shortcuts manager (see below).

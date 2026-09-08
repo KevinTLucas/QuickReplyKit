@@ -20,6 +20,8 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="MinWidth" Value="32"/>
+            <Setter Property="MinHeight" Value="32"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
@@ -28,6 +30,7 @@
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="MinWidth" Value="72"/>
+            <Setter Property="MinHeight" Value="32"/>
         </Style>
 
         <Style x:Key="FavoriteToggle" TargetType="ToggleButton">
@@ -35,7 +38,9 @@
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource Favorite}"/>
-            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinWidth" Value="28"/>
+            <Setter Property="MinHeight" Value="28"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -46,9 +51,6 @@
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource Accent}"/>
-                            </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                                 <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
@@ -99,7 +101,7 @@
                             AutomationProperties.Name="{Binding SearchScopeLabel, StringFormat=Search in folder {0}}">
                         <DockPanel LastChildFill="True">
                             <Button DockPanel.Dock="Right" Content="×" Style="{StaticResource IconButton}"
-                                    Padding="3,0" Margin="3,0,0,0"
+                                    MinWidth="28" MinHeight="28" Padding="0" Margin="3,0,0,0"
                                     AutomationProperties.Name="Remove folder search filter"
                                     ToolTip="Remove folder search filter"
                                     Click="ClearSearchScope_Click"/>
@@ -333,7 +335,7 @@
                             <TextBlock Text="{Binding PreviewMeta}" Foreground="{DynamicResource TextMuted}"
                                        FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
                                        Visibility="{Binding HasPreviewMeta, Converter={StaticResource BoolVis}}"/>
-                            <StackPanel Orientation="Horizontal">
+                            <WrapPanel>
                                 <Button Content="Paste" TabIndex="3" Style="{StaticResource ActionButton}"
                                         Command="{Binding PasteCommand}" ToolTip="Enter — paste (rich text)"/>
                                 <Button Content="Paste plain" TabIndex="4" Style="{StaticResource ActionButton}"
@@ -349,7 +351,7 @@
                                            views:LiveRegion.Content="{Binding CopiedHint}"
                                            FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                            Visibility="{Binding HasCopiedHint, Converter={StaticResource BoolVis}}"/>
-                            </StackPanel>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
 

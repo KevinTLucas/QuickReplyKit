@@ -67,6 +67,89 @@ public class AccessibilityLauncherEditorTests
         Assert.Contains("RaiseAutomationEvent(AutomationEvents.LiveRegionChanged)", behavior, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void EditorToolbar_ExposesStateAccessibilityAndResponsiveLayout()
+    {
+        var editor = Load("src/QuickReplyKit/Views/EditorWindow.xaml");
+        string[] toggles =
+        {
+            "BoldButton", "ItalicButton", "UnderlineButton", "StrikeButton",
+            "AlignLeftButton", "AlignCenterButton", "AlignRightButton",
+            "BulletListButton", "NumberListButton"
+        };
+
+        foreach (string name in toggles)
+        {
+            var toggle = Named(editor, name);
+            Assert.Equal("ToggleButton", toggle.Name.LocalName);
+            Assert.Equal("True", (string?)toggle.Attribute("IsThreeState"));
+            Assert.False(string.IsNullOrWhiteSpace((string?)toggle.Attribute("AutomationProperties.Name")));
+        }
+
+        Assert.Equal("EditingCommands.ToggleBold", (string?)Named(editor, "BoldButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.ToggleItalic", (string?)Named(editor, "ItalicButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.ToggleUnderline", (string?)Named(editor, "UnderlineButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.AlignLeft", (string?)Named(editor, "AlignLeftButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.AlignCenter", (string?)Named(editor, "AlignCenterButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.AlignRight", (string?)Named(editor, "AlignRightButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.ToggleBullets", (string?)Named(editor, "BulletListButton").Attribute("Command"));
+        Assert.Equal("EditingCommands.ToggleNumbering", (string?)Named(editor, "NumberListButton").Attribute("Command"));
+        Assert.All(toggles.Where(name => name != "StrikeButton"), name =>
+            Assert.Equal("{Binding ElementName=Body}", (string?)Named(editor, name).Attribute("CommandTarget")));
+
+        var style = editor.Descendants().Single(e => e.Name.LocalName == "Style" &&
+            (string?)e.Attribute(X + "Key") == "ToolToggle");
+        var checkedTrigger = style.Descendants().Single(e => e.Name.LocalName == "Trigger" &&
+            (string?)e.Attribute("Property") == "IsChecked" && (string?)e.Attribute("Value") == "True");
+        Assert.Contains(checkedTrigger.Elements(), e => e.Name.LocalName == "Setter" &&
+            (string?)e.Attribute("Property") == "Foreground" &&
+            (string?)e.Attribute("Value") ==
+                "{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}");
+        Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Trigger" &&
+            (string?)e.Attribute("Property") == "IsChecked" && (string?)e.Attribute("Value") == "{x:Null}");
+        Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Trigger" &&
+            (string?)e.Attribute("Property") == "IsKeyboardFocused" && (string?)e.Attribute("Value") == "True");
+
+        Assert.Equal("Body_SelectionChanged", (string?)Named(editor, "Body").Attribute("SelectionChanged"));
+        Assert.Equal("Insert variable",
+            (string?)Named(editor, "InsertVarButton").Attribute("AutomationProperties.Name"));
+
+        var footer = Named(editor, "ErrorText").Parent!;
+        Assert.Equal(2, footer.Element(footer.Name.Namespace + "Grid.ColumnDefinitions")!
+            .Elements().Count());
+        Assert.Equal("0", (string?)Named(editor, "ErrorText").Attribute("Grid.Column"));
+        Assert.Contains(footer.Elements(), e => e.Name.LocalName == "WrapPanel" &&
+            (string?)e.Attribute("Grid.Column") == "1");
+
+        string behavior = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Views/EditorWindow.xaml.cs"));
+        Assert.Contains("value == DependencyProperty.UnsetValue ? null", behavior, StringComparison.Ordinal);
+        Assert.Contains("ListState(Body.Selection)", behavior, StringComparison.Ordinal);
+        Assert.Contains("CommandManager.AddExecutedHandler(Body, Body_CommandExecuted)", behavior,
+            StringComparison.Ordinal);
+        Assert.Contains("Dispatcher.BeginInvoke((Action)UpdateToolbarState)", behavior, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EditorColorMenus_ShowSwatchesAndReadableNames()
+    {
+        var editor = Load("src/QuickReplyKit/Views/EditorWindow.xaml");
+        foreach (string name in new[] { "TextColorButton", "HighlightButton" })
+        {
+            var choices = Named(editor, name).Descendants()
+                .Where(e => e.Name.LocalName == "MenuItem" && e.Attribute("Tag") is not null &&
+                            (string?)e.Attribute("Tag") is not "auto" and not "none")
+                .ToList();
+            Assert.NotEmpty(choices);
+            Assert.All(choices, choice =>
+            {
+                Assert.False(string.IsNullOrWhiteSpace((string?)choice.Attribute("Header")));
+                Assert.False(string.IsNullOrWhiteSpace((string?)choice.Attribute("AutomationProperties.Name")));
+                Assert.Contains(choice.Descendants(), e => e.Name.LocalName == "Rectangle" &&
+                    (string?)e.Attribute("Fill") == (string?)choice.Attribute("Tag"));
+            });
+        }
+    }
+
     private static XDocument Load(string path) => XDocument.Load(TestFiles.RepoAsset(path));
 
     private static XElement Named(XDocument document, string name) => document.Descendants()

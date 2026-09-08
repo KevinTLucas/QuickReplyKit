@@ -85,7 +85,8 @@
                                                    FontSize="10" Visibility="{Binding HasMode, Converter={StaticResource BoolToVis}}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,8,0">
-                                        <TextBlock Text="{Binding Target}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Target}" ToolTip="{Binding Target}"
+                                                   FontSize="13" TextTrimming="CharacterEllipsis"/>
                                         <TextBlock x:Name="StatusText" Text="{Binding Status}" FontSize="11"
                                                    Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>

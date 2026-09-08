@@ -19,9 +19,8 @@ know exactly what it is, how it's built, and its current state. The doc set is i
 4. [`docs/PROJECT-BRIEF.md`](docs/PROJECT-BRIEF.md) — original requirements. [`README.md`](README.md) — user guide.
    [`docs/BACKLOG.md`](docs/BACKLOG.md) — unfinished requested work plus explicitly deferred ideas.
 
-**Current state (audited 2026-09-07):** B01-B18 are complete and green at 706 tests. The app is launchable; only B19,
-the final enterprise UI standards audit and release validation, remains in the active backlog. Read `docs/STATUS.md`
-for current evidence and `docs/BACKLOG.md` for the exact acceptance criteria.
+**Current state (audited 2026-09-07):** B01-B19 are complete and green at 724 tests. The app is launchable and the
+active backlog is empty. Read `docs/STATUS.md` for current evidence and `docs/BACKLOG.md` before accepting new work.
 
 **Golden rules (detailed in `CLAUDE.md`):** `main` is always green; each change on a branch → ponytail (BCL/native
 only, no NuGet) → separate-subagent QA → merge `--no-ff`; **update the handoff docs (STATUS.md first) on every change** —

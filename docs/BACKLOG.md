@@ -7,20 +7,12 @@ Priority is based on crash/core-workflow impact, data-loss or trust-boundary ris
 P3 = optional polish. **Status:** Confirmed, Investigating, Queued, In progress, QA, or Blocked. A shipped foundation
 may still have a Confirmed remaining gap; its merge is noted in the item.
 
-## P2 - High-Value Enhancements
+## Active Work
 
-### B19 - Enterprise UI standards audit and polish
+None. B01-B19 are implemented, independently QA'd, and recorded in [`STATUS.md`](STATUS.md). Add new requested work
+here before implementation, with severity, acceptance criteria, and status.
 
-- **Severity:** P2 cross-view polish
-- **Status:** In progress on `polish/enterprise-ui-audit`; independent visual/interaction and accessibility audits are
-  active before any fixes are selected.
-- **Impact:** Hover/focus/pressed chrome and icon-button behavior are not yet reviewed consistently across every view;
-  for example, the Favorite star shows a box-like hover outline that may not suit an icon action.
-- **Acceptance:** Launch and interact with every page/dialog using project QA tooling; capture representative Light,
-  Dark, High Contrast, compact, and large states; inspect hover, pressed, selected, disabled, focus, keyboard, overflow,
-  and long-text behavior against Windows enterprise-component conventions. Icon actions should use restrained,
-  consistent chrome while retaining visible keyboard focus and accessible names. Fix only clear usability/consistency
-  issues, run the full regression suite, and validate the portable release. Do not use GPT Computer Use.
+## Deferred Ideas
 
 - **Usage analytics / most-used sort:** local and opt-in only; only if Recent/Favorites prove insufficient.
 - **Keyboard shortcut cheat sheet:** only after onboarding and accessibility validation show a discoverability gap.

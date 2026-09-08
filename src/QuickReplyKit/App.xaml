@@ -37,9 +37,6 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="State" Property="Background"
                                         Value="{DynamicResource ButtonHoverOverlay}"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
-                                <Setter TargetName="StateOutlineOuter" Property="BorderThickness" Value="1"/>
-                                <Setter TargetName="StateOutlineInner" Property="BorderThickness" Value="1"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
@@ -49,8 +46,6 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="State" Property="Background"
                                         Value="{DynamicResource ButtonPressedOverlay}"/>
-                                <Setter TargetName="StateOutlineOuter" Property="BorderThickness" Value="3"/>
-                                <Setter TargetName="StateOutlineInner" Property="BorderThickness" Value="1"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.55"/>
