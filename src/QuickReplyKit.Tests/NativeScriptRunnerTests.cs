@@ -110,11 +110,16 @@ public class NativeScriptRunnerTests
     public async Task EvaluateAsync_RunsAsTheCurrentSignedInWindowsUser()
     {
         string expectedSid = WindowsIdentity.GetCurrent().User!.Value;
+        bool expectedAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent())
+            .IsInRole(WindowsBuiltInRole.Administrator);
         var result = await NativeScriptRunner.EvaluateAsync(
-            "[Console]::Out.Write([Security.Principal.WindowsIdentity]::GetCurrent().User.Value)", Now);
+            "$id=[Security.Principal.WindowsIdentity]::GetCurrent(); " +
+            "$admin=([Security.Principal.WindowsPrincipal]::new($id)).IsInRole(" +
+            "[Security.Principal.WindowsBuiltInRole]::Administrator); " +
+            "[Console]::Out.Write($id.User.Value + '|' + $admin)", Now);
 
         Assert.True(result.Success, result.Error);
-        Assert.Equal(expectedSid, WebUtility.HtmlDecode(result.Output));
+        Assert.Equal($"{expectedSid}|{expectedAdmin}", WebUtility.HtmlDecode(result.Output));
     }
 
     [Fact]
