@@ -99,14 +99,20 @@ public class AccessibilityLauncherEditorTests
 
         var style = editor.Descendants().Single(e => e.Name.LocalName == "Style" &&
             (string?)e.Attribute(X + "Key") == "ToolToggle");
-        Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Trigger" &&
+        var checkedTrigger = style.Descendants().Single(e => e.Name.LocalName == "Trigger" &&
             (string?)e.Attribute("Property") == "IsChecked" && (string?)e.Attribute("Value") == "True");
+        Assert.Contains(checkedTrigger.Elements(), e => e.Name.LocalName == "Setter" &&
+            (string?)e.Attribute("Property") == "Foreground" &&
+            (string?)e.Attribute("Value") ==
+                "{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}");
         Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Trigger" &&
             (string?)e.Attribute("Property") == "IsChecked" && (string?)e.Attribute("Value") == "{x:Null}");
         Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Trigger" &&
             (string?)e.Attribute("Property") == "IsKeyboardFocused" && (string?)e.Attribute("Value") == "True");
 
         Assert.Equal("Body_SelectionChanged", (string?)Named(editor, "Body").Attribute("SelectionChanged"));
+        Assert.Equal("Insert variable",
+            (string?)Named(editor, "InsertVarButton").Attribute("AutomationProperties.Name"));
 
         var footer = Named(editor, "ErrorText").Parent!;
         Assert.Equal(2, footer.Element(footer.Name.Namespace + "Grid.ColumnDefinitions")!

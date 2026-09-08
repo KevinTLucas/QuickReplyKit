@@ -61,6 +61,8 @@
                                 <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Selection}"/>
                                 <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                                 <Setter TargetName="Chrome" Property="BorderThickness" Value="2"/>
+                                <Setter Property="Foreground"
+                                        Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="{x:Null}">
                                 <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
@@ -245,6 +247,7 @@
                         ToolTip="Remove formatting from the selection" Click="ClearFormatting_Click"/>
                 <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
                 <Button x:Name="InsertVarButton" Style="{StaticResource ToolButton}" Content="{}{{ }} ▾"
+                        AutomationProperties.Name="Insert variable"
                         ToolTip="Insert a variable at the caret. Tip: type {{Response Name}} to include another response's text."
                         Click="InsertVar_Click">
                     <Button.ContextMenu>
