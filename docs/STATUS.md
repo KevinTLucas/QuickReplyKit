@@ -10,7 +10,7 @@
 - **Current product merge:** `b1749ff` (B34 parser-backed Word RTF conversion).
 - **Current product baseline:** B01-B34 are complete on `main`; B35 and B36 are isolated in QA branches.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **788 passed** on merged `main`; **791** on `feature/word-style-word-fidelity`; **809** on
+- **Tests:** **788 passed** on merged `main`; **791** on `feature/word-style-word-fidelity`; **811** on
   `bugfix/rich-editor-persistence`.
 - **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip (`c755601`) at 69,933,764 bytes (SHA-256
   `06D4687E64E0E872630CAC5A2971CAAB20AB20D12C99A9570C62EC332A3BFDC5`). It is self-contained; no external .NET or
@@ -105,7 +105,9 @@
 **B36 is ready for independent QA** on `bugfix/rich-editor-persistence`. It fixes the confirmed Save/reopen loss of
 bold, italic, and underline at the shared FlowDocument → HTML boundary. The heavy regression matrix covers every
 exposed editor format, loaded-format removal, mixed partial selections, formatted lists/links, Clear, and real JSON
-save/reload. Release build is clean, 809 tests pass, and `--selftest-paste-rich` reports `RICHPASTE=ok`.
+save/reload. Release build is clean, 811 tests pass, and `--selftest-paste-rich` reports `RICHPASTE=ok`. Independent
+review found and the branch now fixes repeated-save growth in aligned multi-paragraph list items and link-selection
+crashes for whole-document/cross-paragraph ranges; exact-tip re-QA is pending.
 
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
@@ -150,7 +152,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **788** green on `main`, **791** on B35, or **809** on B36. Registry tests need normal
+4. Run build + tests; expect **788** green on `main`, **791** on B35, or **811** on B36. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a

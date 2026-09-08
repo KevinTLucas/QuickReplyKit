@@ -56,4 +56,43 @@ internal static class EditorFormatting
 
     internal static void RemoveHighlight(TextSelection selection) =>
         selection.ApplyPropertyValue(TextElement.BackgroundProperty, System.Windows.Media.Brushes.Transparent);
+
+    internal static Hyperlink? SelectedLink(TextSelection selection)
+    {
+        if (selection.IsEmpty)
+            return HyperlinkAt(selection.Start) ??
+                HyperlinkAt(selection.Start.GetNextContextPosition(LogicalDirection.Forward) ?? selection.Start);
+
+        Hyperlink? found = null;
+        for (var position = selection.Start; position != null && position.CompareTo(selection.End) < 0;
+             position = position.GetNextContextPosition(LogicalDirection.Forward))
+        {
+            if (position.GetPointerContext(LogicalDirection.Forward) != TextPointerContext.Text) continue;
+            var link = HyperlinkAt(position);
+            if (link == null) return null;
+            if (found != null && !ReferenceEquals(found, link)) return null;
+            found = link;
+        }
+        return found;
+    }
+
+    internal static bool CanCreateLink(TextSelection selection)
+    {
+        var end = selection.End.GetInsertionPosition(LogicalDirection.Backward) ?? selection.End;
+        if (selection.Start.Paragraph == null || !ReferenceEquals(selection.Start.Paragraph, end.Paragraph))
+            return false;
+
+        for (var position = selection.Start; position != null && position.CompareTo(selection.End) < 0;
+             position = position.GetNextContextPosition(LogicalDirection.Forward))
+            if (HyperlinkAt(position) != null) return false;
+        return true;
+    }
+
+    private static Hyperlink? HyperlinkAt(TextPointer position)
+    {
+        for (DependencyObject? parent = position.Parent; parent != null;
+             parent = parent is FrameworkContentElement element ? element.Parent : null)
+            if (parent is Hyperlink hyperlink) return hyperlink;
+        return null;
+    }
 }

@@ -65,23 +65,26 @@ public static class FlowDocumentToHtml
         sb.Append("</").Append(tag).Append('>');
     }
 
-    // A ListItem's text lives in Paragraph blocks; emit their inlines directly (no <p>) so the
-    // markup matches what HtmlToFlowDocument reads back (<li>text<ul>…</ul></li>). Nested lists
-    // are emitted inline. Multiple paragraphs in one item (rare) are separated with <br>.
+    // Keep the compact <li>text</li> form for one unaligned paragraph. Paragraph tags are required
+    // when an item has alignment or multiple paragraphs so save/reload preserves those boundaries.
     private static void WriteListItem(StringBuilder sb, ListItem li, FormatState defaults)
     {
-        bool firstPara = true;
+        bool wrapParagraphs = li.Blocks.OfType<Paragraph>().Skip(1).Any() ||
+            li.Blocks.OfType<Paragraph>().Any(p => AlignOf(p) != null);
         foreach (var block in li.Blocks)
         {
             switch (block)
             {
                 case Paragraph p:
-                    if (!firstPara) sb.Append("<br>");
                     string? align = AlignOf(p);
-                    if (align != null) sb.Append("<p style=\"text-align:").Append(align).Append("\">");
+                    if (wrapParagraphs)
+                    {
+                        sb.Append("<p");
+                        if (align != null) sb.Append(" style=\"text-align:").Append(align).Append('"');
+                        sb.Append('>');
+                    }
                     WriteInlines(sb, p.Inlines, defaults, defaults);
-                    if (align != null) sb.Append("</p>");
-                    firstPara = false;
+                    if (wrapParagraphs) sb.Append("</p>");
                     break;
                 case List nested:
                     WriteList(sb, nested, defaults);

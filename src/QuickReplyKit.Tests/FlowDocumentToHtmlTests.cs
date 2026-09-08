@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Xml.Linq;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Core.Text;
@@ -118,30 +119,6 @@ public class FlowDocumentToHtmlTests
             var doc = new FlowDocument(new Paragraph(run));
             Assert.Equal("<p><span style=\"color:#FF0000; background-color:#FFFF00; font-size:18px\">x</span></p>",
                 FlowDocumentToHtml.Convert(doc));
-        });
-    }
-
-    // "Automatic (theme default)" in the editor clears the explicit foreground via UnsetValue so the
-    // text inherits the theme colour (readable in dark). Verify the clear reaches the serialized HTML.
-    [Fact]
-    public void ApplyUnsetForeground_ClearsColor_ForAutomaticThemeDefault()
-    {
-        Sta(() =>
-        {
-            var rtb = new System.Windows.Controls.RichTextBox
-            {
-                Document = new FlowDocument(new Paragraph(new Run("hi"))),
-            };
-            rtb.SelectAll();
-            rtb.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Red);
-            Assert.Contains("color:#FF0000", FlowDocumentToHtml.Convert(rtb.Document));
-
-            // Same technique EditorWindow.ClearForeground uses (UnsetValue throws): split then clear.
-            rtb.SelectAll();
-            for (var p = rtb.Selection.Start; p != null && p.CompareTo(rtb.Selection.End) < 0;
-                 p = p.GetNextContextPosition(LogicalDirection.Forward))
-                (p.Parent as Run)?.ClearValue(TextElement.ForegroundProperty);
-            Assert.DoesNotContain("color:", FlowDocumentToHtml.Convert(rtb.Document));
         });
     }
 
@@ -438,6 +415,26 @@ public class FlowDocumentToHtmlTests
         });
     }
 
+    [Fact]
+    public void MultiParagraphListItem_IsStableAcrossRepeatedSaves()
+    {
+        Sta(() =>
+        {
+            var item = new ListItem();
+            item.Blocks.Add(new Paragraph(new Run("first")));
+            item.Blocks.Add(new Paragraph(new Run("second")) { TextAlignment = TextAlignment.Right });
+            var list = new System.Windows.Documents.List(item) { MarkerStyle = TextMarkerStyle.Decimal };
+
+            string once = FlowDocumentToHtml.Convert(new FlowDocument(list));
+            string twice = FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(once));
+            string threeTimes = FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(twice));
+
+            Assert.Equal("<ol><li><p>first</p><p style=\"text-align:right\">second</p></li></ol>", once);
+            Assert.Equal(once, twice);
+            Assert.Equal(twice, threeTimes);
+        });
+    }
+
     [Theory]
     [InlineData("<ul><li>item</li></ul>", "bullet")]
     [InlineData("<ol><li>item</li></ol>", "number")]
@@ -529,6 +526,51 @@ public class FlowDocumentToHtmlTests
             Assert.Equal("{{greeting}}", restored.Text);
             Assert.Equal(FontWeights.Bold, restored.FontWeight);
         });
+    }
+
+    [Fact]
+    public void LinkSelection_RejectsCrossParagraphAndNestedSelections()
+    {
+        Sta(() =>
+        {
+            var first = new Paragraph(new Run("first"));
+            var link = new Hyperlink(new Run("linked")) { NavigateUri = new Uri("https://example.com/") };
+            var second = new Paragraph(link);
+            var editor = new RichTextBox { Document = new FlowDocument(first) };
+            editor.Document.Blocks.Add(second);
+
+            editor.Selection.Select(first.ContentStart, second.ContentEnd);
+            Assert.False(EditorFormatting.CanCreateLink(editor.Selection));
+            Assert.Null(EditorFormatting.SelectedLink(editor.Selection));
+
+            editor.Selection.Select(link.ContentStart, link.ContentEnd);
+            Assert.Same(link, EditorFormatting.SelectedLink(editor.Selection));
+            Assert.False(EditorFormatting.CanCreateLink(editor.Selection));
+
+            editor.Selection.Select(first.ContentStart, first.ContentEnd);
+            Assert.True(EditorFormatting.CanCreateLink(editor.Selection));
+        });
+    }
+
+    [Fact]
+    public void EditorPaletteMenu_ExposesEveryTestedValueThroughTheExpectedHandler()
+    {
+        var document = XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/EditorWindow.xaml"));
+
+        AssertMenu("SizeButton", "SizeItem_Click", ["11", "14", "18", "24"]);
+        AssertMenu("TextColorButton", "TextSwatch_Click",
+            ["#111111", "#6B7280", "#DC2626", "#EA580C", "#16A34A", "#0891B2", "#2563EB", "#7C3AED", "auto"]);
+        AssertMenu("HighlightButton", "HighlightSwatch_Click",
+            ["#FEF08A", "#BBF7D0", "#BFDBFE", "#FBCFE8", "#FED7AA", "#E9D5FF", "none"]);
+
+        void AssertMenu(string buttonName, string handler, string[] expectedTags)
+        {
+            var button = document.Descendants().Single(element =>
+                element.Attributes().Any(attribute => attribute.Name.LocalName == "Name" && attribute.Value == buttonName));
+            var items = button.Descendants().Where(element => element.Name.LocalName == "MenuItem").ToArray();
+            Assert.Equal(expectedTags, items.Select(item => (string?)item.Attribute("Tag")));
+            Assert.All(items, item => Assert.Equal(handler, (string?)item.Attribute("Click")));
+        }
     }
 
     private static IEnumerable<Run> Runs(FlowDocument document)

@@ -272,7 +272,7 @@ public partial class EditorWindow : Window
     private void Link_Click(object sender, RoutedEventArgs e)
     {
         var sel = Body.Selection;
-        var existingLink = FindHyperlink(sel.Start);
+        var existingLink = EditorFormatting.SelectedLink(sel);
         string existing = existingLink?.NavigateUri?.ToString() ?? "";
 
         string? url = InputDialog.Prompt(this, "Insert link", "Link URL:", existing);
@@ -299,23 +299,23 @@ public partial class EditorWindow : Window
             Body.Selection.Select(sel.Start, sel.End);
         }
 
-        if (!Body.Selection.IsEmpty)
+        if (!EditorFormatting.CanCreateLink(Body.Selection))
+        {
+            ShowError("Select text within one paragraph that is not already linked.");
+            return;
+        }
+
+        try
         {
             var link = new Hyperlink(Body.Selection.Start, Body.Selection.End) { NavigateUri = uri };
             link.ToolTip = uri.ToString();
         }
-        Body.Focus();
-    }
-
-    /// <summary>Walk up from a text position to the enclosing <see cref="Hyperlink"/>, if any.</summary>
-    private static Hyperlink? FindHyperlink(TextPointer pos)
-    {
-        for (DependencyObject? p = pos.Parent; p != null; )
+        catch (InvalidOperationException)
         {
-            if (p is Hyperlink h) return h;
-            p = p is FrameworkContentElement fce ? fce.Parent : null;
+            ShowError("That selection can't be converted into one link.");
+            return;
         }
-        return null;
+        Body.Focus();
     }
 
     // --- Save ---------------------------------------------------------------

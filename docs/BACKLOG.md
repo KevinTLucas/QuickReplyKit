@@ -17,7 +17,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   commands stored formatting on text-run properties that the HTML serializer ignored, so formatting looked correct
   until Save/reopen. `bugfix/rich-editor-persistence` normalizes loaded and newly edited formatting at text runs,
   preserves independent underline/strikethrough state, fixes Automatic color/Clear/aligned-list behavior, and uses
-  the same safe-link schemes on edit and reload. Release build is clean and 809 tests pass; independent QA remains.
+  the same safe-link schemes on edit and reload. Release build is clean and 811 tests pass; independent re-QA remains
+  after fixing aligned multi-paragraph list stability and unsafe cross-paragraph link selections found in review.
 
 ## Deferred Ideas
 
