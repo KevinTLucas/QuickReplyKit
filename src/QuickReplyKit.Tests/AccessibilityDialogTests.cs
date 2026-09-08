@@ -18,6 +18,8 @@ public class AccessibilityDialogTests
     [InlineData("SettingsWindow.xaml", "HotkeyBox")]
     [InlineData("SettingsWindow.xaml", "LibraryPathBox")]
     [InlineData("SettingsWindow.xaml", "BackupPathBox")]
+    [InlineData("ScriptManagerWindow.xaml", "ScriptList")]
+    [InlineData("ScriptManagerWindow.xaml", "ExpressionBox")]
     [InlineData("TrashWindow.xaml", "TrashList")]
     public void PrimaryDialogControls_HaveAutomationNames(string file, string name)
     {
@@ -33,6 +35,7 @@ public class AccessibilityDialogTests
     [InlineData("InputDialog.xaml", "ErrorText", "Assertive")]
     [InlineData("SettingsWindow.xaml", "HotkeyError", "Assertive")]
     [InlineData("SettingsWindow.xaml", "BackupPathError", "Assertive")]
+    [InlineData("ScriptManagerWindow.xaml", "StatusText", "Assertive")]
     [InlineData("TrashWindow.xaml", "EmptyHint", "Polite")]
     public void ChangingDialogStatus_IsALiveRegion(string file, string name, string setting)
     {
@@ -57,6 +60,12 @@ public class AccessibilityDialogTests
         Assert.True(double.Parse((string)import.Attribute("Width")!) <= 760);
         Assert.True(double.Parse((string)import.Attribute("MinWidth")!) <= 520);
         Assert.True(double.Parse((string)import.Attribute("Height")!) <= 540);
+
+        var scripts = Load("ScriptManagerWindow.xaml").Root!;
+        Assert.Equal("CanResizeWithGrip", (string?)scripts.Attribute("ResizeMode"));
+        Assert.DoesNotContain(Load("ScriptManagerWindow.xaml").Descendants(), e =>
+            ((string?)e.Attribute("Content"))?.Contains("all", StringComparison.OrdinalIgnoreCase) == true &&
+            ((string?)e.Attribute("Content"))?.Contains("trust", StringComparison.OrdinalIgnoreCase) == true);
     }
 
     private static XDocument Load(string file) => XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/" + file));

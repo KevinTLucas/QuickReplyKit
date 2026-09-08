@@ -128,6 +128,11 @@ public sealed class LauncherViewModel : ViewModelBase
         return paths;
     }
 
+    /// <summary>Enabled, valid, locally trusted scripts available to the editor variable menu.</summary>
+    public IReadOnlyList<string> ScriptNames() => _library.Scripts
+        .Where(x => x.IsValid && x.IsEnabled && x.IsTrusted)
+        .Select(x => x.Name).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+
     public string CategoryFullPath(string categoryPath) =>
         string.IsNullOrEmpty(categoryPath) ? LibraryRoot
             : System.IO.Path.Combine(LibraryRoot, categoryPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
@@ -404,8 +409,7 @@ public sealed class LauncherViewModel : ViewModelBase
         _selectedResult?.IsValid == true ? _selectedResult.Item : null;
 
     /// <summary>Resolve <c>{{…}}</c> tokens in the stored HTML against the current library and clock.</summary>
-    private string Resolve(string html) =>
-        TemplateEngine.Resolve(html, n => _library.FindByName(n)?.Html, _now());
+    private string Resolve(string html) => _library.ResolveTemplate(html, _now());
 
     /// <summary>
     /// A copy of <paramref name="item"/> with its template tokens resolved into HTML — never mutating

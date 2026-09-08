@@ -1,7 +1,9 @@
 using QuickReplyKit.Core.Library;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Search;
+using QuickReplyKit.Core.Scripts;
 using QuickReplyKit.Core.Storage;
+using QuickReplyKit.Core.Templates;
 
 namespace QuickReplyKit.Core;
 
@@ -18,6 +20,8 @@ public sealed class LibraryService : IDisposable
     private string _root;
     private readonly string? _recentPath;   // null → the global %APPDATA% recent file
     private readonly RecentStore _recent;
+    private readonly ScriptTrustLedger _scriptTrust;
+    private ScriptCatalog _scripts;
     private LibraryWatcher? _watcher;
     private readonly object _gate = new();
     private bool _disposed;
@@ -33,11 +37,15 @@ public sealed class LibraryService : IDisposable
     /// <summary>Whether the library folder is being watched for live changes (diagnostics).</summary>
     public bool IsWatching => _watcher?.IsAttached == true;
 
+    /// <summary>Portable script definitions and their effective local status.</summary>
+    public IReadOnlyList<ScriptCatalogItem> Scripts => _scripts.Items;
+
     /// <summary>Raised after the library changed on disk and <see cref="Snapshot"/> was rebuilt.</summary>
     public event Action? Updated;
 
     public LibraryService(string libraryRoot, string? seedSourceDir = null,
-        string? recentPath = null, bool watch = true, bool deferInitialScan = false)
+        string? recentPath = null, bool watch = true, bool deferInitialScan = false,
+        ScriptTrustLedger? scriptTrust = null)
     {
         _root = libraryRoot;
         _recentPath = recentPath;
@@ -46,11 +54,21 @@ public sealed class LibraryService : IDisposable
             LibrarySeeder.SeedIfEmpty(_root, seedSourceDir);
 
         _recent = recentPath is null ? RecentStore.Load() : RecentStore.Load(recentPath);
+        _scriptTrust = scriptTrust ?? ScriptTrustLedger.Open().Value!;
 
         // Deferred: start with an empty snapshot so the window can show immediately; the caller runs
         // LoadInitial() on a background thread. Otherwise scan up front (tests, self-tests, headless).
-        if (deferInitialScan) { Snapshot = LibraryScanner.Empty(_root); IsLoading = true; }
-        else Snapshot = LibraryScanner.Scan(_root);
+        if (deferInitialScan)
+        {
+            Snapshot = LibraryScanner.Empty(_root);
+            _scripts = ScriptCatalog.Empty(_scriptTrust);
+            IsLoading = true;
+        }
+        else
+        {
+            Snapshot = LibraryScanner.Scan(_root);
+            _scripts = ScriptCatalog.Load(_root, _scriptTrust);
+        }
 
         if (watch)
         {
@@ -83,7 +101,11 @@ public sealed class LibraryService : IDisposable
     }
 
     /// <summary>Rescans the library root into a fresh <see cref="Snapshot"/>.</summary>
-    public void Reload() => Snapshot = LibraryScanner.Scan(_root);
+    public void Reload()
+    {
+        Snapshot = LibraryScanner.Scan(_root);
+        _scripts = ScriptCatalog.Load(_root, _scriptTrust);
+    }
 
     /// <summary>
     /// Point the library at a new root: rescan it and (if watching) re-attach the watcher there.
@@ -114,6 +136,17 @@ public sealed class LibraryService : IDisposable
     public ResponseItem? FindByName(string name) =>
         Snapshot.ValidResponses.FirstOrDefault(
             r => string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Resolve built-ins, response includes, and trusted scripts against one library snapshot.</summary>
+    public string ResolveTemplate(string html, DateTimeOffset now)
+    {
+        var snapshot = Snapshot;
+        var scripts = _scripts;
+        return TemplateEngine.Resolve(html,
+            name => snapshot.ValidResponses.FirstOrDefault(r =>
+                string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Html,
+            now, scripts.Evaluate);
+    }
 
     /// <summary>
     /// Global, ranked search over the whole library (delegates to <see cref="ResponseSearch"/>).

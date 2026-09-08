@@ -24,11 +24,11 @@ public partial class ImportPreviewWindow : Window
             + $"{plan.Entries.Count(entry => entry.Classification is ImportClassification.Invalid or ImportClassification.Unsafe)} unavailable";
     }
 
-    public static IReadOnlyDictionary<int, ImportAction>? Prompt(Window owner, ImportPlan plan,
+    internal static ImportReviewDecision? Prompt(Window owner, ImportPlan plan,
         Func<ImportPlanEntry, bool>? canBulkSelect = null)
     {
         var dialog = new ImportPreviewWindow(plan, canBulkSelect) { Owner = owner };
-        return dialog.ShowDialog() == true ? dialog._review.Decisions : null;
+        return dialog.ShowDialog() == true ? dialog._review.Decision : null;
     }
 
     private void SelectAll_Click(object sender, RoutedEventArgs e) => _review.SelectAll();

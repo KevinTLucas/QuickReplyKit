@@ -9,25 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## P2 - High-Value Enhancements
 
-### B16 - Sandboxed user scripts for dynamic variables
-
-- **Severity:** P2 feature; security-critical design
-- **Status:** Foundation, runtime/template, and secure import/review are integrated on
-  `feature/sandboxed-script-engine` and pass 691 tests plus independent security QA. Script-manager, editor, Settings,
-  and diagnostics UI is active on `feature/sandboxed-script-manager`; final combined security/accessibility QA follows.
-- **Impact:** Enables custom computed template values, but shareable executable content creates a major trust boundary.
-- **Acceptance:** Define the full user workflow: create, name, edit, validate, disable, delete, export, and review
-  scripts; persist definitions in a documented format; invoke them with explicit template syntax such as
-  `{{script:Name}}`; resolve consistently in preview, rich paste, plain paste, copy, and edit-before-insert.
-  Never execute imported code in the main UI process and never raw-eval response content. Use either OS-enforced
-  isolation with an explicit threat model or a deliberately non-general-purpose interpreter whose operations are
-  intrinsically bounded; a separate process alone is not a sandbox. Fail closed when containment is unavailable.
-  Enforce time, memory, process, filesystem, registry, environment, clipboard, UI, network, recursion, and output-size
-  limits with default-deny capabilities; failures become visible non-crashing markers. Import preview displays exact
-  code and requires per-item acceptance with **no accept-all for code-bearing items**; accepted-code provenance is
-  local, invalidated when code changes, and never travels as trust. Security QA must prove containment cannot be
-  bypassed through path, network, process, environment, reflection/native loading, recursion, timeout, or output abuse.
-
 ### B19 - Enterprise UI standards audit and polish
 
 - **Severity:** P2 cross-view polish

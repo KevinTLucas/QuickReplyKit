@@ -108,8 +108,13 @@ Responses can contain `{{…}}` tokens that are filled in **when you insert** (a
 - **Includes:** reference another response by name to reuse sections — e.g. a template of
   `{{Welcome}}` / body / `{{Closing}}` keeps greetings and sign-offs consistent everywhere. Cycles and
   missing references are shown as clear inline markers, never a hang.
+- **Sandboxed scripts:** trusted local definitions can supply computed text with `{{script:Name}}`. The intentionally
+  small `qrk-expr-1` language supports literals, clock values, comparisons, boolean logic, and bounded pure functions
+  such as `if`, `concat`, `upper`, `lower`, `date`, and `time`. It cannot access files, processes, the network,
+  environment, registry, clipboard, UI, reflection, or native code. Example: `if(hour < 12, "Good morning", "Hello")`.
 
-(Variables are a fixed, safe built-in set — no code is ever executed, so shared templates are safe to import.)
+Open **Settings → Scripts…** to create, validate, enable, review, export, or delete definitions. Trust is local and tied
+to the exact source: editing a definition revokes trust, and QuickReplyKit never exports approval state.
 
 ## Sharing responses
 
@@ -118,7 +123,8 @@ Responses can contain `{{…}}` tokens that are filled in **when you insert** (a
 - Use the launcher's labelled **⇄ Import / Export** menu to import responses or export the full library. Export one
   response from its result context menu, or export one folder from its folder context menu. Import first shows a
   selectable New/Changed/Duplicate/Identical/Invalid/Unsafe review list; changed paths can be skipped, overwritten,
-  or kept as a second copy. Invalid content never blocks valid responses.
+  or kept as a second copy. Invalid content never blocks valid responses. Script definitions show their exact source,
+  start unchecked, and require a separate explicit acceptance for every item; Select all never accepts code.
 
 Broken/invalid `.json` files show up in **All Responses** marked with a ⚠ (muted, and not
 paste-able) with the parse error in the preview, so you can find and fix them.
@@ -143,6 +149,7 @@ Open from the ⚙ button or the tray. You can set:
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
 - **Keyboard shortcuts…** — opens the shortcuts manager (see below).
+- **Scripts…** — opens the sandboxed-script manager for create/edit/validate/trust/enable/export/delete workflows.
 - **Back up / Restore Library…** — create or restore one of the 10 rolling library-and-settings snapshots.
 - **Trash…** — restore deleted responses or folders, remove one permanently, or empty Trash. Deleted items
   are kept for 30 days by default.
@@ -188,8 +195,8 @@ box — press any combination to see what it's bound to — plus a filter over t
 - Import preview classifies each response as New, Duplicate elsewhere, Changed, Identical, Invalid, or Unsafe. Check
   only the responses you want, use Select all/Clear for ordinary files, and choose Overwrite or the safer Keep both
   option per selected conflict. Identical, invalid, and unsafe files stay disabled. Select all never accepts
-  code-bearing definitions; those require individual review. The accepted preview is the exact plan that executes,
-  and files changed after preview are reported stale rather than overwritten.
+  code-bearing definitions; those display exact source and require individual review and acceptance. The accepted
+  preview is the exact plan that executes, and files changed after preview are reported stale rather than overwritten.
 - Legacy folder-tag sidecars are ignored during import and never appear as responses.
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the audited state and [`docs/BACKLOG.md`](docs/BACKLOG.md) for remaining work.

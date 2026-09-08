@@ -5,6 +5,7 @@ namespace QuickReplyKit.Views;
 
 /// <summary>Outcome of a name collision the user must resolve.</summary>
 public enum ConflictChoice { Overwrite, KeepBoth, Cancel }
+internal enum UnsavedDraftChoice { Save, Discard, Cancel }
 
 /// <summary>
 /// Minimal themed message dialog with configurable buttons. Used for the destructive delete
@@ -67,5 +68,17 @@ public partial class ConfirmDialog : Window
             0 => ConflictChoice.Overwrite,
             1 => ConflictChoice.KeepBoth,
             _ => ConflictChoice.Cancel,
+        };
+
+    internal static UnsavedDraftChoice AskUnsavedDraft(Window owner) =>
+        Show(owner, "Unsaved script changes",
+            "Save your changes before leaving this script?",
+            ("Save", false, true),
+            ("Discard", true, false),
+            ("Cancel", false, false)) switch
+        {
+            0 => UnsavedDraftChoice.Save,
+            1 => UnsavedDraftChoice.Discard,
+            _ => UnsavedDraftChoice.Cancel,
         };
 }

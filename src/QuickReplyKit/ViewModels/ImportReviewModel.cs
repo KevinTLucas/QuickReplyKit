@@ -3,6 +3,8 @@ using QuickReplyKit.Core.ImportExport;
 namespace QuickReplyKit.ViewModels;
 
 internal sealed record ImportConflictChoice(string Label, ImportAction Action);
+internal sealed record ImportReviewDecision(IReadOnlyDictionary<int, ImportAction> Actions,
+    IReadOnlySet<int> AcceptedScriptEntries);
 
 internal sealed class ImportReviewRow : ViewModelBase
 {
@@ -20,7 +22,7 @@ internal sealed class ImportReviewRow : ViewModelBase
         Entry = entry;
         CanSelect = entry.Classification is ImportClassification.New
             or ImportClassification.DuplicateElsewhere or ImportClassification.Conflict;
-        CanBulkSelect = CanSelect && canBulkSelect;
+        CanBulkSelect = CanSelect && entry.Kind == ImportItemKind.Response && canBulkSelect;
         _isSelected = CanBulkSelect && entry.DefaultAction != ImportAction.Skip;
         _conflictAction = entry.DefaultAction == ImportAction.Overwrite
             ? ImportAction.Overwrite : ImportAction.KeepBoth;
@@ -29,6 +31,10 @@ internal sealed class ImportReviewRow : ViewModelBase
     internal event EventHandler? SelectionChanged;
     internal ImportPlanEntry Entry { get; }
     public ImportClassification Classification => Entry.Classification;
+    public ImportItemKind Kind => Entry.Kind;
+    public bool IsScript => Kind == ImportItemKind.Script;
+    public string KindLabel => IsScript ? "Script" : "Response";
+    public string? CodeSource => Entry.CodeSource;
     public string DestinationPath => Entry.DestinationPath;
     public string Status => Classification switch
     {
@@ -43,10 +49,12 @@ internal sealed class ImportReviewRow : ViewModelBase
     {
         ImportClassification.DuplicateElsewhere => $"Same content exists at {Entry.MatchingExistingPath}",
         ImportClassification.Identical => "Already up to date",
-        ImportClassification.Conflict => "A response already exists at this path",
+        ImportClassification.Conflict => $"A {KindLabel.ToLowerInvariant()} already exists at this path",
         _ => "",
     };
-    public string SelectionName => $"Select {DestinationPath}";
+    public string SelectionName => IsScript
+        ? $"Accept executable script {DestinationPath} after reviewing its exact expression"
+        : $"Select {DestinationPath}";
     public string ConflictActionName => $"Conflict action for {DestinationPath}";
     public bool CanSelect { get; }
     public bool CanBulkSelect { get; }
@@ -90,10 +98,15 @@ internal sealed class ImportReviewModel : ViewModelBase
     public IReadOnlyList<ImportReviewRow> Rows { get; }
     public int SelectedCount => Rows.Count(row => row.IsSelected);
     public int SelectableCount => Rows.Count(row => row.CanSelect);
-    public string SelectedSummary => $"{SelectedCount} of {SelectableCount} responses selected";
+    public string SelectedSummary => $"{SelectedCount} of {SelectableCount} items selected";
     public bool CanImport => SelectedCount > 0;
     public IReadOnlyDictionary<int, ImportAction> Decisions =>
         Rows.ToDictionary(row => row.Entry.Id, row => row.Decision);
+    public IReadOnlySet<int> AcceptedScriptEntries => Rows
+        .Where(row => row.IsScript && row.IsSelected)
+        .Select(row => row.Entry.Id).ToHashSet();
+
+    public ImportReviewDecision Decision => new(Decisions, AcceptedScriptEntries);
 
     public void SelectAll() => SetSelection(row => row.CanBulkSelect, true);
     public void Clear() => SetSelection(row => row.CanSelect, false);

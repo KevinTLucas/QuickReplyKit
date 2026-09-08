@@ -81,7 +81,10 @@ test-created windows normally. If paste verification genuinely requires Notepad,
   content is a restricted HTML subset — original (bold/italic/underline/ul/ol/li/link/paragraphs) **plus the
   V2 additions** (strikethrough, font-size/heading, text color, highlight, paragraph alignment, all additive
   via inline styles/simple tags). Content may contain **template tokens** `{{…}}` (built-in variables +
-  `{{Response Name}}` includes) resolved at insert/preview time by `Core/Templates/TemplateEngine.cs`.
+  `{{Response Name}}` includes + trusted `{{script:Name}}` expressions) resolved at insert/preview time by
+  `Core/Templates/TemplateEngine.cs`. Portable scripts are strict `*.qrkscript.json` definitions for the bounded,
+  non-general-purpose `qrk-expr-1` interpreter; local source fingerprints live outside the library and never export.
+  Code-bearing imports require exact per-item review/acceptance, and no bulk action may approve them.
   Keep loading **back-compatible**: the seeded `assets/DefaultLibrary` and any older shared file must still load.
 - **DPI:** Per-Monitor-v2 via `app.manifest`. Keep it.
 

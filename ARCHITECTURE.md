@@ -25,13 +25,14 @@ src/
     WindowPlacement.cs       monitor-aware launcher bounds validation
     Diagnostics/             rolling Logger + process-wide Diag facade
     Text/                    HtmlToFlowDocument, FlowDocumentToHtml, HtmlText (plain), CfHtml, ClipboardHtml
-    Templates/               TemplateEngine (built-in variables + response includes)
+    Templates/               TemplateEngine (built-ins + response includes + bounded script tokens)
+    Scripts/                 strict portable definitions, expression interpreter, catalog, local trust ledger
     ImportExport/            LibraryPorter (export/import), LibraryBackup (rolling snapshots + restore)
   QuickReplyKit/             WPF app
-    Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ImportPreview, Backup, Trash,
-                             About, Onboarding, Input/Confirm dialogs, HighlightText
+    Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ScriptManager, ImportPreview,
+                             Backup, Trash, About, Onboarding, Input/Confirm dialogs, HighlightText
     ViewModels/              LauncherViewModel, ResponseRowVm, NavNodeVm, RelayCommand, ViewModelBase,
-                             ImportCoordinator, ImportPreviewWindow
+                             ImportCoordinator, ImportReviewModel, ScriptManagerModel
     Interop/                 HotkeyRegistrar (many hotkeys, one msg-only window), HotkeyGesture, HotkeyConflicts (pure
                              dup/lookup logic), ForegroundWindow, ForegroundMonitor, ForegroundTargetTracker,
                              ClipboardWriter, ClipboardBackup, InputSender
@@ -64,6 +65,9 @@ view-models, interop, and app wiring.
   theme, remember-window, verbose logging, Trash retention, onboarding flag, and **per-response instant-paste
   hotkeys** keyed by library-relative path). **Recent** is `%APPDATA%\QuickReplyKit\recent.json`; Favorites remain
   in response files so they travel when shared.
+- Script definitions use the strict portable `*.qrkscript.json` schema beside responses in the library; the scanner
+  excludes them from responses/search/favorites/recent. Local approval fingerprints live only in
+  `%APPDATA%\QuickReplyKit\script-trust.json` and never travel with a definition or export.
 - Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in `backups` by default, and
   recoverable deleted responses in `trash`. None is scanned as library content.
 
@@ -79,8 +83,17 @@ view-models, interop, and app wiring.
 - **Templates** (`Core/Templates/TemplateEngine`): content may contain `{{…}}` tokens resolved at insert/preview/copy:
   built-in variables (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) and **includes**
   (`{{Response Name}}` splices another response's resolved HTML). Cycle detection, a fan-out expansion budget, and
-  inline `[missing:…]`/`[cycle:…]`/`[includes: too many]` markers. **Built-ins are a fixed allow-list — no code is
-  ever executed** (responses are shareable, so this is a hard security boundary).
+  inline `[missing:…]`/`[cycle:…]`/`[includes: too many]` markers.
+- **Sandboxed scripts** use `{{script:Name}}`. `qrk-expr-1` is a deliberately non-general-purpose interpreter with
+  literals, fixed clock values, comparisons/boolean operators, and a closed set of pure string/date functions. It has
+  no assignment, loops, user functions, reflection, filesystem, process, environment, registry, network, clipboard,
+  UI, native loading, regex, or dynamic-evaluation capability. Definitions, parsing, AST depth/count, evaluation,
+  arguments, literals, output, aggregate calls (64), and resolved content (250,000 chars) are bounded. Substitution
+  occurs only in HTML text nodes, never tags or attributes. Invalid, disabled, ambiguous, missing, changed, or untrusted
+  scripts fail closed with visible markers. All render paths use one captured clock.
+- `ScriptTrustLedger` stores only local ID/source fingerprints using bounded strict JSON, atomic writes, and a named
+  mutex with reload-before-mutate semantics. Source changes revoke trust. The Script Manager binds Trust to the exact
+  source displayed to the user and protects unsaved drafts with Save/Discard/Cancel.
 
 ## Paste engine (the core value) — `Interop/*` + `Services/InsertService`
 - A `ForegroundMonitor` (WinEvent `EVENT_SYSTEM_FOREGROUND`, `WINEVENT_SKIPOWNPROCESS`) continuously records the
@@ -129,6 +142,10 @@ view-models, interop, and app wiring.
   source/destination fingerprints. Execution rechecks those fingerprints, reports stale entries without writing them,
   and atomically replaces individual files. Valid siblings continue when another entry is invalid, unsafe, stale, or
   fails. A required rolling backup is created after the user accepts the plan and before any write.
+- Portable script definitions participate in import/export but trust never does. Script rows show exact source,
+  begin unchecked, and cannot be selected by Select all. Each exact plan entry needs a separate user acceptance;
+  Core execution independently rejects unaccepted code. An accepted script is trusted only after its destination is
+  written, reloaded, and byte-verified. Stale, unsafe, invalid, or failed writes remain untrusted.
 - `LibraryBackup` writes a versioned ZIP containing `library/`, `config.json` when present, and a manifest. Retention
   keeps at most 10 snapshots within count, 500 MB, and 90-day bounds while preserving at least the newest. Restore
   first protects the selected archive, validates and size-bounds extraction beside the live library, snapshots the current state,

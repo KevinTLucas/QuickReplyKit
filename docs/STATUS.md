@@ -6,11 +6,12 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `ca730f6` (B17 import review selection merged into `main`); use `git rev-parse HEAD` for
-  the docs-inclusive tip.
-- **Current product baseline:** B01-B15, B17, and B18 are complete.
+- **Current product merge:** `28a12ad` (B16 feature tip after final QA fixes; `main` merge commit follows); use
+  `git rev-parse HEAD` for the docs-inclusive tip.
+- **Current product baseline:** B01-B18 are complete; B19 is the only remaining backlog item.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
-- **Tests:** **572 passed** after B17 independent import-plan, accessibility, and UX QA; build remains clean.
+- **Tests:** **706 passed** after B16 combined runtime/import/manager regression and independent security,
+  correctness, accessibility, performance, and blocker re-QA; build remains clean.
 - **Portable publish:** `publish/QuickReplyKit.exe` and `publish/latest/QuickReplyKit.exe` were rebuilt from B17 `main`
   and match at 69,887,798 bytes (SHA-256 `731445EA15B724E94DEE0110E373686D24144359126F2D408D74A3236B99E8C6`).
   The published rich-clipboard self-test exits 0. No external .NET install is needed.
@@ -19,14 +20,14 @@
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable, but a user-requested backlog wave is active. [`BACKLOG.md`](BACKLOG.md) contains 2 ordered
-  items. B16's foundation, runtime, and secure-import slices are integrated and independently QA'd at 691 tests;
-  script-manager/editor/Settings UI is active. Final B16 QA and the enterprise UI audit remain.
+- **State:** launchable. [`BACKLOG.md`](BACKLOG.md) contains one remaining item: the final enterprise UI audit and
+  release validation (B19). B16 is complete and awaiting its `main` merge/release rebuild.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B16 sandboxed dynamic-variable scripts | `28a12ad` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete; merge follows |
 | B17 import review selection | `ca730f6` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
 | B18 selected-folder indication | `57576ed` | 569/569; 45/45 focused; system-color bar plus semibold non-color cue; nav row width preserved | Complete |
 | B15 complete About / Diagnostics status | `5c30e8e` | 567/567 integrated; actual hotkey/watcher/logger state; safe path tokens; both themes; separate correctness/privacy/UI QA | Complete |
@@ -67,10 +68,12 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
   transient paste content is marked to stay out of Windows clipboard history.
 - **Library/editor:** live-watched folder hierarchy; create/edit/duplicate/rename/move; rich editor with standard
   color/highlight palettes, lists, links, alignment, size, strike, response-tag chips, edit-before-insert, templates,
-  safe built-in variables, and response includes. Retired folder-tag sidecars are inert and safely ignored.
-- **Safety/sharing:** import preview; zip/file import/export; conflict policies; invalid-file tolerance; importer and
-  Trash path-traversal guards; rolling library backups with restore; app-local response and folder Trash with exact
-  hierarchy restore.
+  safe built-in variables, response includes, and bounded trusted `{{script:Name}}` expressions. The Script Manager
+  supports create/edit/validate/trust/enable/export/delete and protects dirty drafts.
+- **Safety/sharing:** selectable import preview; zip/file import/export; per-conflict policies; invalid-file tolerance;
+  exact per-script source review with no bulk code acceptance; local source-bound trust; importer and Trash
+  path-traversal guards; rolling library backups with restore; app-local response and folder Trash with exact hierarchy
+  restore.
 - **Desktop integration:** System/Light/Dark themes, first-run onboarding, tray, startup registration, persisted
   settings/window placement, About/Diagnostics, rolling logs, large-library background/parallel scan, and
   self-contained single-file publishing.
@@ -79,14 +82,11 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
 
-1. **B16 P2:** complete the active script-manager UI, then final combined security/accessibility QA.
-2. **B19 P2:** run the enterprise UI audit/polish pass, then final release validation.
+1. **B19 P2:** run the enterprise UI audit/polish pass, then final release validation.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** `feature/sandboxed-script-engine` is the B16 integration branch; its foundation, runtime, and
-secure-import slices pass 691 combined tests and independent security/correctness reviews.
-`feature/sandboxed-script-manager` owns only script-manager/editor/Settings/diagnostics UI. B17 and B18 are complete.
+**Active worktrees:** `feature/sandboxed-script-engine` is complete at 706 tests and awaits merge into `main`.
 A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
@@ -104,6 +104,9 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
   focus-sensitive test-harness flake unless a user-facing paste failure reproduces; keep watching it.
 - Before broad rollout, manually confirm a real Ctrl+Alt+D paste into Outlook/Teams/browser/CRM and verify the
   transient response does not appear in the Win+V history flyout.
+- Script trust protects against unreviewed portable definitions, accidental source changes, malformed files, and
+  concurrent app workflows. A malicious process already running as the same Windows user can modify the local trust
+  ledger and is outside this application-level security boundary.
 - The portable executable is unsigned, so SmartScreen may prompt. Code signing is a distribution concern, not an
   application defect.
 
@@ -113,7 +116,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **572** green after B17. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **706** green after B16. Registry tests need normal current-user registry access.
 5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.

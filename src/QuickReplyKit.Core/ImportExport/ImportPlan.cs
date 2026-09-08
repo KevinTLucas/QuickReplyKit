@@ -4,23 +4,27 @@ public enum ImportClassification { New, DuplicateElsewhere, Identical, Conflict,
 
 public enum ImportAction { Import, Skip, Overwrite, KeepBoth }
 
+public enum ImportItemKind { Response, Script }
+
 public enum ImportOutcomeKind { Imported, Skipped, Overwritten, KeptBoth, Invalid, Unsafe, Stale, Failed }
 
 /// <summary>One immutable row in a validated import preview.</summary>
 public sealed class ImportPlanEntry
 {
-    internal ImportPlanEntry(int id, string sourcePath, string destinationPath,
+    internal ImportPlanEntry(int id, ImportItemKind kind, string sourcePath, string destinationPath,
         ImportClassification classification, ImportAction defaultAction, string? matchingExistingPath,
-        string? message, byte[] content, string? destinationFullPath, byte[]? destinationHash,
+        string? message, string? codeSource, byte[] content, string? destinationFullPath, byte[]? destinationHash,
         string? keepBothFullPath)
     {
         Id = id;
+        Kind = kind;
         SourcePath = sourcePath;
         DestinationPath = destinationPath;
         Classification = classification;
         DefaultAction = defaultAction;
         MatchingExistingPath = matchingExistingPath;
         Message = message;
+        CodeSource = codeSource;
         Content = content;
         DestinationFullPath = destinationFullPath;
         DestinationHash = destinationHash;
@@ -28,12 +32,14 @@ public sealed class ImportPlanEntry
     }
 
     public int Id { get; }
+    public ImportItemKind Kind { get; }
     public string SourcePath { get; }
     public string DestinationPath { get; }
     public ImportClassification Classification { get; }
     public ImportAction DefaultAction { get; }
     public string? MatchingExistingPath { get; }
     public string? Message { get; }
+    public string? CodeSource { get; }
 
     internal byte[] Content { get; }
     internal string? DestinationFullPath { get; }
