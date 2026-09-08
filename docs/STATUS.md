@@ -11,10 +11,8 @@
 - **Current product baseline:** B01-B20 and B22-B26 are complete. B21 is in progress; B27-B30 remain queued.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **732 passed** on merged `main` after B26.
-- **Portable publish:** because an active QA process prevented canonical replacement, `publish/latest/QuickReplyKit.exe`
-  was rebuilt from `1ffac1f` at 69,920,525 bytes (SHA-256
-  `AB85A1412843C38B230D5DFA6734435979D8195481395424D5300C99882574DB`). Promote it to
-  `publish/QuickReplyKit.exe` when QA windows close. The prior packaged rich-clipboard gate exits 0.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `1ffac1f` at 69,920,525 bytes (SHA-256
+  `AB85A1412843C38B230D5DFA6734435979D8195481395424D5300C99882574DB`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
