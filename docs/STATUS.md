@@ -6,13 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `ba621f5` (B20 import crash containment and transactional script-import rollback);
+- **Current product merge:** `dc4b2a8` (B22 per-user storage paths and truthful diagnostics);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 are complete. B22 is in QA; B21 and B23-B29 remain active.
+- **Current product baseline:** B01-B20 and B22 are complete. B21 and B23-B29 remain active.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **729 passed** after B20 independent import/stability QA.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `ba621f5` at 69,921,413 bytes (SHA-256
-  `363683138A436C4A7855C6A6327A782D2A6464F14C5A0B5923854CF0290C1FE5`). The packaged rich-clipboard gate exits 0.
+- **Tests:** **730 passed** after B22 independent path/privacy QA.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `dc4b2a8` at 69,921,110 bytes (SHA-256
+  `A23107F77F0DAA3B3982FCDF95FD7641C85816EA2C9463C1C5415723072B74AB`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -31,6 +31,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B22 per-user paths and truthful diagnostics | `dc4b2a8` | 730/730; exact resolved paths; saved custom paths; no hotkey values/content; invalid and environment-variable paths | Complete |
 | B20 import workflow crash | `ba621f5` | 729/729; exact XAML root fixed; full UI boundary containment; transactional script trust/write rollback; independent re-QA | Complete |
 | Notepad self-test reliability/cleanup | `b5a6ff0` | 724/724; all four self-tests x3; foreground-denied fallback; exact temp window closes normally | Complete |
 | B19 enterprise UI standards audit | `1bf0d66` | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
@@ -86,7 +87,7 @@
 
 ## Remaining Work
 
-B21-B29 are active in [`BACKLOG.md`](BACKLOG.md); B22 is currently in QA. Work in severity order: B21/B22 first; then the focused
+B21 and B23-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21 first; then the focused
 UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
