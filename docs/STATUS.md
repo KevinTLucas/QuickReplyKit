@@ -5,7 +5,7 @@
 
 ## Audited Baseline
 
-- **Last audited:** 2026-09-07
+- **Last audited:** 2026-09-08
 - **Current product merge:** `8658443` (B25 backup and Trash settings layout);
   use `git rev-parse HEAD` for the docs-inclusive tip.
 - **Current product baseline:** B01-B20 and B22-B25 are complete. B21 is in progress; B29 is in QA; B26-B28 and B30 remain queued.
@@ -90,8 +90,8 @@
 
 ## Remaining Work
 
-B21 and B26-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in independent security/UI QA; B29 passes 731/731
-branch tests and awaits independent wording/interaction QA; B26-B28 are isolated and queued; B30 is explicitly last.
+B21 and B26-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in independent security/UI QA; B29 passed independent
+wording/interaction QA and 731/731 branch tests and is ready to merge; B26-B28 are isolated and queued; B30 is explicitly last.
 Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 

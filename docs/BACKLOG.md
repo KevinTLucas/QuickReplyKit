@@ -40,11 +40,11 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B29 - Rename transient response editing action
 
-- **Severity / status:** P2 · QA
+- **Severity / status:** P2 · QA passed · Ready to merge
 - **Acceptance:** rename the response context-menu action currently shown as “Edit & insert…” to “Edit Response Text…”
   (or equally clear wording) without changing its transient compose-and-insert behavior.
-- **Implemented on:** `ui/response-edit-label`; Release build is clean and the integrated branch passes 731/731 tests.
-  Independent wording/interaction QA remains before merge.
+- **Implemented on:** `ui/response-edit-label`; independent QA verified the real context menu and transient compose dialog
+  in Light, Dark, and compact layouts. Release build is clean and the integrated branch passes 731/731 tests.
 
 ### B30 - Sample dynamic variables and scripts
 
