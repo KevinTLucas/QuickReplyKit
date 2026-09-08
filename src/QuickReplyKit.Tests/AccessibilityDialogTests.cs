@@ -11,7 +11,6 @@ public class AccessibilityDialogTests
     [InlineData("AboutWindow.xaml", "DiagText")]
     [InlineData("AssignHotkeyWindow.xaml", "HotkeyBox")]
     [InlineData("BackupWindow.xaml", "BackupList")]
-    [InlineData("HotkeyManagerWindow.xaml", "SearchKeyBox")]
     [InlineData("HotkeyManagerWindow.xaml", "FilterBox")]
     [InlineData("ImportPreviewWindow.xaml", "EntryList")]
     [InlineData("InputDialog.xaml", "Input")]
@@ -30,7 +29,6 @@ public class AccessibilityDialogTests
     [Theory]
     [InlineData("AssignHotkeyWindow.xaml", "ErrorText", "Assertive")]
     [InlineData("BackupWindow.xaml", "EmptyHint", "Polite")]
-    [InlineData("HotkeyManagerWindow.xaml", "SearchResult", "Polite")]
     [InlineData("ImportPreviewWindow.xaml", "SelectionSummary", "Polite")]
     [InlineData("InputDialog.xaml", "ErrorText", "Assertive")]
     [InlineData("SettingsWindow.xaml", "HotkeyError", "Assertive")]
@@ -47,7 +45,6 @@ public class AccessibilityDialogTests
     [Fact]
     public void Dialogs_HaveSafeKeyboardDefaults()
     {
-        AssertDefaultButton("AboutWindow.xaml", "Close");
         AssertDefaultButton("BackupWindow.xaml", "Close");
         AssertDefaultButton("TrashWindow.xaml", "_Close");
         Assert.Equal("True", (string?)Named(Load("ImportPreviewWindow.xaml"), "ImportButton").Attribute("IsDefault"));
