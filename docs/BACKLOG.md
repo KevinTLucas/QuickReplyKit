@@ -25,8 +25,9 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Severity / status:** P2 · QA
 - **Acceptance:** remove the bar-style selected-folder indicator. Selection is communicated through a subtle but
   visible background in Light and Dark themes plus the existing non-color cue; preserve High Contrast accessibility.
-- **Implemented on:** `ui/folder-selection-style`; Release build is clean and the integrated branch passes 730/730
-  tests. Independent Light/Dark/High Contrast visual and accessibility QA remains before merge.
+- **Implemented on:** `ui/folder-selection-style`; independent QA and current-main integration pass a clean Release
+  build, 732/732 tests, focused accessibility/navigation tests, and Light/Dark/compact captures. System highlight
+  resources preserve Windows High Contrast behavior. Ready for merge.
 
 ### B28 - Icon-only Import / Export menu trigger
 
