@@ -25,7 +25,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Severity / status:** P2 · QA
 - **Acceptance:** the active scoped-search chip shows only the selected folder's display name, not the full hierarchy;
   search behavior and the full underlying category path remain unchanged.
-- **Implemented on:** `ui/scoped-search-label`; independent QA passes a clean Release build, 731/731 tests, and
+- **Implemented on:** `ui/scoped-search-label`; independent QA plus current-main integration pass a clean Release build,
+  732/732 tests, and
   Light/Dark/compact captures. The visual label uses the folder leaf while accessibility retains the full path.
   Ready for merge.
 
