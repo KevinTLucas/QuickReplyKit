@@ -11,7 +11,7 @@ publish/
 
 ## Test / capture artifacts (only curated GitHub documentation images are tracked)
 *.png
-!docs/**/*.png
+!docs/images/*.png
 TestResults/
 
 ## Agent worktrees / session data

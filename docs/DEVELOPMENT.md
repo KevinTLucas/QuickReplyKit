@@ -16,7 +16,7 @@ Root `AGENTS.md` and `CLAUDE.md` are local operating instructions and intentiona
 
 ## Toolchain
 
-- Windows 10/11 x64 development machine.
+- Windows 11 x64 or a Microsoft-supported Windows 10 Enterprise/LTSC x64 development machine.
 - .NET 10 SDK. On the primary workstation, `dotnet.exe` is under `C:\Program Files\dotnet`.
 - WPF/C# targeting `net10.0-windows` with `UseWPF=true`.
 - No third-party runtime/NuGet dependencies in the product projects: use the BCL, WPF, or native Windows APIs.
@@ -117,8 +117,9 @@ the test count, product commit, byte size, and SHA-256 in `STATUS.md`.
 
 ## Runtime requirements and dependency inventory
 
-The published `win-x64` executable is self-contained. A target PC needs 64-bit Windows 10 or Windows 11. It does not
-need a separate .NET runtime, SDK, Visual C++ Redistributable, or NuGet package.
+The published `win-x64` executable is self-contained. A target PC needs Windows 11 x64 or a
+[Microsoft-supported Windows 10 Enterprise/LTSC x64 release](https://learn.microsoft.com/dotnet/core/install/windows).
+It does not need a separate .NET runtime, SDK, Visual C++ Redistributable, or NuGet package.
 
 The single file bundles the .NET 10 runtime, WPF, application assemblies, and native runtime libraries. Representative
 bundled native components include:

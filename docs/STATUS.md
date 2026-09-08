@@ -9,8 +9,8 @@
 - **Last audited:** 2026-09-08
 - **Current product merge:** `08de27d` (B31 whole-app UI and interaction consistency);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B31 are complete on `main`. B32 is implemented on `end-user-readme` and awaiting
-  independent documentation QA; it has no product-code changes.
+- **Current product baseline:** B01-B31 are complete on `main`. B32 is independently QA'd on `end-user-readme` and
+  ready to merge; it has no product-code changes.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **785 passed** on merged `main` after B31, independently rerun after visual/accessibility review.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `08de27d` at 69,932,892 bytes (SHA-256
@@ -83,8 +83,9 @@
   Compact action buttons wrap without clipping;
   pointer states are restrained while keyboard focus remains explicit.
 - **Paste:** configurable launcher hotkey (default **Ctrl+Alt+D**) plus per-response global hotkeys that paste
-  rich or plain without opening the launcher. Focus returns to the prior app; clipboard content is restored;
-  transient paste content is marked to stay out of Windows clipboard history.
+  rich or plain without opening the launcher. QuickReplyKit attempts to restore the prior app and common clipboard
+  formats; transient paste content is marked so Windows should not retain it in clipboard history. These behaviors
+  remain best-effort across privilege, application, and clipboard-format boundaries.
 - **Library/editor:** live-watched folder hierarchy; create/edit/duplicate/rename/move; rich editor with standard
   color/highlight palettes, lists, links, alignment, size, strike, response-tag chips, edit-before-insert, templates,
   safe built-in variables, response includes, restricted `{{script:Name}}` expressions, and explicitly trusted
@@ -101,13 +102,13 @@
 
 ## Remaining Work
 
-B32 is the only active item in [`BACKLOG.md`](BACKLOG.md). It is implemented on the isolated `end-user-readme`
-worktree and awaits independent editorial, link, screenshot, and accuracy QA. The branch moves build/publish/runtime
-dependency/contributor details to `docs/DEVELOPMENT.md`, replaces the root README with an end-user guide, and adds
-10 curated current UI screenshots plus the app icon. Local links, every PNG, image-tracking rules, code fences,
-headings, and screenshot privacy were checked; the Release build is clean and the unchanged product baseline remains
-785/785. There is no product-source or build-behavior change; the only project-file edit corrects a documentation
-link in an XML comment.
+B32 is the only active item in [`BACKLOG.md`](BACKLOG.md). It is complete and independently QA'd on the isolated
+`end-user-readme` worktree, ready for `--no-ff` merge. The branch moves build/publish/runtime dependency/contributor
+details to `docs/DEVELOPMENT.md`, replaces the root README with an end-user guide, and adds 10 curated current UI
+screenshots plus the app icon. QA checked every user-facing claim against shipping code, recaptured misleading editor
+and shortcut examples, inspected every PNG, validated local links/Markdown/HTML, and confirmed screenshot privacy.
+The Release build is clean and the unchanged product baseline remains 785/785. There is no product-source or
+build-behavior change; the only project-file edit corrects a documentation link in an XML comment.
 
 **Known confirmed regressions/defects:** none after B20.
 
@@ -143,7 +144,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
    [`README.md`](../README.md) is the end-user guide.
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
-   `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
+   `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
 4. Run build + tests; expect **785** green after B31. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
