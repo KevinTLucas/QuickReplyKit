@@ -90,8 +90,8 @@
 ## Remaining Work
 
 B21 and B25-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in implementation, B25 is awaiting its final
-visual QA gate, B26 passes 729/729 branch tests and awaits independent QA, B27-B29 are isolated and queued, and B30
-is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
+visual QA gate, B26 passed independent QA with 731/731 branch tests and is ready to merge, B27-B29 are isolated and
+queued, and B30 is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** none after B20.
