@@ -107,6 +107,25 @@ public class AccessibilityDialogTests
             (string?)e.Attribute("Property") == "IsMouseOver");
     }
 
+    [Fact]
+    public void Settings_BackupActionsFollowBackupFolder_WithoutReset()
+    {
+        var document = Load("SettingsWindow.xaml");
+        var settings = document.Descendants().Single(e => e.Name.LocalName == "ScrollViewer")
+            .Descendants().Where(e => e.Parent?.Name.LocalName == "StackPanel").ToList();
+        int backupLabel = settings.FindIndex(e => (string?)e.Attribute("Text") == "Backup folder");
+        int actions = settings.FindIndex(e => e.Descendants().Any(b =>
+            (string?)b.Attribute("Click") == "Backup_Click"));
+
+        Assert.True(backupLabel >= 0 && actions > backupLabel);
+        Assert.Equal("BackupPathError", (string?)settings[actions - 1].Attribute(X + "Name"));
+        Assert.Contains(settings[actions].Descendants(), e => (string?)e.Attribute("Click") == "Trash_Click");
+        Assert.DoesNotContain(document.Descendants(), e =>
+            (string?)e.Attribute("Content") == "Reset" || (string?)e.Attribute("Click") == "ResetBackup_Click");
+        Assert.DoesNotContain("ResetBackup_Click", File.ReadAllText(TestFiles.RepoAsset(
+            "src/QuickReplyKit/Views/SettingsWindow.xaml.cs")), StringComparison.Ordinal);
+    }
+
     private static XDocument Load(string file) => XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/" + file));
 
     private static XElement Named(XDocument document, string name) => document.Descendants()

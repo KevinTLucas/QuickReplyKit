@@ -145,13 +145,6 @@ public partial class SettingsWindow : Window
         catch (Exception ex) { ShowBackupPathError(ex.Message); }
     }
 
-    private void ResetBackup_Click(object sender, RoutedEventArgs e)
-    {
-        _backupPath = AppPaths.BackupsDir;
-        BackupPathBox.Text = _backupPath;
-        HideBackupPathError();
-    }
-
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => App.OpenLogsFolder();
 
     private void About_Click(object sender, RoutedEventArgs e) =>
