@@ -8,9 +8,9 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `d1f39a0` (B24 hotkey-manager combination-capture removal);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B24 are complete. B21 and B25-B29 remain active.
+- **Current product baseline:** B01-B20 and B22-B24 are complete. B25 is in QA; B21 and B26-B29 remain active.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **729 passed** after B24 independent hotkey-manager QA; two obsolete data rows for the removed controls were deleted.
+- **Tests:** **730 passed** on the integrated B25 branch.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `d1f39a0` at 69,920,656 bytes (SHA-256
   `4C79B1FCFA889A8201B1FC54802FB77586F70B060FF9F88E04D35088ACEB2D5A`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
@@ -89,7 +89,7 @@
 
 ## Remaining Work
 
-B21 and B25-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21 first; then the focused
+B21 and B25-B29 are active in [`BACKLOG.md`](BACKLOG.md); B25 is currently in QA. Work in severity order: B21 first; then the focused
 UI cleanup items B25-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 

@@ -22,7 +22,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B25 - Reorganize backup and Trash settings
 
-- **Severity / status:** P2 · Requested · Queued
+- **Severity / status:** P2 · QA
 - **Acceptance:** remove the Backup Folder Reset button and its unused handler. Place Backup/Restore Library and Trash
   controls directly beneath the Backup Folder settings, preserving validation, keyboard access, compact resizing, and
   both themes.
