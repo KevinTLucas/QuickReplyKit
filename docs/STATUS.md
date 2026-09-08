@@ -20,7 +20,9 @@
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0 for three consecutive branch rounds and one final packaged
   `b5a6ff0` round; every temporary Notepad window closed normally and no visible Notepad remained.
-- **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
+- **Git:** `origin` is `https://github.com/KevinTLucas/QuickReplyKit.git`; its initial MIT-license commit was
+  preserved when the local history was connected. Completed feature branches listed below are ancestors of `main`.
+  Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. [`BACKLOG.md`](BACKLOG.md) has no active items.
