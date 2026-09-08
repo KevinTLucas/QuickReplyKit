@@ -6,14 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `4fa69ec` (B21 explicitly trusted native scripts);
+- **Current product merge:** `8a3de68` (B29 response edit label);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B28 are complete. B29 passed independent QA and current-main regression and awaits merge;
-  B30 remains queued last.
+- **Current product baseline:** B01-B29 are complete. B30 remains queued last.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **760 passed** on merged `main` after B21.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `4fa69ec` at 69,931,950 bytes (SHA-256
-  `F6B65AFF3DFD28660CCB436A44E3A9CCB60513024E5F2D8024131BBEF8E04E98`). The prior packaged rich-clipboard gate exits 0.
+- **Tests:** **761 passed** on merged `main` after B29.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `8a3de68` at 69,931,950 bytes (SHA-256
+  `1C6CFA6B7F425F81F7D753699987EF7D7B49F5789253FA0F98B318FA4D41F1AD`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -26,12 +25,13 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. Restricted expressions and explicitly trusted native PowerShell are both shipped and
-  independently security/UI tested. See [`BACKLOG.md`](BACKLOG.md) for B29-B30.
+  independently security/UI tested. See [`BACKLOG.md`](BACKLOG.md) for B30.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B29 response edit label | `8a3de68` | 761/761; 4/4 focused; Light/Dark/compact context-menu and compose captures; handler and transient behavior unchanged | Complete |
 | B21 explicitly trusted native scripts | `4fa69ec` | 760/760; 62/62 security/integration; 14/14 runtime; Light/Dark/compact Script Manager and Import Review; UTF-8, duplicate hotkey, and layout blockers fixed | Complete |
 | B28 icon-only Import / Export trigger | `99d8efd` | 732/732; 25/25 focused; Light/Dark/compact captures; keyboard menu anchored to trigger | Complete |
 | B27 native selected-folder background | `44f9267` | 732/732; 47/47 focused; Light/Dark/compact captures; High Contrast system brushes and non-color cue verified | Complete |
@@ -97,15 +97,14 @@
 
 ## Remaining Work
 
-B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B29 passed independent Light/Dark/compact wording/interaction QA and
-761/761 current-main tests; it awaits merge. B30 is explicitly last. Each implementation requires
-a scoped human-readable branch, independent QA, green full
+B30 is the only active item in [`BACKLOG.md`](BACKLOG.md) and is explicitly last. It requires a scoped human-readable
+branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktree:** B29 is listed by `git worktree list` and is not merged until its current-main integration passes.
-A stale interrupted historical hotkey worktree remains quarantined and
+**Active worktrees:** no reviewed feature branch is active. A stale interrupted historical hotkey worktree remains
+quarantined and
 is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
@@ -137,7 +136,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **760** green after B21. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **761** green after B29. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.
