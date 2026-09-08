@@ -6,12 +6,11 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `b5a6ff0` (B19 enterprise UI standards polish plus stable, normally-closing Notepad
-  self-tests); use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B19 are complete. B20-B29 are active in priority order; B20 is a confirmed
-  release-blocking import crash.
+- **Current product merge:** `c977be1` (B20 import crash containment and transactional script-import rollback);
+  use `git rev-parse HEAD` for the docs-inclusive tip.
+- **Current product baseline:** B01-B20 are complete. B21-B29 remain active in priority order.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **724 passed** after the B19 combined regression and independent UI/accessibility review.
+- **Tests:** **729 passed** after B20 independent import/stability QA.
 - **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` were rebuilt from
   `b5a6ff0` and match at 69,920,606 bytes (SHA-256
   `7949268476273ECB8FDD908C6DF0ABF36721ECB0914EA4237386A3D81D39ED2C`). All four packaged self-tests exit 0.
@@ -26,13 +25,14 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable for existing workflows, but **not release-ready** until B20 is fixed and independently
-  regression-tested. See [`BACKLOG.md`](BACKLOG.md) for B20-B29.
+- **State:** launchable. The confirmed import crash is fixed and independently regression-tested. See
+  [`BACKLOG.md`](BACKLOG.md) for B21-B29.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B20 import workflow crash | `c977be1` | 729/729; exact XAML root fixed; full UI boundary containment; transactional script trust/write rollback; independent re-QA | Complete |
 | Notepad self-test reliability/cleanup | `b5a6ff0` | 724/724; all four self-tests x3; foreground-denied fallback; exact temp window closes normally | Complete |
 | B19 enterprise UI standards audit | `1bf0d66` | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
 | B16 sandboxed dynamic-variable scripts | `db07f5e` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete |
@@ -87,15 +87,15 @@
 
 ## Remaining Work
 
-B20-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B20 first; then B21/B22; then the focused
+B21-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21/B22 first; then the focused
 UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
-**Known confirmed regressions/defects:** B20, an import failure can crash the entire application. Treat it as the
-current release blocker until a safe-failure regression proves the app and library remain usable and uncorrupted.
+**Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** no active implementation worktree at this planning baseline. A stale interrupted historical
-hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** isolated branches for B22-B29 are listed by `git worktree list`; none are merged until their
+individual QA and integrated regression pass. A stale interrupted historical hotkey worktree remains quarantined and
+is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -126,7 +126,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **724** green after B19. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **729** green after B20. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.

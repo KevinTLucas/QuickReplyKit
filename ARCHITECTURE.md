@@ -181,7 +181,7 @@ view-models, interop, and app wiring.
 ## Known completion boundaries
 
 The implemented paths above are merged and tested. [`docs/BACKLOG.md`](docs/BACKLOG.md) is the source of truth for
-future requested work. B20-B29 are currently active; see that file for priority and acceptance criteria.
+future requested work. B21-B29 are currently active; see that file for priority and acceptance criteria.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,

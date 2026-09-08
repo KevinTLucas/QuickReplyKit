@@ -9,17 +9,9 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-### B20 - Import workflow crash
-
-- **Severity / status:** P0 · Confirmed · Investigation in progress
-- **Problem:** an import failure can escape the UI workflow and terminate the application.
-- **Acceptance:** every import-stage failure is caught at the UI boundary, produces a useful safe error, is recorded in
-  diagnostics without customer content, leaves the current library/config intact, and keeps QuickReplyKit usable.
-  Regression coverage must exercise malformed, inaccessible, stale, and failed-write inputs.
-
 ### B21 - Explicitly trusted native scripts
 
-- **Severity / status:** P1 · Requested · Queued after B20
+- **Severity / status:** P1 · Requested · Next
 - **Problem:** `qrk-expr-1` intentionally cannot read files or perform the internal data-processing workflows now
   requested by users.
 - **Acceptance:** add an explicitly identified native script type that can access local files, parse data, and return
