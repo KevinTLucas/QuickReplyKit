@@ -117,8 +117,7 @@ public class AccessibilityLauncherEditorTests
 
         string behavior = File.ReadAllText(TestFiles.RepoAsset("src/QuickReplyKit/Views/EditorWindow.xaml.cs"));
         Assert.Contains("value == DependencyProperty.UnsetValue ? null", behavior, StringComparison.Ordinal);
-        Assert.Contains("Body.Selection.End.GetInsertionPosition(LogicalDirection.Backward)", behavior,
-            StringComparison.Ordinal);
+        Assert.Contains("ListState(Body.Selection)", behavior, StringComparison.Ordinal);
         Assert.Contains("CommandManager.AddExecutedHandler(Body, Body_CommandExecuted)", behavior,
             StringComparison.Ordinal);
         Assert.Contains("Dispatcher.BeginInvoke((Action)UpdateToolbarState)", behavior, StringComparison.Ordinal);

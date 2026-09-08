@@ -141,22 +141,7 @@ public partial class EditorWindow : Window
         SetState(AlignCenterButton, alignment, TextAlignment.Center);
         SetState(AlignRightButton, alignment, TextAlignment.Right);
 
-        var start = ListAt(Body.Selection.Start.GetInsertionPosition(LogicalDirection.Forward) ?? Body.Selection.Start);
-        var endPosition = Body.Selection.IsEmpty
-            ? Body.Selection.End
-            : Body.Selection.End.GetInsertionPosition(LogicalDirection.Backward) ?? Body.Selection.End;
-        var end = ListAt(endPosition);
-        if ((start == null) != (end == null) || start?.MarkerStyle != end?.MarkerStyle)
-        {
-            BulletListButton.IsChecked = null;
-            NumberListButton.IsChecked = null;
-        }
-        else
-        {
-            BulletListButton.IsChecked = start != null && IsBullet(start.MarkerStyle);
-            NumberListButton.IsChecked = start != null && start.MarkerStyle != TextMarkerStyle.None &&
-                !IsBullet(start.MarkerStyle);
-        }
+        (BulletListButton.IsChecked, NumberListButton.IsChecked) = ListState(Body.Selection);
     }
 
     private static void SetState(ToggleButton button, object value, object expected) =>
@@ -173,6 +158,34 @@ public partial class EditorWindow : Window
             if (parent is List list) return list;
         return null;
     }
+
+    internal static (bool? Bullet, bool? Number) ListState(TextRange selection)
+    {
+        if (selection.IsEmpty)
+        {
+            var list = ListAt(selection.Start.GetInsertionPosition(LogicalDirection.Forward) ?? selection.Start);
+            return ListState(list);
+        }
+
+        var end = selection.End.GetInsertionPosition(LogicalDirection.Backward) ?? selection.End;
+        (bool Bullet, bool Number)? state = null;
+        for (var position = selection.Start; position != null && position.CompareTo(end) <= 0;
+             position = position.GetNextContextPosition(LogicalDirection.Forward))
+        {
+            var paragraph = position.Paragraph;
+            if (paragraph == null) continue;
+
+            var current = ListState(ListAt(paragraph.ContentStart));
+            if (state is not null && state.Value != current) return (null, null);
+            state = current;
+        }
+
+        return state ?? (false, false);
+    }
+
+    private static (bool Bullet, bool Number) ListState(List? list) =>
+        (list != null && IsBullet(list.MarkerStyle),
+         list != null && list.MarkerStyle != TextMarkerStyle.None && !IsBullet(list.MarkerStyle));
 
     private static bool IsBullet(TextMarkerStyle marker) => marker is TextMarkerStyle.Disc or
         TextMarkerStyle.Circle or TextMarkerStyle.Square or TextMarkerStyle.Box;
