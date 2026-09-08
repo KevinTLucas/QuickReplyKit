@@ -465,6 +465,26 @@ public class FlowDocumentToHtmlTests
     }
 
     [Fact]
+    public void EditorStrike_PreservesMixedUnderlineSelection()
+    {
+        Sta(() =>
+        {
+            var editor = new RichTextBox
+            {
+                Document = HtmlToFlowDocument.Convert("<p><u>underlined</u> plain</p>"),
+            };
+            editor.SelectAll();
+            EditorFormatting.ToggleStrike(editor.Selection);
+            Assert.Equal("<p><u><s>underlined</s></u><s> plain</s></p>",
+                FlowDocumentToHtml.Convert(editor.Document));
+
+            editor.SelectAll();
+            EditorFormatting.ToggleStrike(editor.Selection);
+            Assert.Equal("<p><u>underlined</u> plain</p>", FlowDocumentToHtml.Convert(editor.Document));
+        });
+    }
+
+    [Fact]
     public void VariableTextFormatting_SaveAndReload()
     {
         Sta(() =>
