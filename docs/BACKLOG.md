@@ -15,7 +15,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Acceptance:** rename the response context-menu action currently shown as “Edit & insert…” to “Edit Response Text…”
   (or equally clear wording) without changing its transient compose-and-insert behavior.
 - **Implemented on:** `ui/response-edit-label`; independent QA verified the real context menu and transient compose dialog
-  in Light, Dark, and compact layouts. Release build is clean and the integrated branch passes 731/731 tests.
+  in Light, Dark, and compact layouts. Release build is clean and current-main integration passes 761/761 tests.
 
 ### B30 - Sample dynamic variables and scripts
 

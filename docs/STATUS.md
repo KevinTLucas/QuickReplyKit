@@ -8,7 +8,7 @@
 - **Last audited:** 2026-09-08
 - **Current product merge:** `4fa69ec` (B21 explicitly trusted native scripts);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B28 are complete. B29 passed independent QA and awaits current-main regression;
+- **Current product baseline:** B01-B28 are complete. B29 passed independent QA and current-main regression and awaits merge;
   B30 remains queued last.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **760 passed** on merged `main` after B21.
@@ -98,7 +98,7 @@
 ## Remaining Work
 
 B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B29 passed independent Light/Dark/compact wording/interaction QA and
-731/731 pre-B21 branch tests; it awaits current-main regression. B30 is explicitly last. Each implementation requires
+761/761 current-main tests; it awaits merge. B30 is explicitly last. Each implementation requires
 a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
