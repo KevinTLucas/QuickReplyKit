@@ -125,6 +125,14 @@ Open **Settings → Scripts…** to create, validate, enable, review, export, or
 the restricted language unless you explicitly select full-trust PowerShell. Trust is local and tied to the exact
 language and source: editing either revokes trust, and QuickReplyKit never exports approval state.
 
+The optional `DefaultLibrary/Examples` seed folder contains small, removable demonstrations of built-in variables,
+reusable response includes, one restricted expression, and one clearly labeled full-trust PowerShell script. The
+PowerShell example stays untrusted after seeding: review its exact source under **Settings → Scripts…** and explicitly
+trust it before it can run. Each example is a separate file, so the demos are easy to copy or delete; the composed
+response needs its two `Shared …` include files. Existing libraries are never modified automatically; to add these
+examples after an upgrade, copy the `Examples` folder from `DefaultLibrary` into your response library. Ordinary
+support examples do not depend on the demos.
+
 ## Sharing responses
 
 - **Copy folders/files** directly into your library — the folder hierarchy and responses appear

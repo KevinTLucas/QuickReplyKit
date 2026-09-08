@@ -8,9 +8,11 @@
 - **Last audited:** 2026-09-08
 - **Current product merge:** `8a3de68` (B29 response edit label);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B29 are complete. B30 remains queued last.
+- **Current product baseline:** B01-B29 are complete on `main`. B30 is independently QA'd on
+  `examples/dynamic-scripts` and is ready to merge; it is not yet shipped.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **761 passed** on merged `main` after B29.
+- **Tests:** **761 passed** on merged `main` after B29. The unmerged B30 branch has a clean Release build and
+  **765/765 passed** (4 focused seed-example tests added), independently rerun after visual/security review.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `8a3de68` at 69,931,950 bytes (SHA-256
   `1C6CFA6B7F425F81F7D753699987EF7D7B49F5789253FA0F98B318FA4D41F1AD`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
@@ -25,7 +27,7 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. Restricted expressions and explicitly trusted native PowerShell are both shipped and
-  independently security/UI tested. See [`BACKLOG.md`](BACKLOG.md) for B30.
+  independently security/UI tested. B30 optional examples passed QA and await merge; see [`BACKLOG.md`](BACKLOG.md).
 
 ## Merged And QA'd
 
@@ -97,15 +99,17 @@
 
 ## Remaining Work
 
-B30 is the only active item in [`BACKLOG.md`](BACKLOG.md) and is explicitly last. It requires a scoped human-readable
-branch, independent QA, green full
-regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
+B30 is the only active item in [`BACKLOG.md`](BACKLOG.md) and is explicitly last. Its implementation and independent
+QA are complete on `examples/dynamic-scripts`: optional seed files demonstrate built-ins, response includes, a
+deterministic restricted expression, and an enabled-but-untrusted full-permission PowerShell greeting. Release build
+is clean, all 765 tests pass, and Light/Dark/compact plus security/content checks pass. The `--no-ff` merge and a
+portable rebuild from the resulting `main` tip remain.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** no reviewed feature branch is active. A stale interrupted historical hotkey worktree remains
-quarantined and
-is not an active source of changes.
+**Active worktrees:** `examples/dynamic-scripts` at `.worktrees/dynamic-script-examples` owns B30 only, passed
+independent QA, and is ready to merge. A stale interrupted historical hotkey worktree remains quarantined and is not
+an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
