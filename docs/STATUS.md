@@ -8,9 +8,10 @@
 
 - **Last audited:** 2026-09-08
 - **Current product merge:** `c755601` (B33 CF_RTF compatibility + release refresh).
-- **Current product baseline:** B01-B33 are complete on `main`; no active feature worktree.
+- **Current product baseline:** B01-B33 are complete on `main`; no active feature worktree merged.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **786 passed** on merged `main` after B33, independently rerun after merge and exe refresh.
+- **Tests:** **788 passed** on merged `main` after B33, plus two additional Word-fidelity tests in
+  `feature/word-rtf-compatibility`.
 - **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip (`c755601`) at 69,933,764 bytes (SHA-256
   `06D4687E64E0E872630CAC5A2971CAAB20AB20D12C99A9570C62EC332A3BFDC5`). It is self-contained; no external .NET or
   Visual C++ installation is needed.
@@ -100,7 +101,9 @@
 
 ## Remaining Work
 
-No active backlog work items remain. Current branch work in-progress: `feature/rtf-clipboard-format` (rich insertion now writes both `CF_HTML` and `CF_RTF` to improve Word/CRM fidelity).
+No active backlog work items remain. Current branch work in-progress: `feature/word-rtf-compatibility` —
+improve `InsertService` and `Copy` RTF generation with WPF-platform HTML parsing to better preserve formatting in
+Microsoft Word.
 
 **Known confirmed regressions/defects:** none after B20.
 

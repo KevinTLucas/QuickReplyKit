@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Documents;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -136,7 +135,7 @@ internal static class SelfTest
             string html = $"<p>plain <b>{mark}</b> tail</p><ul><li>one</li><li>two</li></ul>";
             var item = new ResponseItem { Html = html };
             string expectedHtml = CfHtml.Build(html);
-            string expectedRtf = BuildRtf(html);
+            string expectedRtf = HtmlToRtf.Convert(html);
 
             if (ClipboardWriter.WriteRich(item.PlainText, expectedHtml, expectedRtf))
             {
@@ -181,14 +180,6 @@ internal static class SelfTest
             finally { GlobalUnlock(h); }
         }
         finally { CloseClipboard(); }
-    }
-
-    private static string BuildRtf(string html)
-    {
-        var flow = HtmlToFlowDocument.Convert(html);
-        using var stream = new MemoryStream();
-        new TextRange(flow.ContentStart, flow.ContentEnd).Save(stream, DataFormats.Rtf);
-        return Encoding.UTF8.GetString(stream.ToArray()).TrimEnd('\0');
     }
 
     /// <summary>

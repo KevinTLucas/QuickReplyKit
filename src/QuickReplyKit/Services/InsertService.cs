@@ -1,9 +1,6 @@
 using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Threading;
 using System.Windows;
-using System.Windows.Documents;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Text;
@@ -47,7 +44,7 @@ public sealed class InsertService : IInsertService
         var data = new DataObject();
         data.SetData(DataFormats.UnicodeText, item.PlainText);
         data.SetData(DataFormats.Html, CfHtml.Build(item.Html));
-        data.SetData(DataFormats.Rtf, BuildRtf(item.Html));
+        data.SetData(DataFormats.Rtf, HtmlToRtf.Convert(item.Html));
         for (int attempt = 0; attempt < 3; attempt++)
         {
             try
@@ -98,7 +95,7 @@ public sealed class InsertService : IInsertService
             Diag.Verbose("InsertService", "Paste", $"focus result={focused}");
 
             var html = CfHtml.Build(item.Html);
-            var rtf = BuildRtf(item.Html);
+            var rtf = HtmlToRtf.Convert(item.Html);
             bool wrote = rich
                 ? ClipboardWriter.WriteRich(item.PlainText, html, rtf)
                 : ClipboardWriter.WritePlain(item.PlainText);
@@ -127,19 +124,4 @@ public sealed class InsertService : IInsertService
         }
     }
 
-    private static string BuildRtf(string html)
-    {
-        try
-        {
-            var flow = HtmlToFlowDocument.Convert(html);
-            using var ms = new MemoryStream();
-            new TextRange(flow.ContentStart, flow.ContentEnd).Save(ms, DataFormats.Rtf);
-
-            return Encoding.UTF8.GetString(ms.ToArray());
-        }
-        catch
-        {
-            return string.Empty;
-        }
-    }
 }
