@@ -205,6 +205,23 @@ public class ScriptManagerModelTests
     }
 
     [Fact]
+    public void ManagerUi_UsesThemedLanguageComboAndScrollsAtCompactHeight()
+    {
+        string xaml = File.ReadAllText(TestFiles.RepoAsset(
+            "src/QuickReplyKit/Views/ScriptManagerWindow.xaml"));
+        var document = System.Xml.Linq.XDocument.Parse(xaml);
+        System.Xml.Linq.XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        System.Xml.Linq.XNamespace names = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var language = document.Descendants(x + "ComboBox").Single(element =>
+            (string?)element.Attribute(names + "Name") == "LanguageBox");
+
+        Assert.Null(language.Attribute("Style"));
+        Assert.Contains(document.Descendants(x + "ScrollViewer"), element =>
+            (string?)element.Attribute("VerticalScrollBarVisibility") == "Auto" &&
+            element.Descendants(x + "ComboBox").Contains(language));
+    }
+
+    [Fact]
     public void Catalog_ListsInvalidAndDuplicateDefinitions_WithTextualStatus()
     {
         using var temp = new TempDir();
