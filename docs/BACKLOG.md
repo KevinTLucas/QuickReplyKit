@@ -9,6 +9,14 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
+### B22 - Per-user default paths and truthful diagnostics
+
+- **Severity / status:** P1 · QA
+- **Acceptance:** defaults resolve from the installed user's Windows profile: library and backup locations under the
+  intended user-profile folders; config, logs, Trash, and script trust under `%APPDATA%\QuickReplyKit`. About and
+  Diagnostics display the actual resolved filesystem paths rather than environment-variable or privacy placeholders.
+  Configured custom locations remain supported and upgrades do not silently move existing data.
+
 ### B21 - Explicitly trusted native scripts
 
 - **Severity / status:** P1 · Requested · Next

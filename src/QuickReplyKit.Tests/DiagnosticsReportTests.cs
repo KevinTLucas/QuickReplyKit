@@ -24,7 +24,7 @@ public class DiagnosticsReportTests
         {
             LibraryPath = configuredLibrary,
             BackupPath = configuredBackups,
-            HotkeyGesture = "Ctrl+Alt+D",
+            HotkeyGesture = "SECRET-LAUNCHER-HOTKEY",
             VerboseLogging = false,
             ResponseHotkeys =
             {
@@ -45,7 +45,7 @@ public class DiagnosticsReportTests
         {
             string report = DiagnosticsReport.Build(config, library, entries, "1.2.3");
             Assert.Contains("1.2.3", report);
-            Assert.Contains("Ctrl+Alt+D (registered)", report);
+            Assert.Contains("Launcher hotkey       : registered", report);
             Assert.Contains("2 configured, 1 registered, 1 failed", report);
             Assert.Contains("2 (1 valid, 1 invalid)", report);
             Assert.Contains("Watcher               : not attached", report);
@@ -64,6 +64,7 @@ public class DiagnosticsReportTests
             Assert.DoesNotContain(contentSecret, report, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("Ctrl+Alt+1", report);
             Assert.DoesNotContain("Ctrl+Alt+2", report);
+            Assert.DoesNotContain("SECRET-LAUNCHER-HOTKEY", report);
         }
         finally { Diag.Shutdown(); }
     }
@@ -85,5 +86,23 @@ public class DiagnosticsReportTests
         Assert.DoesNotContain("%APPDATA%", report);
         Assert.DoesNotContain("%USERPROFILE%", report);
         Assert.DoesNotContain("[private path]", report);
+    }
+
+    [Fact]
+    public void ReportExpandsEnvironmentPaths_AndHandlesInvalidPaths()
+    {
+        using var temp = new TempDir();
+        using var library = new LibraryService(temp.Of("library"), recentPath: temp.Of("recent.json"), watch: false);
+        var config = new AppConfig
+        {
+            LibraryPath = @"%USERPROFILE%\QuickReplyKit-QA\Library",
+            BackupPath = "\0",
+        };
+
+        string report = DiagnosticsReport.Build(config, library, Array.Empty<HotkeyService.Entry>(), "test");
+
+        Assert.Contains("Library folder        : " + Path.GetFullPath(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "QuickReplyKit-QA", "Library")), report);
+        Assert.Contains("Backup folder         : [invalid location]", report);
     }
 }

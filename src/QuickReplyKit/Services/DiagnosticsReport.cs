@@ -25,7 +25,7 @@ internal static class DiagnosticsReport
         Row("Runtime", RuntimeInformation.FrameworkDescription);
         Row("OS", RuntimeInformation.OSDescription + " (" + RuntimeInformation.OSArchitecture + ")");
         text.AppendLine();
-        Row("Launcher hotkey", $"{config.HotkeyGesture} ({(hotkeys.Any(x => x.IsLauncher && x.Registered) ? "registered" : "not registered")})");
+        Row("Launcher hotkey", hotkeys.Any(x => x.IsLauncher && x.Registered) ? "registered" : "not registered");
         Row("Response hotkeys", $"{configured} configured, {registered} registered, {configured - registered} failed");
         Row("Default paste", config.DefaultPasteMode.ToString());
         Row("Theme", config.Theme.ToString());
