@@ -22,7 +22,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B24 - Remove shortcut-combination lookup
 
-- **Severity / status:** P2 · Requested · Queued
+- **Severity / status:** P2 · QA
 - **Acceptance:** remove “Find a Shortcut by Combination” because capture is unreliable while global shortcuts are
   registered. Keep the normal hotkey search field and conflict indicators; delete only code/tests used exclusively by
   the removed capture workflow.

@@ -8,9 +8,9 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `2e23918` (B23 About / Diagnostics window chrome cleanup);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20, B22, and B23 are complete. B21 and B24-B29 remain active.
+- **Current product baseline:** B01-B20, B22, and B23 are complete. B24 is in QA; B21 and B25-B29 remain active.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **731 passed** after B23 independent UI/accessibility QA.
+- **Tests:** **729 passed** on the integrated B24 branch; two obsolete data rows for the removed controls were deleted.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `2e23918` at 69,921,126 bytes (SHA-256
   `C31C335E598491AE7B60EF79E9B58B341CDAD3749052A237CA1CDCFE4FBC071E`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
@@ -88,7 +88,7 @@
 
 ## Remaining Work
 
-B21 and B24-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21 first; then the focused
+B21 and B24-B29 are active in [`BACKLOG.md`](BACKLOG.md); B24 is currently in QA. Work in severity order: B21 first; then the focused
 UI cleanup items B24-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 

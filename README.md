@@ -163,8 +163,8 @@ or plain text. These binds are stored locally (in your `config.json`, keyed by t
 library never fights over global keys.
 
 Open **Settings → Keyboard shortcuts…** for the manager: it lists the launcher hotkey and every per-response bind,
-flags conflicts (a duplicate within QuickReplyKit, or a combo another app already owns), and has a **find-a-shortcut**
-box — press any combination to see what it's bound to — plus a filter over the list. If a hotkey can't be registered
+flags conflicts (a duplicate within QuickReplyKit, or a combo another app already owns), and provides a text filter
+over shortcut combinations and response names. If a hotkey can't be registered
 (already in use), the app keeps running and the manager shows it as "in use by another app".
 
 ## Backups, Trash, and diagnostics
