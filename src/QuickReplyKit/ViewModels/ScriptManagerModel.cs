@@ -25,13 +25,22 @@ internal sealed class ScriptManagerModel
     public void Reload() => Items = ScriptCatalog.Load(_root, _trust).Items;
 
     public ScriptOperationResult Validate(string name, string expression, bool enabled,
-        ScriptCatalogItem? existing = null) => ScriptDefinitionFile.Validate(Draft(name, expression, enabled, existing));
+        ScriptCatalogItem? existing = null) => Validate(name, expression, enabled,
+            existing?.Definition?.Language ?? ScriptDefinitionFile.Language, existing);
+
+    public ScriptOperationResult Validate(string name, string expression, bool enabled, string language,
+        ScriptCatalogItem? existing = null) =>
+        ScriptDefinitionFile.Validate(Draft(name, expression, enabled, language, existing));
 
     public ScriptManagerResult Save(ScriptCatalogItem? existing, string name, string expression,
-        bool enabled, bool trustAfterSave)
+        bool enabled, bool trustAfterSave) => Save(existing, name, expression, enabled,
+            existing?.Definition?.Language ?? ScriptDefinitionFile.Language, trustAfterSave);
+
+    public ScriptManagerResult Save(ScriptCatalogItem? existing, string name, string expression,
+        bool enabled, string language, bool trustAfterSave)
     {
         name = name.Trim();
-        var definition = Draft(name, expression, enabled, existing);
+        var definition = Draft(name, expression, enabled, language, existing);
         var valid = ScriptDefinitionFile.Validate(definition);
         if (!valid.Success) return new(false, valid.Error);
         if (Items.Any(x => x.FullPath != existing?.FullPath && x.Definition is not null &&
@@ -42,7 +51,8 @@ internal sealed class ScriptManagerModel
         if (existing is null && File.Exists(path)) return new(false, "A script file with that name already exists.");
 
         bool sourceChanged = existing?.Definition is { } old &&
-            !string.Equals(old.Expression, expression, StringComparison.Ordinal);
+            (!string.Equals(old.Expression, expression, StringComparison.Ordinal) ||
+             !string.Equals(old.Language, language, StringComparison.Ordinal));
         if (sourceChanged)
         {
             var revoked = _trust.Revoke(definition.Id);
@@ -114,7 +124,7 @@ internal sealed class ScriptManagerModel
         return Path.Combine(_root, file + ScriptDefinitionFile.Extension);
     }
 
-    private static ScriptDefinition Draft(string name, string expression, bool enabled,
+    private static ScriptDefinition Draft(string name, string expression, bool enabled, string language,
         ScriptCatalogItem? existing) => new(existing?.Definition?.Id ?? Guid.NewGuid().ToString("N"),
-            name, ScriptDefinitionFile.Language, enabled, expression);
+            name, language, enabled, expression);
 }

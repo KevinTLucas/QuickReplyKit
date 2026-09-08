@@ -8,6 +8,7 @@ public static class ScriptDefinitionFile
 {
     public const string Extension = ".qrkscript.json";
     public const string Language = "qrk-expr-1";
+    public const string NativeLanguage = "powershell-1";
     public const int MaxIdChars = 128;
     public const int MaxNameChars = 128;
     public const int MaxFileChars = 32_768;
@@ -113,10 +114,13 @@ public static class ScriptDefinitionFile
             return ScriptOperationResult.Fail("definition ", "id", "The id must be nonblank, bounded, and contain no control characters.");
         if (!ValidLabel(definition.Name, MaxNameChars))
             return ScriptOperationResult.Fail("definition ", "name", "The name must be nonblank, bounded, and contain no control characters.");
-        if (!string.Equals(definition.Language, Language, StringComparison.Ordinal))
-            return ScriptOperationResult.Fail("definition ", "language", $"The language must be '{Language}'.");
-
-        var expression = ScriptExpression.Validate(definition.Expression);
+        var expression = definition.Language switch
+        {
+            Language => ScriptExpression.Validate(definition.Expression),
+            NativeLanguage => NativeScriptRunner.Validate(definition.Expression),
+            _ => ScriptOperationResult.Fail("definition ", "language",
+                $"The language must be '{Language}' or '{NativeLanguage}'."),
+        };
         return expression.Success
             ? ScriptOperationResult.Ok()
             : new(false, expression.Marker, expression.Error);

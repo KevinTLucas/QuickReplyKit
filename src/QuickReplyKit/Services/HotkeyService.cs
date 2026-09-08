@@ -23,6 +23,9 @@ public sealed class HotkeyService : IDisposable
     private readonly LibraryService _library;
     private readonly IInsertService _insert;
     private readonly Func<DateTimeOffset> _now;
+    private readonly CancellationTokenSource _stop = new();
+    private bool _disposed;
+    private int _pasteRunning;
 
     private string _launcherGesture;
     private List<Entry> _entries = new();
@@ -95,21 +98,49 @@ public sealed class HotkeyService : IDisposable
 
     internal void InstantPaste(string relativePath, bool plain)
     {
-        // Re-resolve against the live snapshot: the library may have changed since registration.
-        var item = _library.FindByRelativePath(relativePath);
-        if (item is null)
-        {
-            Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
-            return;
-        }
-
-        Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
-        string html = _library.ResolveTemplate(item.Html, _now());
-        var resolved = new ResponseItem { Html = html };
-        if (plain) _insert.InsertPlain(resolved);
-        else _insert.InsertRich(resolved);
-        _library.MarkUsed(item);
+        if (_disposed || Interlocked.CompareExchange(ref _pasteRunning, 1, 0) != 0) return;
+        PendingPaste = InstantPasteAsync(relativePath, plain);
     }
 
-    public void Dispose() => _registrar.Dispose();
+    internal Task PendingPaste { get; private set; } = Task.CompletedTask;
+
+    internal async Task InstantPasteAsync(string relativePath, bool plain)
+    {
+        try
+        {
+            if (_disposed) return;
+            // Re-resolve against the live snapshot: the library may have changed since registration.
+            var item = _library.FindByRelativePath(relativePath);
+            if (item is null)
+            {
+                Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
+                return;
+            }
+
+            Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
+            string html = _library.HasTrustedNativeScripts
+                ? await _library.ResolveTemplateAsync(item.Html, _now(), _stop.Token)
+                : _library.ResolveTemplate(item.Html, _now());
+            if (_disposed || _stop.IsCancellationRequested) return;
+            var resolved = new ResponseItem { Html = html };
+            if (plain) _insert.InsertPlain(resolved);
+            else _insert.InsertRich(resolved);
+            _library.MarkUsed(item);
+        }
+        catch (OperationCanceledException) when (_stop.IsCancellationRequested) { }
+        catch (Exception ex)
+        {
+            Diag.Warn("HotkeyService", "Hotkey", "instant-paste failed safely", ex);
+        }
+        finally { Interlocked.Exchange(ref _pasteRunning, 0); }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _stop.Cancel();
+        _registrar.Dispose();
+        _stop.Dispose();
+    }
 }

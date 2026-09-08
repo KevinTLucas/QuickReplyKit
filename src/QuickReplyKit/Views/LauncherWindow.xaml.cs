@@ -25,6 +25,7 @@ public partial class LauncherWindow : Window
     private double _navWidth = 180;   // remembered so collapse/expand restores the user's size
     private bool _navVisible = true;
     private bool _navUserOverride;    // once toggled by hand, stop auto-managing on resize
+    private bool _openingCompose;
 
     /// <summary>Set when a --size override is in effect (screenshots) so saved bounds don't fight it.</summary>
     public bool SuppressBoundsRestore { get; set; }
@@ -252,11 +253,22 @@ public partial class LauncherWindow : Window
             EditorWindow.OpenEdit(this, _vm.LibraryRoot, _vm.CategoryPaths(), item, _vm.ScriptNames());
     }
 
-    private void MenuEditInsert_Click(object sender, RoutedEventArgs e)
+    private async void MenuEditInsert_Click(object sender, RoutedEventArgs e)
     {
         // Open the editor on the resolved message; on Insert the edited text is pasted, not saved.
-        if (_vm.SelectedItem is { IsValid: true } item)
-            EditorWindow.OpenCompose(this, _vm.ResolveComposed(item), _vm.InsertComposed, _vm.ScriptNames());
+        if (_openingCompose || _vm.SelectedItem is not { IsValid: true } item) return;
+        _openingCompose = true;
+        try
+        {
+            string html = await _vm.ResolveComposedAsync(item);
+            if (IsVisible)
+                EditorWindow.OpenCompose(this, html, _vm.InsertComposed, _vm.ScriptNames());
+        }
+        catch (Exception ex)
+        {
+            Diag.Warn("LauncherWindow", "Action", "edit response text failed safely", ex);
+        }
+        finally { _openingCompose = false; }
     }
 
     private void MenuDuplicate_Click(object sender, RoutedEventArgs e)

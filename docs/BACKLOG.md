@@ -11,7 +11,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B21 - Explicitly trusted native scripts
 
-- **Severity / status:** P1 · In progress
+- **Severity / status:** P1 · QA
 - **Problem:** `qrk-expr-1` intentionally cannot read files or perform the internal data-processing workflows now
   requested by users.
 - **Acceptance:** add an explicitly identified native script type that can access local files, parse data, and return
@@ -19,6 +19,11 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   the app process so syntax/runtime failures cannot crash or hang QuickReplyKit. Trust remains local and source-bound;
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
+- **Implemented on:** `feature/native-script-runtime`; independent security, correctness, compatibility,
+  performance, and UI QA is complete. Release build is clean and current-main integration passes 760/760 tests.
+  QA fixed UTF-8 stdin corruption, overlapping instant-hotkey execution, and compact/dark Script Manager layout.
+  Restricted expressions remain the default and existing definitions continue to load unchanged. Ready for the
+  normal `--no-ff` merge/integrated publish gate; not shipped yet.
 
 ### B29 - Rename transient response editing action
 

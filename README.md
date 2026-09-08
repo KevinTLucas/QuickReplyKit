@@ -109,13 +109,21 @@ Responses can contain `{{…}}` tokens that are filled in **when you insert** (a
 - **Includes:** reference another response by name to reuse sections — e.g. a template of
   `{{Welcome}}` / body / `{{Closing}}` keeps greetings and sign-offs consistent everywhere. Cycles and
   missing references are shown as clear inline markers, never a hang.
-- **Sandboxed scripts:** trusted local definitions can supply computed text with `{{script:Name}}`. The intentionally
-  small `qrk-expr-1` language supports literals, clock values, comparisons, boolean logic, and bounded pure functions
-  such as `if`, `concat`, `upper`, `lower`, `date`, and `time`. It cannot access files, processes, the network,
-  environment, registry, clipboard, UI, reflection, or native code. Example: `if(hour < 12, "Good morning", "Hello")`.
+- **Restricted expressions (recommended):** trusted local definitions can supply computed text with
+  `{{script:Name}}`. The intentionally small `qrk-expr-1` language supports literals, clock values, comparisons,
+  boolean logic, and bounded pure functions such as `if`, `concat`, `upper`, `lower`, `date`, and `time`. It cannot
+  access files, processes, the network, environment, registry, clipboard, UI, reflection, or native code. Example:
+  `if(hour < 12, "Good morning", "Hello")`.
+- **Full-trust Windows PowerShell:** `powershell-1` definitions can perform local data-processing tasks that the
+  restricted language cannot. They run as the signed-in Windows user and can read, change, or delete files; access
+  the network, registry, environment, and credentials; and start processes. Only create or trust source you have
+  reviewed. QuickReplyKit launches the system Windows PowerShell out of process with no profile or visible window,
+  limits source to 4,096 characters and output to 8,192 characters, stops it after 5 seconds, and allows at most two
+  concurrent runs. These limits protect app responsiveness; they do not sandbox trusted PowerShell.
 
-Open **Settings → Scripts…** to create, validate, enable, review, export, or delete definitions. Trust is local and tied
-to the exact source: editing a definition revokes trust, and QuickReplyKit never exports approval state.
+Open **Settings → Scripts…** to create, validate, enable, review, export, or delete definitions. New definitions use
+the restricted language unless you explicitly select full-trust PowerShell. Trust is local and tied to the exact
+language and source: editing either revokes trust, and QuickReplyKit never exports approval state.
 
 ## Sharing responses
 
@@ -125,8 +133,9 @@ to the exact source: editing a definition revokes trust, and QuickReplyKit never
   the full library. Export one
   response from its result context menu, or export one folder from its folder context menu. Import first shows a
   selectable New/Changed/Duplicate/Identical/Invalid/Unsafe review list; changed paths can be skipped, overwritten,
-  or kept as a second copy. Invalid content never blocks valid responses. Script definitions show their exact source,
-  start unchecked, and require a separate explicit acceptance for every item; Select all never accepts code.
+  or kept as a second copy. Invalid content never blocks valid responses. Script definitions identify restricted versus
+  full-trust code, show their exact source, start unchecked, and require a separate explicit acceptance for every item;
+  Select all never accepts code. Imported PowerShell is not trusted until that exact written definition is verified.
 
 Broken/invalid `.json` files show up in **All Responses** marked with a ⚠ (muted, and not
 paste-able) with the parse error in the preview, so you can find and fix them.
@@ -151,7 +160,8 @@ Open from the ⚙ button or the tray. You can set:
 - **Remember window** size and position (restored on-screen even if monitors change).
 - **Launch at startup**.
 - **Keyboard shortcuts…** — opens the shortcuts manager (see below).
-- **Scripts…** — opens the sandboxed-script manager for create/edit/validate/trust/enable/export/delete workflows.
+- **Scripts…** — opens the restricted-expression and full-trust PowerShell manager for
+  create/edit/validate/trust/enable/export/delete workflows.
 - **Back up / Restore Library…** — create or restore one of the 10 rolling library-and-settings snapshots.
 - **Trash…** — restore deleted responses or folders, remove one permanently, or empty Trash. Deleted items
   are kept for 30 days by default.
@@ -198,8 +208,9 @@ over shortcut combinations and response names. If a hotkey can't be registered
 - Import preview classifies each response as New, Duplicate elsewhere, Changed, Identical, Invalid, or Unsafe. Check
   only the responses you want, use Select all/Clear for ordinary files, and choose Overwrite or the safer Keep both
   option per selected conflict. Identical, invalid, and unsafe files stay disabled. Select all never accepts
-  code-bearing definitions; those display exact source and require individual review and acceptance. The accepted
-  preview is the exact plan that executes, and files changed after preview are reported stale rather than overwritten.
+  code-bearing definitions; those display exact source and language and require individual review and acceptance.
+  Full-trust PowerShell rows state their Windows-user access explicitly. The accepted preview is the exact plan that
+  executes, and files changed after preview are reported stale rather than overwritten.
 - Legacy folder-tag sidecars are ignored during import and never appear as responses.
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the audited state and [`docs/BACKLOG.md`](docs/BACKLOG.md) for remaining work.

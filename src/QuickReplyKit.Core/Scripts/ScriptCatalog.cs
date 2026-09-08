@@ -12,20 +12,22 @@ public sealed class ScriptCatalog
 
     private readonly IReadOnlyDictionary<string, Entry> _entries;
     private readonly ScriptTrustLedger _trust;
+    private readonly string _libraryRoot;
 
     private ScriptCatalog(IReadOnlyDictionary<string, Entry> entries,
-        IReadOnlyList<ScriptCatalogItem> items, ScriptTrustLedger trust)
+        IReadOnlyList<ScriptCatalogItem> items, ScriptTrustLedger trust, string libraryRoot)
     {
         _entries = entries;
         Items = items;
         _trust = trust;
+        _libraryRoot = libraryRoot;
     }
 
     /// <summary>Every portable definition, including invalid and duplicate entries, in path order.</summary>
     public IReadOnlyList<ScriptCatalogItem> Items { get; }
 
     public static ScriptCatalog Empty(ScriptTrustLedger trust) =>
-        new(new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase), [], trust);
+        new(new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase), [], trust, "");
 
     public static ScriptCatalog Load(string libraryRoot, ScriptTrustLedger trust)
     {
@@ -64,11 +66,16 @@ public sealed class ScriptCatalog
             candidate.Definition is not null && !duplicateNames.Contains(candidate.Name) &&
                 trust.IsTrusted(candidate.Definition),
             candidate.Error)).ToArray();
-        return new(entries, items, trust);
+        return new(entries, items, trust, libraryRoot);
     }
 
     /// <summary>Evaluate one valid, enabled, uniquely named and locally trusted definition.</summary>
     public ScriptEvaluationResult Evaluate(string name, DateTimeOffset now)
+        => EvaluateAsync(name, now).GetAwaiter().GetResult();
+
+    /// <summary>Cancelable evaluation path for native scripts; safe to call away from the UI thread.</summary>
+    public async Task<ScriptEvaluationResult> EvaluateAsync(string name, DateTimeOffset now,
+        CancellationToken cancellationToken = default)
     {
         name = name.Trim();
         if (!_entries.TryGetValue(name, out var entry)) return Fail("missing", name);
@@ -76,7 +83,10 @@ public sealed class ScriptCatalog
         if (entry.Definition is null) return Fail("invalid", name);
         if (!entry.Definition.Enabled) return Fail("disabled", name);
         if (!_trust.IsTrusted(entry.Definition)) return Fail("untrusted", name);
-        return ScriptExpression.Evaluate(entry.Definition.Expression, now);
+        return entry.Definition.Language == ScriptDefinitionFile.NativeLanguage
+            ? await NativeScriptRunner.EvaluateAsync(entry.Definition.Expression, now, _libraryRoot,
+                cancellationToken).ConfigureAwait(false)
+            : ScriptExpression.Evaluate(entry.Definition.Expression, now);
     }
 
     private static ScriptEvaluationResult Fail(string state, string name) =>
