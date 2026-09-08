@@ -10,6 +10,9 @@ public static class AppPaths
 {
     public const string AppName = "QuickReplyKit";
 
+    private static string UserDocumentsDir =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", AppName);
+
     public static string AppDataDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName);
 
@@ -23,14 +26,13 @@ public static class AppPaths
     public static string LogsDir => Path.Combine(AppDataDir, "logs");
 
     /// <summary>Rolling library snapshots for undo/restore (see <c>ImportExport.LibraryBackup</c>).</summary>
-    public static string BackupsDir => Path.Combine(AppDataDir, "backups");
+    public static string BackupsDir => Path.Combine(UserDocumentsDir, "Backups");
 
     /// <summary>App-local soft-delete trash with retention (see <c>Storage.TrashService</c>).</summary>
     public static string TrashDir => Path.Combine(AppDataDir, "trash");
 
     /// <summary>Default library root; the effective root is configurable in settings.</summary>
-    public static string DefaultLibraryDir =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppName, "Library");
+    public static string DefaultLibraryDir => Path.Combine(UserDocumentsDir, "Library");
 
     public static void EnsureAppData() => Directory.CreateDirectory(AppDataDir);
 }

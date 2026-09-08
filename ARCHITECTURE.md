@@ -68,8 +68,9 @@ view-models, interop, and app wiring.
 - Script definitions use the strict portable `*.qrkscript.json` schema beside responses in the library; the scanner
   excludes them from responses/search/favorites/recent. Local approval fingerprints live only in
   `%APPDATA%\QuickReplyKit\script-trust.json` and never travel with a definition or export.
-- Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in `backups` by default, and
-  recoverable deleted responses in `trash`. None is scanned as library content.
+- Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in
+  `%USERPROFILE%\Documents\QuickReplyKit\Backups` by default, and recoverable deleted responses in
+  `%APPDATA%\QuickReplyKit\trash`. None is scanned as library content.
 
 ## Rich text & templates
 - **Canonical stored form = a restricted HTML subset**: bold, italic, underline, **strikethrough**, ul/ol/li,
@@ -171,9 +172,9 @@ view-models, interop, and app wiring.
   messages; the sink also flattens control characters to prevent forged log lines.
 - First launch schedules a three-card onboarding dialog after persisting `OnboardingSeen`. About/Diagnostics is a
   copyable, read-only support snapshot built by `DiagnosticsReport`: runtime/version, aggregate actual hotkey
-  registration, library/watcher/logger state, counts, and safe location tokens. It never includes response details,
-  individual response hotkeys, or raw custom/network/user paths. Settings links to hotkeys, backups, Trash, logs,
-  and diagnostics.
+  registration, library/watcher/logger state, counts, and resolved filesystem paths. It never includes response
+  details, individual response hotkeys, script source, or clipboard content. Settings links to hotkeys, backups,
+  Trash, logs, and diagnostics.
 - Accessibility is defined in XAML at the control boundary: Automation names/help, polite/assertive live regions,
   native keyboard menus, safe dialog defaults, keyboard-visible focus, full-value tooltips for clipped text, and
   theme/High Contrast resources. Collection dialogs such as Backup and Trash resize while keeping actions reachable.
