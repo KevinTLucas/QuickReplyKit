@@ -1,6 +1,5 @@
 using System.IO;
 using System.Windows;
-using System.Windows.Input;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Storage;
 using QuickReplyKit.Interop;
@@ -11,8 +10,8 @@ namespace QuickReplyKit.Views;
 /// <summary>
 /// The keyboard-shortcuts manager: lists the launcher hotkey plus every per-response instant-paste
 /// bind (gesture, target, rich/plain), flags conflicts (a duplicate within the app, or one Windows
-/// rejected as in-use), offers Edit/Clear per bind, and answers "what is this combo bound to?" via a
-/// search-by-key capture box. All conflict logic is delegated to <see cref="HotkeyConflicts"/>.
+/// rejected as in-use), and offers Edit/Clear per bind. All conflict logic is delegated to
+/// <see cref="HotkeyConflicts"/>.
 /// </summary>
 public partial class HotkeyManagerWindow : Window
 {
@@ -83,34 +82,6 @@ public partial class HotkeyManagerWindow : Window
     }
 
     private void FilterBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => ApplyFilter();
-
-    // --- Search by key ------------------------------------------------------
-
-    private void SearchKeyBox_GotFocus(object sender, RoutedEventArgs e) => SearchKeyBox.Text = "Press a combination…";
-
-    private void SearchKeyBox_LostFocus(object sender, RoutedEventArgs e) => SearchKeyBox.Text = "";
-
-    private void SearchKeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        e.Handled = true;
-        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
-        string? gesture = HotkeyGesture.Format(Keyboard.Modifiers, key);
-        if (gesture is null) return;
-
-        SearchKeyBox.Text = gesture;
-        var hit = HotkeyConflicts.Resolve(gesture, _config.HotkeyGesture, _config.ResponseHotkeys);
-        SearchResult.Text = hit.Kind switch
-        {
-            HotkeyConflicts.TargetKind.Launcher => $"“{gesture}” opens QuickReplyKit (the launcher hotkey).",
-            HotkeyConflicts.TargetKind.Response =>
-                $"“{gesture}” instant-pastes “{ResponseName(hit.RelativePath)}”.",
-            _ => $"“{gesture}” is free — not bound to anything in QuickReplyKit.",
-        };
-    }
-
-    private string ResponseName(string? relativePath) =>
-        _library.FindByRelativePath(relativePath ?? "")?.Name
-        ?? Path.GetFileNameWithoutExtension(relativePath) ?? relativePath ?? "";
 
     // --- Row actions --------------------------------------------------------
 
