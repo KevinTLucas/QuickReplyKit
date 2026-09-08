@@ -24,6 +24,9 @@ public sealed class LauncherViewModel : ViewModelBase
     private readonly AppConfig _config;
     private readonly Func<DateTimeOffset> _now;
     private readonly DispatcherTimer _copiedHintTimer;
+    private CancellationTokenSource? _previewCancellation;
+    private long _previewVersion;
+    private int _actionRunning;
 
     public ObservableCollection<NavNodeVm> NavRoots { get; } = new();
     public ObservableCollection<ResponseRowVm> Results { get; } = new();
@@ -44,9 +47,9 @@ public sealed class LauncherViewModel : ViewModelBase
         _now = now ?? (static () => DateTimeOffset.Now);
         _loading = library.IsLoading;   // deferred initial scan still running → show "Loading…"
 
-        PasteCommand = new RelayCommand(_ => DefaultInsert(), _ => HasValidSelection);
-        PastePlainCommand = new RelayCommand(_ => PlainInsert(), _ => HasValidSelection);
-        CopyCommand = new RelayCommand(_ => CopySelected(), _ => HasValidSelection);
+        PasteCommand = new RelayCommand(_ => TriggerDefaultInsert(), _ => CanRunAction);
+        PastePlainCommand = new RelayCommand(_ => TriggerPlainInsert(), _ => CanRunAction);
+        CopyCommand = new RelayCommand(_ => _ = StartAction(CopySelectedAsync), _ => CanRunAction);
 
         // Copy keeps the launcher open, so it needs its own confirmation; this auto-clears it.
         _copiedHintTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
@@ -103,6 +106,7 @@ public sealed class LauncherViewModel : ViewModelBase
     }
 
     public bool HasValidSelection => _selectedResult?.IsValid == true;
+    private bool CanRunAction => HasValidSelection && Volatile.Read(ref _actionRunning) == 0;
 
     /// <summary>The response backing the current selection (valid or not), or null.</summary>
     public ResponseItem? SelectedItem => _selectedResult?.Item;
@@ -197,8 +201,12 @@ public sealed class LauncherViewModel : ViewModelBase
         SelectedResult = Results[idx];
     }
 
-    public void TriggerDefaultInsert() => DefaultInsert();
-    public void TriggerPlainInsert() => PlainInsert();
+    public void TriggerDefaultInsert() => _ = TriggerDefaultInsertAsync();
+    public void TriggerPlainInsert() => _ = TriggerPlainInsertAsync();
+    internal Task TriggerDefaultInsertAsync() => StartAction(DefaultInsertAsync);
+    internal Task TriggerPlainInsertAsync() => StartAction(PlainInsertAsync);
+    internal Task PendingAction { get; private set; } = Task.CompletedTask;
+    internal Task PreviewCompletion { get; private set; } = Task.CompletedTask;
 
     // --- Live update from the watcher (already marshalled to the Dispatcher) --
 
@@ -285,19 +293,67 @@ public sealed class LauncherViewModel : ViewModelBase
 
     private void UpdatePreview()
     {
+        CancelPreview();
+        PreviewCompletion = Task.CompletedTask;
         var item = _selectedResult?.Item;
         if (item == null) { PreviewDocument = new FlowDocument(); PreviewMeta = ""; SelectionHasVariables = false; }
         else if (!item.IsValid) { PreviewDocument = ErrorDocument(item); PreviewMeta = "This file could not be read."; SelectionHasVariables = false; }
         else
         {
-            // Render the resolved result so the user sees the final text (greeting filled, includes expanded).
-            PreviewDocument = HtmlToFlowDocument.Convert(Resolve(item.Html));
             PreviewMeta = BuildMeta(item);
             SelectionHasVariables = TemplateEngine.ContainsTokens(item.Html);
+            if (_library.HasTrustedNativeScripts)
+            {
+                PreviewDocument = new FlowDocument();
+                var cancellation = new CancellationTokenSource();
+                _previewCancellation = cancellation;
+                long version = _previewVersion;
+                PreviewCompletion = UpdatePreviewAsync(item, version, cancellation);
+            }
+            else
+            {
+                // Preserve the immediate qrk-expr-1 preview path.
+                PreviewDocument = HtmlToFlowDocument.Convert(Resolve(item.Html));
+                PreviewCompletion = Task.CompletedTask;
+            }
         }
 
         OnPropertyChanged(nameof(HasValidSelection));
         CommandManager.InvalidateRequerySuggested();
+    }
+
+    private async Task UpdatePreviewAsync(ResponseItem item, long version,
+        CancellationTokenSource cancellation)
+    {
+        try
+        {
+            string html = await _library.ResolveTemplateAsync(item.Html, _now(), cancellation.Token);
+            if (cancellation.IsCancellationRequested || version != _previewVersion ||
+                !ReferenceEquals(_selectedResult?.Item, item)) return;
+            PreviewDocument = HtmlToFlowDocument.Convert(html);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        catch (Exception ex)
+        {
+            if (version == _previewVersion)
+                PreviewDocument = HtmlToFlowDocument.Convert("[script error: evaluation-failed]");
+            Diag.Warn("LauncherViewModel", "Preview", "template preview failed safely", ex);
+        }
+        finally
+        {
+            if (ReferenceEquals(_previewCancellation, cancellation))
+                _previewCancellation = null;
+            cancellation.Dispose();
+        }
+    }
+
+    private void CancelPreview()
+    {
+        _previewVersion++;
+        var cancellation = _previewCancellation;
+        _previewCancellation = null;
+        cancellation?.Cancel();
+        cancellation?.Dispose();
     }
 
     private static string BuildMeta(ResponseItem item)
@@ -351,11 +407,11 @@ public sealed class LauncherViewModel : ViewModelBase
             };
     }
 
-    private void DefaultInsert()
+    private async Task DefaultInsertAsync()
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        var resolved = ResolvedCopy(item);
+        var resolved = await ResolvedCopyAsync(item);
         bool plain = _config.DefaultPasteMode == PasteMode.PlainText;
         Diag.Verbose("LauncherViewModel", "Action", $"insert requested mode={(plain ? "plain" : "rich")}");
         if (plain) _insert.InsertPlain(resolved);
@@ -364,12 +420,12 @@ public sealed class LauncherViewModel : ViewModelBase
         RequestHide?.Invoke();
     }
 
-    private void PlainInsert()
+    private async Task PlainInsertAsync()
     {
         var item = ValidSelectedItem();
         if (item == null) return;
         Diag.Verbose("LauncherViewModel", "Action", "insert requested mode=plain source=shortcut");
-        _insert.InsertPlain(ResolvedCopy(item));
+        _insert.InsertPlain(await ResolvedCopyAsync(item));
         _library.MarkUsed(item);
         RequestHide?.Invoke();
     }
@@ -379,25 +435,29 @@ public sealed class LauncherViewModel : ViewModelBase
     /// includes expanded, so the user edits the actual message rather than the template.
     /// </summary>
     public string ResolveComposed(ResponseItem item) => Resolve(item.Html);
+    public Task<string> ResolveComposedAsync(ResponseItem item) => ResolveAsync(item.Html);
 
     /// <summary>
     /// Insert a one-off message composed in the editor (edited, NOT saved to any file). Resolves any
     /// remaining <c>{{…}}</c> tokens for safety (idempotent when token-free), then runs the real
     /// insert pipeline into the captured target window and hides the launcher. Touches no file.
     /// </summary>
-    public void InsertComposed(string html, bool plain)
+    public void InsertComposed(string html, bool plain) =>
+        _ = StartAction(() => InsertComposedAsync(html, plain));
+
+    internal async Task InsertComposedAsync(string html, bool plain)
     {
-        var item = new ResponseItem { Html = Resolve(html) };
+        var item = new ResponseItem { Html = await ResolveAsync(html) };
         if (plain) _insert.InsertPlain(item);
         else _insert.InsertRich(item);
         RequestHide?.Invoke();
     }
 
-    private void CopySelected()
+    private async Task CopySelectedAsync()
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        _insert.Copy(ResolvedCopy(item));
+        _insert.Copy(await ResolvedCopyAsync(item));
         _library.MarkUsed(item);
         // Copy leaves the launcher open so the user can keep browsing; flash a brief confirmation.
         CopiedHint = "Copied ✓";
@@ -411,30 +471,54 @@ public sealed class LauncherViewModel : ViewModelBase
     /// <summary>Resolve <c>{{…}}</c> tokens in the stored HTML against the current library and clock.</summary>
     private string Resolve(string html) => _library.ResolveTemplate(html, _now());
 
-    /// <summary>
-    /// A copy of <paramref name="item"/> with its template tokens resolved into HTML — never mutating
-    /// the stored item. PlainText re-derives from the resolved HTML via <see cref="HtmlText"/>. Returns
-    /// the original when there was nothing to resolve.
-    /// </summary>
-    private ResponseItem ResolvedCopy(ResponseItem item)
+    private Task<string> ResolveAsync(string html)
     {
-        string html = Resolve(item.Html);
-        if (html == item.Html) return item;
-        return new ResponseItem
+        DateTimeOffset now = _now();
+        return _library.HasTrustedNativeScripts
+            ? _library.ResolveTemplateAsync(html, now)
+            : Task.FromResult(_library.ResolveTemplate(html, now));
+    }
+
+    private async Task<ResponseItem> ResolvedCopyAsync(ResponseItem item)
+    {
+        string html = await ResolveAsync(item.Html);
+        return html == item.Html ? item : CopyWithHtml(item, html);
+    }
+
+    private static ResponseItem CopyWithHtml(ResponseItem item, string html) => new()
+    {
+        Name = item.Name,
+        RelativePath = item.RelativePath,
+        FullPath = item.FullPath,
+        CategoryPath = item.CategoryPath,
+        App = item.App,
+        Tags = item.Tags,
+        Html = html,
+        Favorite = item.Favorite,
+        Created = item.Created,
+        Modified = item.Modified,
+        IsValid = item.IsValid,
+        Error = item.Error,
+    };
+
+    private Task StartAction(Func<Task> action)
+    {
+        if (Interlocked.CompareExchange(ref _actionRunning, 1, 0) != 0)
+            return Task.CompletedTask;
+        CommandManager.InvalidateRequerySuggested();
+        PendingAction = RunAction(action);
+        return PendingAction;
+    }
+
+    private async Task RunAction(Func<Task> action)
+    {
+        try { await action(); }
+        catch (Exception ex) { Diag.Warn("LauncherViewModel", "Action", "action failed safely", ex); }
+        finally
         {
-            Name = item.Name,
-            RelativePath = item.RelativePath,
-            FullPath = item.FullPath,
-            CategoryPath = item.CategoryPath,
-            App = item.App,
-            Tags = item.Tags,
-            Html = html,
-            Favorite = item.Favorite,
-            Created = item.Created,
-            Modified = item.Modified,
-            IsValid = item.IsValid,
-            Error = item.Error,
-        };
+            Interlocked.Exchange(ref _actionRunning, 0);
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     private void BuildNav()
