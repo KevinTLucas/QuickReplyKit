@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Controls.Primitives;
 using Microsoft.VisualBasic.FileIO;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Storage;
@@ -72,8 +73,13 @@ public partial class EditorWindow : Window
             Title = "New response";
         }
 
+        CommandManager.AddExecutedHandler(Body, Body_CommandExecuted);
         Body.Document = HtmlToFlowDocument.Convert(html);
-        Loaded += (_, _) => (composeInsert != null ? (System.Windows.UIElement)Body : NameBox).Focus();
+        Loaded += (_, _) =>
+        {
+            UpdateToolbarState();
+            (composeInsert != null ? (System.Windows.UIElement)Body : NameBox).Focus();
+        };
     }
 
     /// <summary>Open the editor to create a new response. Returns true if one was saved.</summary>
@@ -110,9 +116,84 @@ public partial class EditorWindow : Window
 
     // --- Toolbar ------------------------------------------------------------
 
+    private void Body_SelectionChanged(object sender, RoutedEventArgs e) => UpdateToolbarState();
+
+    private void Body_CommandExecuted(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (e.Command == EditingCommands.ToggleBold || e.Command == EditingCommands.ToggleItalic ||
+            e.Command == EditingCommands.ToggleUnderline || e.Command == EditingCommands.AlignLeft ||
+            e.Command == EditingCommands.AlignCenter || e.Command == EditingCommands.AlignRight ||
+            e.Command == EditingCommands.ToggleBullets || e.Command == EditingCommands.ToggleNumbering)
+            Dispatcher.BeginInvoke((Action)UpdateToolbarState);
+    }
+
+    private void UpdateToolbarState()
+    {
+        SetState(BoldButton, Body.Selection.GetPropertyValue(TextElement.FontWeightProperty), FontWeights.Bold);
+        SetState(ItalicButton, Body.Selection.GetPropertyValue(TextElement.FontStyleProperty), FontStyles.Italic);
+
+        object decorations = Body.Selection.GetPropertyValue(Inline.TextDecorationsProperty);
+        SetDecorationState(UnderlineButton, decorations, TextDecorationLocation.Underline);
+        SetDecorationState(StrikeButton, decorations, TextDecorationLocation.Strikethrough);
+
+        object alignment = Body.Selection.GetPropertyValue(Paragraph.TextAlignmentProperty);
+        SetState(AlignLeftButton, alignment, TextAlignment.Left);
+        SetState(AlignCenterButton, alignment, TextAlignment.Center);
+        SetState(AlignRightButton, alignment, TextAlignment.Right);
+
+        (BulletListButton.IsChecked, NumberListButton.IsChecked) = ListState(Body.Selection);
+    }
+
+    private static void SetState(ToggleButton button, object value, object expected) =>
+        button.IsChecked = value == DependencyProperty.UnsetValue ? null : Equals(value, expected);
+
+    private static void SetDecorationState(ToggleButton button, object value, TextDecorationLocation location) =>
+        button.IsChecked = value == DependencyProperty.UnsetValue ? null :
+            value is TextDecorationCollection decorations && decorations.Any(d => d.Location == location);
+
+    private static List? ListAt(TextPointer position)
+    {
+        for (DependencyObject? parent = position.Parent; parent != null; parent =
+             parent is FrameworkContentElement element ? element.Parent : null)
+            if (parent is List list) return list;
+        return null;
+    }
+
+    internal static (bool? Bullet, bool? Number) ListState(TextRange selection)
+    {
+        if (selection.IsEmpty)
+        {
+            var list = ListAt(selection.Start.GetInsertionPosition(LogicalDirection.Forward) ?? selection.Start);
+            return ListState(list);
+        }
+
+        var end = selection.End.GetInsertionPosition(LogicalDirection.Backward) ?? selection.End;
+        (bool Bullet, bool Number)? state = null;
+        for (var position = selection.Start; position != null && position.CompareTo(end) <= 0;
+             position = position.GetNextContextPosition(LogicalDirection.Forward))
+        {
+            var paragraph = position.Paragraph;
+            if (paragraph == null) continue;
+
+            var current = ListState(ListAt(paragraph.ContentStart));
+            if (state is not null && state.Value != current) return (null, null);
+            state = current;
+        }
+
+        return state ?? (false, false);
+    }
+
+    private static (bool Bullet, bool Number) ListState(List? list) =>
+        (list != null && IsBullet(list.MarkerStyle),
+         list != null && list.MarkerStyle != TextMarkerStyle.None && !IsBullet(list.MarkerStyle));
+
+    private static bool IsBullet(TextMarkerStyle marker) => marker is TextMarkerStyle.Disc or
+        TextMarkerStyle.Circle or TextMarkerStyle.Square or TextMarkerStyle.Box;
+
     private void ClearFormatting_Click(object sender, RoutedEventArgs e)
     {
         Body.Selection.ClearAllProperties();   // clears colour/highlight/size/decorations too
+        UpdateToolbarState();
         Body.Focus();
     }
 
@@ -122,6 +203,7 @@ public partial class EditorWindow : Window
         bool on = cur != null && cur.Any(d => d.Location == TextDecorationLocation.Strikethrough);
         Body.Selection.ApplyPropertyValue(Inline.TextDecorationsProperty,
             on ? new TextDecorationCollection() : TextDecorations.Strikethrough);
+        UpdateToolbarState();
         Body.Focus();
     }
 
