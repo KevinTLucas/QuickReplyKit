@@ -20,10 +20,7 @@ public partial class AboutWindow : Window
     public AboutWindow(AppConfig config, LibraryService library, HotkeyService hotkeys)
     {
         InitializeComponent();
-        void LimitHeight() => MaxHeight = Math.Max(MinHeight, System.Windows.Forms.Screen
-            .FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle).WorkingArea.Height
-            / System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleY);
-        Loaded += (_, _) => { LimitHeight(); LocationChanged += (_, _) => LimitHeight(); };
+        WindowSizing.LimitHeightToCurrentScreen(this);
         _library = config.LibraryPath;
         _backup = config.BackupPath;
         DiagText.Text = DiagnosticsReport.Build(config, library, hotkeys.Entries, App.Version);

@@ -4,7 +4,7 @@
         xmlns:views="clr-namespace:QuickReplyKit.Views"
         Title="Edit response"
         Width="640" Height="560" MinWidth="480" MinHeight="420"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
         Background="{DynamicResource WindowBg}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="Segoe UI" ShowInTaskbar="False">
     <Window.Resources>
@@ -183,7 +183,7 @@
                 <Button x:Name="SizeButton" Style="{StaticResource ToolButton}" Content="Size ▾"
                         ToolTip="Text size" Click="Size_Click">
                     <Button.ContextMenu>
-                        <ContextMenu>
+                        <ContextMenu Placement="Bottom">
                             <MenuItem Header="Small" Tag="11" Click="SizeItem_Click"/>
                             <MenuItem Header="Normal" Tag="14" Click="SizeItem_Click"/>
                             <MenuItem Header="Large" Tag="18" Click="SizeItem_Click"/>
@@ -194,7 +194,7 @@
                 <Button x:Name="TextColorButton" Style="{StaticResource ToolButton}" Content="A ▾"
                         ToolTip="Text colour" AutomationProperties.Name="Text color" Click="TextColor_Click">
                     <Button.ContextMenu>
-                        <ContextMenu>
+                        <ContextMenu Placement="Bottom">
                             <MenuItem Header="Black" Tag="#111111" Click="TextSwatch_Click" AutomationProperties.Name="Black text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#111111" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
                             <MenuItem Header="Gray" Tag="#6B7280" Click="TextSwatch_Click" AutomationProperties.Name="Gray text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#6B7280" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
                             <MenuItem Header="Red" Tag="#DC2626" Click="TextSwatch_Click" AutomationProperties.Name="Red text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#DC2626" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
@@ -211,7 +211,7 @@
                 <Button x:Name="HighlightButton" Style="{StaticResource ToolButton}" Content="🖍 ▾"
                         ToolTip="Highlight" AutomationProperties.Name="Text highlight" Click="Highlight_Click">
                     <Button.ContextMenu>
-                        <ContextMenu>
+                        <ContextMenu Placement="Bottom">
                             <MenuItem Header="Yellow" Tag="#FEF08A" Click="HighlightSwatch_Click" AutomationProperties.Name="Yellow highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#FEF08A" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
                             <MenuItem Header="Green" Tag="#BBF7D0" Click="HighlightSwatch_Click" AutomationProperties.Name="Green highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#BBF7D0" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
                             <MenuItem Header="Blue" Tag="#BFDBFE" Click="HighlightSwatch_Click" AutomationProperties.Name="Blue highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#BFDBFE" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
@@ -251,7 +251,7 @@
                         ToolTip="Insert a variable at the caret. Tip: type {{Response Name}} to include another response's text."
                         Click="InsertVar_Click">
                     <Button.ContextMenu>
-                        <ContextMenu>
+                        <ContextMenu Placement="Bottom">
                             <MenuItem Header="{}{{greeting}}" Click="InsertVarItem_Click"
                                       ToolTip="Good morning / afternoon / evening"/>
                             <MenuItem Header="{}{{date}}" Click="InsertVarItem_Click"

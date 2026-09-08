@@ -34,11 +34,18 @@
                    AutomationProperties.LiveSetting="Polite"
                    views:LiveRegion.Content="{Binding Visibility, RelativeSource={RelativeSource Self}}"
                    Text="No snapshots yet." Visibility="Collapsed"/>
-        <WrapPanel Grid.Row="4" Orientation="Horizontal" Margin="0,14,0,0">
-            <Button Content="Back up now" Style="{StaticResource Btn}" Click="BackupNow_Click"/>
-            <Button x:Name="RestoreButton" Content="Restore selected" Style="{StaticResource Btn}" Click="Restore_Click"/>
-            <Button Content="Open folder" Style="{StaticResource Btn}" Click="OpenFolder_Click"/>
-            <Button Content="Close" Style="{StaticResource Btn}" Margin="0" IsCancel="True" IsDefault="True"/>
-        </WrapPanel>
+        <Grid Grid.Row="4" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button Content="Back up now" Style="{StaticResource Btn}" Click="BackupNow_Click"/>
+                <Button x:Name="RestoreButton" Content="Restore selected" Style="{StaticResource Btn}" Click="Restore_Click"/>
+                <Button Content="Open folder" Style="{StaticResource Btn}" Click="OpenFolder_Click"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="Close" Style="{StaticResource Btn}" Margin="0" HorizontalAlignment="Right"
+                    IsCancel="True" IsDefault="True"/>
+        </Grid>
     </Grid>
 </Window>

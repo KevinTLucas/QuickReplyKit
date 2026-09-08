@@ -120,8 +120,12 @@ public partial class App : Application
         // QA override: pop the editor (New) directly so its theming can be screenshotted. The
         // sample categories give the Category combobox dropdown some items to render.
         if (e.Args.Any(a => a.Equals("--show-editor", StringComparison.OrdinalIgnoreCase)))
-            Dispatcher.BeginInvoke(new Action(() => Views.EditorWindow.OpenNew(
-                _launcher!, _config!.LibraryPath, new[] { "IXL", "IXL/Math", "Billing", "Onboarding" }, "IXL")));
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _launcher!.Show();
+                Views.EditorWindow.OpenNew(
+                    _launcher, _config!.LibraryPath, new[] { "IXL", "IXL/Math", "Billing", "Onboarding" }, "IXL");
+            }));
 
         if (e.Args.Any(a => a.Equals("--show-about", StringComparison.OrdinalIgnoreCase)))
             Dispatcher.BeginInvoke(new Action(() =>
@@ -154,8 +158,12 @@ public partial class App : Application
         }
 
         if (e.Args.Any(a => a.Equals("--show-trash", StringComparison.OrdinalIgnoreCase)))
-            Dispatcher.BeginInvoke(new Action(() => new Views.TrashWindow(
-                _config!.LibraryPath, _config.TrashRetentionDays, () => _vm!.ReloadLibrary()) { Owner = _launcher }.ShowDialog()));
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _launcher!.Show();
+                new Views.TrashWindow(_config!.LibraryPath, _config.TrashRetentionDays,
+                    () => _vm!.ReloadLibrary()) { Owner = _launcher }.ShowDialog();
+            }));
 
         // Auto-purge expired Trash in the background (retention 0 = keep forever).
         if (_config.TrashRetentionDays > 0)

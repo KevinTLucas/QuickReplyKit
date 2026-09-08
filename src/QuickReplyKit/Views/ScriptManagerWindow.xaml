@@ -56,15 +56,23 @@
                          AutomationProperties.Name="Script definitions"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          SelectionChanged="ScriptList_SelectionChanged">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                            <Setter Property="AutomationProperties.HelpText" Value="{Binding Status}"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Margin="7,5" ToolTip="{Binding RelativePath}">
                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis"/>
+                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
                                 <TextBlock Text="{Binding Status}" FontSize="11"
-                                           Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
+                                           Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Status}"/>
                                 <TextBlock Text="{Binding RelativePath}" FontSize="10"
-                                           Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
+                                           Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding RelativePath}"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -72,6 +80,7 @@
             </Border>
 
             <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center"
+                          AutomationProperties.Name="Resize script list and editor"
                           Background="{DynamicResource CardBorder}"/>
 
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"

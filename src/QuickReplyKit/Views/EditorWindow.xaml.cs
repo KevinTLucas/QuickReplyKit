@@ -31,6 +31,7 @@ public partial class EditorWindow : Window
         Action<string, bool>? composeInsert = null, IEnumerable<string>? scriptNames = null)
     {
         InitializeComponent();
+        WindowSizing.LimitHeightToCurrentScreen(this);
         _root = libraryRoot;
         _editing = editing;
         _composeInsert = composeInsert;

@@ -25,7 +25,8 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. Restricted expressions, explicitly trusted native PowerShell, and optional safe examples are
-  shipped and independently security/UI tested. B31 UI consistency and B32 end-user documentation remain.
+  shipped and independently security/UI tested. B31 passed independent QA on `ui-consistency-audit` and is ready to
+  merge; B32 end-user documentation remains queued last.
 
 ## Merged And QA'd
 
@@ -98,14 +99,23 @@
 
 ## Remaining Work
 
-B31 and B32 are the only active items in [`BACKLOG.md`](BACKLOG.md), in that order. B31 is a scoped whole-app UI and
-interaction consistency pass limited to small, low-risk polish. B32 is the final end-user GitHub README and visual
-guide; developer-heavy README material must move into internal documentation without being lost.
+B31 and B32 are the only active items in [`BACKLOG.md`](BACKLOG.md), in that order. B31 passed independent QA on
+`ui-consistency-audit`: Release builds with 0 warnings/errors; 20 focused UI contracts and all 785 tests pass; every
+user-facing surface was inspected in Light and Dark, with compact launcher/dialog and fixed-action layouts also checked.
+QA moved collection accessibility metadata onto `ListBoxItem`/`ContentControl` peers, added `DpiChanged` handling to
+monitor-aware height caps, restored long-path tooltips, and replaced WPF's light Dark-theme menu gutter with one shared
+flat-menu template. The branch otherwise stays limited to keyboard navigation in hotkey capture fields, resizing grips,
+item/splitter accessibility text, shortcut-filter clarity, menu placement, consistent affirmative actions, truthful
+labels, and a non-overlapping Backup footer. Existing shared button states, favorite behavior, themed ComboBoxes,
+literal editor swatches, and native High Contrast colors were preserved. B31 requires only a `--no-ff` merge. B32 is
+the final end-user GitHub README and visual guide;
+developer-heavy README material must move into internal documentation without being lost.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** no reviewed feature branch is active. A stale interrupted historical hotkey worktree remains
-quarantined and is not an active source of changes.
+**Active worktrees:** `ui-consistency-audit` owns B31 only; implementation and independent QA are complete and the branch
+is ready to merge. A stale interrupted historical hotkey worktree remains quarantined and is not an active
+source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

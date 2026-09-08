@@ -13,6 +13,11 @@
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="MinWidth" Value="80"/>
         </Style>
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryButtonBg}"/>
+        </Style>
     </Window.Resources>
     <StackPanel Margin="16">
         <TextBlock x:Name="PromptLabel" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="13"/>
@@ -25,10 +30,9 @@
                    views:LiveRegion.Content="{Binding Text, RelativeSource={RelativeSource Self}}"
                    TextWrapping="Wrap" Visibility="Collapsed"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="OK" Style="{StaticResource ActionButton}" IsDefault="True"
-                    Click="Ok_Click"/>
-            <Button Content="Cancel" Style="{StaticResource ActionButton}" Margin="0"
-                    IsCancel="True"/>
+            <Button Content="Cancel" Style="{StaticResource ActionButton}" IsCancel="True"/>
+            <Button Content="OK" Style="{StaticResource PrimaryButton}" Margin="0"
+                    IsDefault="True" Click="Ok_Click"/>
         </StackPanel>
     </StackPanel>
 </Window>

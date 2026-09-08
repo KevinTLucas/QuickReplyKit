@@ -62,6 +62,8 @@
                     <Style TargetType="ListBoxItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="Padding" Value="2"/>
+                        <Setter Property="AutomationProperties.Name" Value="{Binding DestinationPath}"/>
+                        <Setter Property="AutomationProperties.HelpText" Value="{Binding Detail}"/>
                     </Style>
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
