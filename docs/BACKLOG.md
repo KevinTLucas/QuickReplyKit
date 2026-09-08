@@ -20,14 +20,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
 
-### B22 - Per-user default paths and truthful diagnostics
-
-- **Severity / status:** P1 · Requested · Queued
-- **Acceptance:** defaults resolve from the installed user's Windows profile: library and backup locations under the
-  intended user-profile folders; config, logs, Trash, and script trust under `%APPDATA%\QuickReplyKit`. About and
-  Diagnostics display the actual resolved filesystem paths rather than environment-variable or privacy placeholders.
-  Configured custom locations remain supported and upgrades do not silently move existing data.
-
 ### B23 - About / Diagnostics window chrome cleanup
 
 - **Severity / status:** P2 · Requested · Queued
