@@ -140,7 +140,7 @@ Open from the ⚙ button or the tray. You can set:
 
 - **Global hotkey** (default **Ctrl+Alt+D**).
 - **Library folder** location.
-- **Backup folder** location, with Change/Open/Reset. The default is `%USERPROFILE%\Documents\QuickReplyKit\Backups`;
+- **Backup folder** location, with Change/Open. The default is `%USERPROFILE%\Documents\QuickReplyKit\Backups`;
   managed local or network paths are accepted when they are absolute, writable, and outside the response library.
 - **Default paste behavior** (rich text or plain text).
 - **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).
