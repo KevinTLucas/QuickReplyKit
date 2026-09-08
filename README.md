@@ -140,7 +140,7 @@ Open from the ⚙ button or the tray. You can set:
 
 - **Global hotkey** (default **Ctrl+Alt+D**).
 - **Library folder** location.
-- **Backup folder** location, with Change/Open/Reset. The default is `%APPDATA%\QuickReplyKit\backups`;
+- **Backup folder** location, with Change/Open/Reset. The default is `%USERPROFILE%\Documents\QuickReplyKit\Backups`;
   managed local or network paths are accepted when they are absolute, writable, and outside the response library.
 - **Default paste behavior** (rich text or plain text).
 - **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).
@@ -186,8 +186,9 @@ box — press any combination to see what it's bound to — plus a filter over t
   template token names, clipboard data, hotkey values, window handles, user paths, and exception messages. Enable
   verbose detail only while troubleshooting. **About / Diagnostics…** provides a copyable support summary with
   version, OS/runtime, aggregate hotkey-registration counts, library/count/watcher state, actual logging status, and
-  one-click access to the library, config, logs, backups, and Trash. The copied report uses safe location tokens and
-  excludes response details, individual response hotkeys, clipboard/customer content, and raw custom/network paths.
+  one-click access to the library, config, logs, backups, and Trash. The copied report shows the resolved filesystem
+  paths needed for troubleshooting while excluding response details, individual response hotkeys, and
+  clipboard/customer content.
 - First launch shows a short three-card introduction to the hotkey, search, and paste workflow.
 
 ## Current limitations before broad rollout
@@ -208,8 +209,9 @@ QuickReplyKit stays available in the system tray. The tray menu offers: **Open Q
 
 ## Where the library lives
 
-By default: `Documents\QuickReplyKit\Library` (configurable in Settings). App settings, recent items,
-logs, backups, and Trash live under `%APPDATA%\QuickReplyKit`; the backup folder is separately configurable.
+By default: `%USERPROFILE%\Documents\QuickReplyKit\Library` (configurable in Settings). Backups default to
+`%USERPROFILE%\Documents\QuickReplyKit\Backups` and are separately configurable. App settings, recent items, logs,
+Trash, and script trust live under `%APPDATA%\QuickReplyKit`.
 When the optional `DefaultLibrary`
 folder is distributed beside the executable, its examples seed an empty library on first run; a
 single-exe distribution starts with an empty library instead.

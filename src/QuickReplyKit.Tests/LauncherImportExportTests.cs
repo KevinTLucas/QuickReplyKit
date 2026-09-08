@@ -30,4 +30,15 @@ public class LauncherImportExportTests
         Assert.DoesNotContain(document.Descendants(), element =>
             (string?)element.Attribute(x + "Name") == "OverflowButton");
     }
+
+    [Fact]
+    public void ImportPreview_ReadOnlyCodeSourceBinding_IsOneWay()
+    {
+        var document = XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/Views/ImportPreviewWindow.xaml"));
+        var source = document.Descendants().Single(element =>
+            element.Name.LocalName == "TextBox"
+            && (string?)element.Attribute("AutomationProperties.Name") == "Exact executable expression");
+
+        Assert.Equal("{Binding CodeSource, Mode=OneWay}", (string?)source.Attribute("Text"));
+    }
 }
