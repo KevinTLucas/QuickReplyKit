@@ -6,29 +6,26 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `db07f5e` (B16 sandboxed script variables merged into `main`); use `git rev-parse HEAD`
-  for the docs-inclusive tip.
-- **Current product baseline:** B01-B18 are complete; B19 is the only remaining backlog item.
-- **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
-- **Tests:** **706 passed** after B16 combined runtime/import/manager regression and independent security,
-  correctness, accessibility, performance, and blocker re-QA; build remains clean.
-- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` were rebuilt from B16
-  `main` and match at 69,917,818 bytes (SHA-256 `DC64DE46D550516472124DF507EA3B71C3C6C473FDFCF1A078FA4CBA04F3BCFD`).
-  The packaged rich-clipboard self-test exits 0. `publish/latest/QuickReplyKit.exe` is still the older B17 build because
-  that exact file is running and locked; do not close it. Promote the pending file after the user exits that instance.
-  No external .NET install is needed.
+- **Current product feature tip:** `79692a5` (B19 enterprise UI standards polish); use `git rev-parse HEAD` for the
+  docs-inclusive `main` tip after the recorded `--no-ff` merge.
+- **Current product baseline:** B01-B19 are complete. The active backlog is empty.
+- **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
+- **Tests:** **724 passed** after the B19 combined regression and independent UI/accessibility review.
+- **Portable publish:** the current `main` release is rebuilt after the B19 merge. Until that publish completes,
+  `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` remain the last B16 release. The older
+  `publish/latest/QuickReplyKit.exe` is running and locked; do not close it. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable. [`BACKLOG.md`](BACKLOG.md) contains one remaining item: B19 enterprise UI audit and final
-  release validation, active on `polish/enterprise-ui-audit`. B16 is complete and merged.
+- **State:** launchable. [`BACKLOG.md`](BACKLOG.md) has no active items.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B19 enterprise UI standards audit | `79692a5` feature tip | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
 | B16 sandboxed dynamic-variable scripts | `db07f5e` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete |
 | B17 import review selection | `ca730f6` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
 | B18 selected-folder indication | `57576ed` | 569/569; 45/45 focused; system-color bar plus semibold non-color cue; nav row width preserved | Complete |
@@ -64,7 +61,8 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
 
 - **Launcher:** compact 3-pane folder/results/preview UI; fast global or folder-scoped search with highlighting, body
   snippets, typo fallback, favorites, recent responses, invalid-file surfacing, keyboard insert, plain insert, copy
-  feedback, a visible Edit action, and a labelled Import/Export menu.
+  feedback, a visible Edit action, and a labelled Import/Export menu. Compact action buttons wrap without clipping;
+  pointer states are restrained while keyboard focus remains explicit.
 - **Paste:** configurable launcher hotkey (default **Ctrl+Alt+D**) plus per-response global hotkeys that paste
   rich or plain without opening the launcher. Focus returns to the prior app; clipboard content is restored;
   transient paste content is marked to stay out of Windows clipboard history.
@@ -78,18 +76,17 @@ file. The integrated result was rebuilt and retested during that audit at 435 te
   restore.
 - **Desktop integration:** System/Light/Dark themes, first-run onboarding, tray, startup registration, persisted
   settings/window placement, About/Diagnostics, rolling logs, large-library background/parallel scan, and
-  self-contained single-file publishing.
+  self-contained single-file publishing. Editor toggles expose active and mixed selection states; collection dialogs
+  resize cleanly, clipped values retain full tooltips, and High Contrast states use paired system colors.
 
 ## Remaining Work
 
-Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate order:
-
-1. **B19 P2:** run the enterprise UI audit/polish pass, then final release validation.
+No active implementation remains. Add future requested work to [`BACKLOG.md`](BACKLOG.md) before starting it.
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** `polish/enterprise-ui-audit` owns B19's cross-view audit and confirmed UI fixes. A stale
-interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** none after the B19 integration worktree is removed. A stale interrupted historical hotkey
+worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -118,8 +115,8 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **706** green after B16. Registry tests need normal current-user registry access.
-5. Take the first item in [`BACKLOG.md`](BACKLOG.md) on a new branch. Use ponytail, then separate-agent QA,
+4. Run build + tests; expect **724** green after B19. Registry tests need normal current-user registry access.
+5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.
 6. Update this file, BACKLOG, README, and ARCHITECTURE as appropriate before considering the change done.

@@ -114,6 +114,7 @@ view-models, interop, and app wiring.
 - Single instance; system tray (Open / Open Library / Import / Export / Settings / Exit). Global hotkey via
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
+  Preview actions wrap at compact widths; icon targets keep stable usable dimensions without boxed pointer chrome.
   The active nav item retains native TreeView selection and adds a system-color edge marker plus semibold label,
   so scope remains clear without relying on color alone.
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
@@ -131,8 +132,10 @@ view-models, interop, and app wiring.
   `AppConfig.Theme` = System/Light/Dark (System follows Windows). `App.xaml` owns one shared button template whose
   translucent hover/pressed layer preserves each button's base color; all view-local button styles inherit it.
   Per-Monitor-v2 DPI is enabled via `app.manifest`.
-- The editor uses a themed ComboBox template, standard text/highlight palettes, removable response-tag chips, and a
-  visible launcher Edit action.
+- The editor uses a themed ComboBox template, standard text/highlight palettes with visual swatches, removable
+  response-tag chips, and a visible launcher Edit action. Formatting controls expose checked/mixed state at the caret
+  or selection; High Contrast pairs native Highlight and HighlightText resources. Error text and actions occupy
+  separate responsive columns.
 - Import uses one immutable `ImportPlan` from `LibraryPorter.PlanImport`; the preview displays that exact plan and
   `LibraryPorter.Import(plan, decisions)` executes it. Entries are classified as New, Duplicate elsewhere, Identical,
   Conflict, Invalid, or Unsafe. New/duplicate/conflict rows use explicit checkboxes; conflicts expose only per-row
@@ -172,13 +175,13 @@ view-models, interop, and app wiring.
   individual response hotkeys, or raw custom/network/user paths. Settings links to hotkeys, backups, Trash, logs,
   and diagnostics.
 - Accessibility is defined in XAML at the control boundary: Automation names/help, polite/assertive live regions,
-  native keyboard menus, safe dialog defaults, visible focus, and theme/High Contrast resources.
+  native keyboard menus, safe dialog defaults, keyboard-visible focus, full-value tooltips for clipped text, and
+  theme/High Contrast resources. Collection dialogs such as Backup and Trash resize while keeping actions reachable.
 
 ## Known completion boundaries
 
-The implemented paths above are merged and tested. Remaining work is intentionally explicit in
-[`docs/BACKLOG.md`](docs/BACKLOG.md): import selection/review, the security-gated computed-variable DSL,
-and the final enterprise UI standards audit.
+The implemented paths above are merged and tested. [`docs/BACKLOG.md`](docs/BACKLOG.md) is the source of truth for
+future requested work and currently has no active items.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
