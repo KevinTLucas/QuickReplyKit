@@ -12,7 +12,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 ### B19 - Enterprise UI standards audit and polish
 
 - **Severity:** P2 cross-view polish
-- **Status:** Queued next-to-last, after all feature UI and before final release validation
+- **Status:** In progress on `polish/enterprise-ui-audit`; independent visual/interaction and accessibility audits are
+  active before any fixes are selected.
 - **Impact:** Hover/focus/pressed chrome and icon-button behavior are not yet reviewed consistently across every view;
   for example, the Favorite star shows a box-like hover outline that may not suit an icon action.
 - **Acceptance:** Launch and interact with every page/dialog using project QA tooling; capture representative Light,

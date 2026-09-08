@@ -22,8 +22,8 @@
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable. [`BACKLOG.md`](BACKLOG.md) contains one remaining item: the final enterprise UI audit and
-  release validation (B19). B16 is complete and awaiting its `main` merge/release rebuild.
+- **State:** launchable. [`BACKLOG.md`](BACKLOG.md) contains one remaining item: B19 enterprise UI audit and final
+  release validation, active on `polish/enterprise-ui-audit`. B16 is complete and merged.
 
 ## Merged And QA'd
 
@@ -88,9 +88,8 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** no product feature is active until B19 begins. The clean, merged
-`feature/sandboxed-script-engine` worktree can be removed. A stale interrupted historical hotkey worktree remains
-quarantined and is not an active source of changes.
+**Active worktrees:** `polish/enterprise-ui-audit` owns B19's cross-view audit and confirmed UI fixes. A stale
+interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
