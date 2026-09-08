@@ -245,7 +245,7 @@
                         <ListBox.ContextMenu>
                             <ContextMenu x:Name="ResultsContextMenu">
                                 <MenuItem x:Name="MenuEdit" Header="Edit…" Click="MenuEdit_Click"/>
-                                <MenuItem x:Name="MenuEditInsert" Header="Edit &amp; insert…"
+                                <MenuItem x:Name="MenuEditInsert" Header="Edit Response Text…"
                                           Click="MenuEditInsert_Click"/>
                                 <MenuItem x:Name="MenuDuplicate" Header="Duplicate" Click="MenuDuplicate_Click"/>
                                 <MenuItem x:Name="MenuRename" Header="Rename…" Click="MenuRename_Click"/>
