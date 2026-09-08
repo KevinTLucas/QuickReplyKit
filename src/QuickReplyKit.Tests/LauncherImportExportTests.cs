@@ -14,8 +14,16 @@ public class LauncherImportExportTests
 
         Assert.Equal("Import and export responses", (string?)button.Attribute("AutomationProperties.Name"));
         Assert.Equal("Import responses or export the full library", (string?)button.Attribute("ToolTip"));
-        Assert.Contains(button.Descendants(), element =>
-            element.Name.LocalName == "AccessText" && (string?)element.Attribute("Text") == "_Import / Export");
+        Assert.Equal("⇄", (string?)button.Attribute("Content"));
+        Assert.Equal("{StaticResource IconButton}", (string?)button.Attribute("Style"));
+        Assert.Equal("6,2", (string?)button.Attribute("Padding"));
+        Assert.Equal("16", (string?)button.Attribute("FontSize"));
+        Assert.Equal("{DynamicResource Accent}", (string?)button.Attribute("Foreground"));
+        Assert.Equal("ImportExportButton_Click", (string?)button.Attribute("Click"));
+        Assert.DoesNotContain(button.Descendants(), element => element.Name.LocalName == "AccessText");
+
+        var menu = button.Descendants().Single(element => element.Name.LocalName == "ContextMenu");
+        Assert.Equal("Bottom", (string?)menu.Attribute("Placement"));
 
         var headers = button.Descendants()
             .Where(element => element.Name.LocalName == "MenuItem")

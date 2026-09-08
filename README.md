@@ -121,7 +121,8 @@ to the exact source: editing a definition revokes trust, and QuickReplyKit never
 
 - **Copy folders/files** directly into your library — the folder hierarchy and responses appear
   automatically (no restart; the app watches the library for changes).
-- Use the launcher's labelled **⇄ Import / Export** menu to import responses or export the full library. Export one
+- Use the launcher's **⇄** menu (tooltip: Import responses or export the full library) to import responses or export
+  the full library. Export one
   response from its result context menu, or export one folder from its folder context menu. Import first shows a
   selectable New/Changed/Duplicate/Identical/Invalid/Unsafe review list; changed paths can be skipped, overwritten,
   or kept as a second copy. Invalid content never blocks valid responses. Script definitions show their exact source,

@@ -119,7 +119,8 @@ view-models, interop, and app wiring.
   The active nav item uses the native system Highlight/HighlightText background and foreground plus a semibold label,
   so scope remains clear in High Contrast and without relying on color alone.
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
-- The labelled **Import / Export** toolbar menu exposes response import and full-library export. Exporting one response
+- The icon-only **⇄** toolbar menu exposes response import and full-library export; its tooltip and automation name
+  state the complete purpose. Exporting one response
   or one folder remains in the corresponding result/folder context menu, so each command's scope is explicit without
   duplicating actions across menus.
 - Search ANDs whitespace tokens across name, response tags, app, category, and body. A selected category supplies the
