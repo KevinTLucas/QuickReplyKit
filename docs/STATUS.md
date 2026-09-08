@@ -6,17 +6,16 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `c977be1` (B20 import crash containment and transactional script-import rollback);
+- **Current product merge:** `ba621f5` (B20 import crash containment and transactional script-import rollback);
   use `git rev-parse HEAD` for the docs-inclusive tip.
 - **Current product baseline:** B01-B20 are complete. B21-B29 remain active in priority order.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **729 passed** after B20 independent import/stability QA.
-- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` were rebuilt from
-  `b5a6ff0` and match at 69,920,606 bytes (SHA-256
-  `7949268476273ECB8FDD908C6DF0ABF36721ECB0914EA4237386A3D81D39ED2C`). All four packaged self-tests exit 0.
-  `publish/latest/QuickReplyKit.exe` is still the older 69,887,798-byte build because that exact file is running and
-  locked; do not close it. Promote the pending file after the user exits that instance. No external .NET install is
-  needed.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `ba621f5` at 69,921,413 bytes (SHA-256
+  `363683138A436C4A7855C6A6327A782D2A6464F14C5A0B5923854CF0290C1FE5`). The packaged rich-clipboard gate exits 0.
+  The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
+  temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
+  gates after the remaining backlog integrations. No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0 for three consecutive branch rounds and one final packaged
   `b5a6ff0` round; every temporary Notepad window closed normally and no visible Notepad remained.
@@ -32,7 +31,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| B20 import workflow crash | `c977be1` | 729/729; exact XAML root fixed; full UI boundary containment; transactional script trust/write rollback; independent re-QA | Complete |
+| B20 import workflow crash | `ba621f5` | 729/729; exact XAML root fixed; full UI boundary containment; transactional script trust/write rollback; independent re-QA | Complete |
 | Notepad self-test reliability/cleanup | `b5a6ff0` | 724/724; all four self-tests x3; foreground-denied fallback; exact temp window closes normally | Complete |
 | B19 enterprise UI standards audit | `1bf0d66` | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
 | B16 sandboxed dynamic-variable scripts | `db07f5e` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete |
