@@ -8,7 +8,7 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `dc4b2a8` (B22 per-user storage paths and truthful diagnostics);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22 are complete. B21 and B23-B29 remain active.
+- **Current product baseline:** B01-B20 and B22 are complete. B23 is in QA; B21 and B24-B29 remain active.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **730 passed** after B22 independent path/privacy QA.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `dc4b2a8` at 69,921,110 bytes (SHA-256
@@ -87,7 +87,7 @@
 
 ## Remaining Work
 
-B21 and B23-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21 first; then the focused
+B21 and B23-B29 are active in [`BACKLOG.md`](BACKLOG.md); B23 is currently in QA. Work in severity order: B21 first; then the focused
 UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
