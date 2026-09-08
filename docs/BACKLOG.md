@@ -22,7 +22,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B23 - About / Diagnostics window chrome cleanup
 
-- **Severity / status:** P2 · Requested · Queued
+- **Severity / status:** P2 · QA
 - **Acceptance:** remove the redundant in-content Close button from About / Diagnostics; the standard window close
   control remains keyboard- and pointer-accessible, with no layout gap.
 

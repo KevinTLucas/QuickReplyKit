@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using QuickReplyKit.Core;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Storage;
@@ -34,6 +35,13 @@ public partial class AboutWindow : Window
     private void OpenLibrary_Click(object sender, RoutedEventArgs e) => OpenFolder(_library);
     private void OpenBackup_Click(object sender, RoutedEventArgs e) => OpenFolder(_backup);
     private void OpenTrash_Click(object sender, RoutedEventArgs e) => OpenFolder(AppPaths.TrashDir);
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape) return;
+        Close();
+        e.Handled = true;
+    }
 
     private void Copy_Click(object sender, RoutedEventArgs e)
     {
