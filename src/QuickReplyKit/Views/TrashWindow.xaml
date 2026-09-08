@@ -30,10 +30,15 @@
                      AutomationProperties.HelpText="Select an item to restore or permanently delete"
                      Foreground="{DynamicResource TextPrimary}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                        <Setter Property="AutomationProperties.HelpText" Value="{Binding Sub}"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Margin="2,3" AutomationProperties.Name="{Binding Name}"
-                                    AutomationProperties.HelpText="{Binding Sub}">
+                        <StackPanel Margin="2,3">
                             <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}"
                                        FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                             <TextBlock Text="{Binding Sub}" FontSize="11" Foreground="{DynamicResource TextMuted}"

@@ -12,6 +12,11 @@ internal static class WindowSizing
             System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(window).Handle).WorkingArea.Height /
             VisualTreeHelper.GetDpi(window).DpiScaleY);
 
-        window.Loaded += (_, _) => { Apply(); window.LocationChanged += (_, _) => Apply(); };
+        window.Loaded += (_, _) =>
+        {
+            Apply();
+            window.LocationChanged += (_, _) => Apply();
+            window.DpiChanged += (_, _) => Apply();
+        };
     }
 }

@@ -28,6 +28,7 @@ public class UiConsistencyTests
         Assert.Contains("Screen.FromHandle", helper, StringComparison.Ordinal);
         Assert.Contains("VisualTreeHelper.GetDpi", helper, StringComparison.Ordinal);
         Assert.Contains("LocationChanged", helper, StringComparison.Ordinal);
+        Assert.Contains("DpiChanged", helper, StringComparison.Ordinal);
 
         foreach (string file in new[]
         {
@@ -47,10 +48,13 @@ public class UiConsistencyTests
     [InlineData("ImportPreviewWindow.xaml", "{Binding DestinationPath}", "{Binding Detail}")]
     public void CollectionRows_ExposeItemLevelAutomationText(string file, string name, string help)
     {
-        var row = Load(file).Descendants().Single(e =>
-            (string?)e.Attribute("AutomationProperties.Name") == name &&
-            (string?)e.Attribute("AutomationProperties.HelpText") == help);
-        Assert.NotNull(row);
+        var style = Load(file).Descendants().Single(e => e.Name.LocalName == "Style" &&
+            (string?)e.Attribute("TargetType") == "ListBoxItem" &&
+            e.Elements().Any(s => (string?)s.Attribute("Property") == "AutomationProperties.Name"));
+        Assert.Contains(style.Elements(), s => (string?)s.Attribute("Property") == "AutomationProperties.Name" &&
+            (string?)s.Attribute("Value") == name);
+        Assert.Contains(style.Elements(), s => (string?)s.Attribute("Property") == "AutomationProperties.HelpText" &&
+            (string?)s.Attribute("Value") == help);
     }
 
     [Theory]
@@ -75,6 +79,15 @@ public class UiConsistencyTests
         Assert.Contains(document.Descendants(), e => (string?)e.Attribute(X + "Name") == "StatusText" &&
             (string?)e.Attribute("TextWrapping") == "Wrap" &&
             (string?)e.Attribute("ToolTip") == "{Binding Status}");
+
+        var row = document.Descendants().Single(e => e.Name.LocalName == "ContentControl" &&
+            (string?)e.Attribute("AutomationProperties.Name") == "{Binding Target}");
+        Assert.Equal("{Binding Status}", (string?)row.Attribute("AutomationProperties.HelpText"));
+        foreach (string action in new[] { "Edit", "Clear" })
+            Assert.Contains(document.Descendants(), e => e.Name.LocalName == "Button" &&
+                (string?)e.Attribute("Content") == action &&
+                ((string?)e.Attribute("AutomationProperties.Name"))?.Contains("{Binding Target", StringComparison.Ordinal) == true &&
+                (string?)e.Attribute("AutomationProperties.HelpText") == "{Binding Status}");
     }
 
     [Fact]
@@ -83,6 +96,11 @@ public class UiConsistencyTests
         var assign = Named(Load("AssignHotkeyWindow.xaml"), "ResponseName");
         Assert.Equal("CharacterEllipsis", (string?)assign.Attribute("TextTrimming"));
         Assert.Equal("{Binding Text, RelativeSource={RelativeSource Self}}", (string?)assign.Attribute("ToolTip"));
+
+        var settings = Load("SettingsWindow.xaml");
+        foreach (string name in new[] { "LibraryPathBox", "BackupPathBox" })
+            Assert.Equal("{Binding Text, RelativeSource={RelativeSource Self}}",
+                (string?)Named(settings, name).Attribute("ToolTip"));
 
         var scripts = Load("ScriptManagerWindow.xaml");
         foreach (string binding in new[] { "Name", "Status", "RelativePath" })
@@ -99,6 +117,12 @@ public class UiConsistencyTests
         foreach (string name in new[] { "SizeButton", "TextColorButton", "HighlightButton", "InsertVarButton" })
             Assert.Equal("Bottom", (string?)Named(document, name).Descendants()
                 .Single(e => e.Name.LocalName == "ContextMenu").Attribute("Placement"));
+
+        var app = XDocument.Load(TestFiles.RepoAsset("src/QuickReplyKit/App.xaml"));
+        foreach (string target in new[] { "{x:Type ContextMenu}", "{x:Type MenuItem}" })
+            Assert.Contains(app.Descendants(), e => e.Name.LocalName == "Style" &&
+                (string?)e.Attribute("TargetType") == target &&
+                e.Elements().Any(s => (string?)s.Attribute("Property") == "Template"));
     }
 
     [Theory]

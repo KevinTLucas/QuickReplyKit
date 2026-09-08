@@ -56,11 +56,15 @@
                          AutomationProperties.Name="Script definitions"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          SelectionChanged="ScriptList_SelectionChanged">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                            <Setter Property="AutomationProperties.HelpText" Value="{Binding Status}"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="7,5" ToolTip="{Binding RelativePath}"
-                                        AutomationProperties.Name="{Binding Name}"
-                                        AutomationProperties.HelpText="{Binding Status}">
+                            <StackPanel Margin="7,5" ToolTip="{Binding RelativePath}">
                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                                            TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
                                 <TextBlock Text="{Binding Status}" FontSize="11"

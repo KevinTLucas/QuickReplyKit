@@ -57,10 +57,10 @@
                     <AutomationProperties.Name>Configured shortcuts</AutomationProperties.Name>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
+                            <ContentControl Focusable="False" AutomationProperties.Name="{Binding Target}"
+                                            AutomationProperties.HelpText="{Binding Status}">
                             <Border Padding="8,7" Margin="1,1,1,0" Background="{DynamicResource CardBg}"
-                                    BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,0,1"
-                                    AutomationProperties.Name="{Binding Target}"
-                                    AutomationProperties.HelpText="{Binding Status}">
+                                    BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,0,1">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="130"/>
@@ -83,12 +83,17 @@
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
                                                 Visibility="{Binding IsResponse, Converter={StaticResource BoolToVis}}">
                                         <Button Content="Edit" Style="{StaticResource ActionButton}"
+                                                AutomationProperties.Name="{Binding Target, StringFormat=Edit shortcut for {0}}"
+                                                AutomationProperties.HelpText="{Binding Status}"
                                                 Tag="{Binding RelativePath}" Click="Edit_Click"/>
                                         <Button Content="Clear" Style="{StaticResource ActionButton}"
+                                                AutomationProperties.Name="{Binding Target, StringFormat=Clear shortcut for {0}}"
+                                                AutomationProperties.HelpText="{Binding Status}"
                                                 Tag="{Binding RelativePath}" Click="Clear_Click"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
+                            </ContentControl>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding HasProblem}" Value="True">
                                     <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Warning}"/>

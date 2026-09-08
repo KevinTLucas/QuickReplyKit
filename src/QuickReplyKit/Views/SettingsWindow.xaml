@@ -76,6 +76,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="LibraryPathBox" IsReadOnly="True" FontSize="13"
                      AutomationProperties.Name="Response library folder"
+                     ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
                      Padding="8,6" VerticalContentAlignment="Center" Style="{StaticResource Input}"/>
             <Button Grid.Column="1" Content="Change…" Style="{StaticResource ActionButton}"
                     Click="ChangeLibrary_Click"/>
@@ -92,6 +93,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="BackupPathBox" IsReadOnly="True" FontSize="13"
                      AutomationProperties.Name="Backup folder"
+                     ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
                      Padding="8,6" VerticalContentAlignment="Center" Style="{StaticResource Input}"/>
             <Button Grid.Column="1" Content="Change…" Style="{StaticResource ActionButton}"
                     Click="ChangeBackup_Click"/>
