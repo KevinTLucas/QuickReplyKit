@@ -25,7 +25,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Severity / status:** P2 · QA passed · Ready to merge
 - **Acceptance:** remove the visible “Import / Export” label from the launcher trigger and retain the existing icon,
   tooltip, automation name, keyboard access, and menu behavior without increasing compact-window clutter.
-- **Implemented on:** `ui/import-export-trigger`; Release build is clean and the integrated branch passes 730/730
+- **Implemented on:** `ui/import-export-trigger`; Release build is clean and current-main integration passes 732/732
   tests. Independent Light/Dark/compact QA passed. QA also anchored the menu below its trigger so keyboard activation
   cannot open it at an unrelated mouse location.
 
