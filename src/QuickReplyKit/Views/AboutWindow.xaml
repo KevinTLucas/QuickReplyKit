@@ -22,8 +22,20 @@
         <TextBlock Grid.Row="1" x:Name="TagLine" Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,2,0,10"
                    Text="Response launcher — diagnostics"/>
 
-        <Border Grid.Row="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource CardBorder}"
-                BorderThickness="1" CornerRadius="6" Padding="2">
+        <Border Grid.Row="2" x:Name="DiagnosticsBorder" Background="{DynamicResource CardBg}"
+                CornerRadius="6" Padding="2">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=DiagText}" Value="True">
+                            <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                            <Setter Property="BorderThickness" Value="2"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <TextBox x:Name="DiagText" IsReadOnly="True" BorderThickness="0" Background="Transparent"
                      AutomationProperties.Name="Diagnostic information"
                      AutomationProperties.HelpText="Read-only system and QuickReplyKit status information"
