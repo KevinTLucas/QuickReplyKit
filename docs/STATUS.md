@@ -9,7 +9,7 @@
 - **Last audited:** 2026-09-08
 - **Current product merge:** `08de27d` (B31 whole-app UI and interaction consistency);
   **current documentation merge:** `1f9839b` (B32 end-user guide). Use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B32 are complete on `main`. The active backlog is empty.
+- **Current product baseline:** B01-B32 are complete on `main`; plus current branch work is `feature/rtf-clipboard-format` (CRM/Word formatting parity via `CF_RTF` in rich paste/copy).
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **785 passed** on merged `main` after B32, independently rerun after documentation QA.
 - **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip after `1f9839b` at 69,932,895 bytes (SHA-256
@@ -101,7 +101,7 @@
 
 ## Remaining Work
 
-No active backlog work. B01-B32 are implemented, independently QA'd, merged, documented, packaged, and pushed.
+No active backlog work items remain. Current branch work in-progress: `feature/rtf-clipboard-format` (rich insertion now writes both `CF_HTML` and `CF_RTF` to improve Word/CRM fidelity).
 
 **Known confirmed regressions/defects:** none after B20.
 

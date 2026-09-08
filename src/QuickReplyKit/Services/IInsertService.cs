@@ -13,7 +13,7 @@ namespace QuickReplyKit.Services;
 /// </summary>
 public interface IInsertService
 {
-    /// <summary>Insert the response as rich text (CF_HTML + Unicode) into the target app.</summary>
+    /// <summary>Insert the response as rich text (Unicode + HTML + optional RTF) into the target app.</summary>
     void InsertRich(ResponseItem item);
 
     /// <summary>Insert the response as plain text only.</summary>

@@ -57,6 +57,7 @@ public class InsertServiceTests
         Assert.True(Clipboard.ContainsText());
         Assert.Equal("rich fallback", Clipboard.GetText());
         Assert.True(Clipboard.ContainsData(DataFormats.Html));
+        Assert.True(Clipboard.ContainsData(DataFormats.Rtf));
         Clipboard.Clear();
     });
 
@@ -68,6 +69,7 @@ public class InsertServiceTests
 
         Assert.Equal("copy me", Clipboard.GetText());
         Assert.True(Clipboard.ContainsData(DataFormats.Html));
+        Assert.True(Clipboard.ContainsData(DataFormats.Rtf));
         Clipboard.Clear();
     });
 }

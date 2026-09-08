@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Documents;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -135,15 +136,20 @@ internal static class SelfTest
             string html = $"<p>plain <b>{mark}</b> tail</p><ul><li>one</li><li>two</li></ul>";
             var item = new ResponseItem { Html = html };
             string expectedHtml = CfHtml.Build(html);
+            string expectedRtf = BuildRtf(html);
 
-            if (ClipboardWriter.WriteRich(item.PlainText, expectedHtml))
+            if (ClipboardWriter.WriteRich(item.PlainText, expectedHtml, expectedRtf))
             {
+                uint rtfId = RegisterClipboardFormat("Rich Text Format");
                 string gotHtml = ReadClipboardFormatUtf8(RegisterClipboardFormat("HTML Format"));
                 string gotPlain = ReadClipboardText();
+                string gotRtf = ReadClipboardFormatUtf8(rtfId);
                 ok = gotHtml == expectedHtml
                      && gotHtml.Contains("StartFragment:", StringComparison.Ordinal)
                      && gotHtml.Contains(mark, StringComparison.Ordinal)
-                     && gotPlain == item.PlainText;
+                     && gotPlain == item.PlainText
+                     && gotRtf.Contains(@"\rtf1", StringComparison.Ordinal)
+                     && gotRtf.Contains(@"\f0", StringComparison.Ordinal);
             }
         }
         catch (Exception ex) { Console.Error.WriteLine("[selftest-rich] " + ex); }
@@ -175,6 +181,14 @@ internal static class SelfTest
             finally { GlobalUnlock(h); }
         }
         finally { CloseClipboard(); }
+    }
+
+    private static string BuildRtf(string html)
+    {
+        var flow = HtmlToFlowDocument.Convert(html);
+        using var stream = new MemoryStream();
+        new TextRange(flow.ContentStart, flow.ContentEnd).Save(stream, DataFormats.Rtf);
+        return Encoding.UTF8.GetString(stream.ToArray()).TrimEnd('\0');
     }
 
     /// <summary>

@@ -1,6 +1,9 @@
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Documents;
 using QuickReplyKit.Core.Diagnostics;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Core.Text;
@@ -44,6 +47,7 @@ public sealed class InsertService : IInsertService
         var data = new DataObject();
         data.SetData(DataFormats.UnicodeText, item.PlainText);
         data.SetData(DataFormats.Html, CfHtml.Build(item.Html));
+        data.SetData(DataFormats.Rtf, BuildRtf(item.Html));
         for (int attempt = 0; attempt < 3; attempt++)
         {
             try
@@ -93,11 +97,13 @@ public sealed class InsertService : IInsertService
             bool focused = ForegroundWindow.Restore(target);
             Diag.Verbose("InsertService", "Paste", $"focus result={focused}");
 
+            var html = CfHtml.Build(item.Html);
+            var rtf = BuildRtf(item.Html);
             bool wrote = rich
-                ? ClipboardWriter.WriteRich(item.PlainText, CfHtml.Build(item.Html))
+                ? ClipboardWriter.WriteRich(item.PlainText, html, rtf)
                 : ClipboardWriter.WritePlain(item.PlainText);
             Diag.Verbose("InsertService", "Paste",
-                $"clipboard transientWrite={wrote} mode={(rich ? "rich" : "plain")} textLength={item.PlainText.Length} htmlLength={(rich ? item.Html.Length : 0)}");
+                $"clipboard transientWrite={wrote} mode={(rich ? "rich" : "plain")} textLength={item.PlainText.Length} htmlLength={(rich ? item.Html.Length : 0)} rtfLength={(rich ? rtf?.Length ?? 0 : 0)}");
 
             if (!wrote)
             {
@@ -118,6 +124,22 @@ public sealed class InsertService : IInsertService
         finally
         {
             _busy = false;
+        }
+    }
+
+    private static string BuildRtf(string html)
+    {
+        try
+        {
+            var flow = HtmlToFlowDocument.Convert(html);
+            using var ms = new MemoryStream();
+            new TextRange(flow.ContentStart, flow.ContentEnd).Save(ms, DataFormats.Rtf);
+
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 }

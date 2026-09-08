@@ -106,7 +106,7 @@ public class ClipboardWriterTests
         try
         {
             string cf = CfHtml.Build("<p>Hello <b>world</b></p>");
-            Assert.True(ClipboardWriter.WriteRich("Hello world", cf));
+            Assert.True(ClipboardWriter.WriteRich("Hello world", cf, @"{\rtf1\ansi\ansicpg1252\deff0\pard {\b Hello} world\par}"));
 
             uint htmlId = RegisterClipboardFormat("HTML Format");
             var (formats, htmlBytes) = WithClipboard(() => (EnumFormats(), ReadBytes(htmlId)));
@@ -157,9 +157,28 @@ public class ClipboardWriterTests
         try
         {
             // Degenerate but valid: empty fragment. Must not throw or leave the clipboard open.
-            Assert.True(ClipboardWriter.WriteRich("", CfHtml.Build("")));
+            Assert.True(ClipboardWriter.WriteRich("", CfHtml.Build(""), @"{\rtf1\ansi\ansicpg1252\deff0\pard\par}"));
             var formats = WithClipboard(EnumFormats);
             Assert.Contains(RegisterClipboardFormat("CanIncludeInClipboardHistory"), formats);
+        }
+        finally { Clear(); }
+    });
+
+    [Fact]
+    public void WriteRich_AlsoSets_RtfFormat_AndReturnsExpectedValue() => Sta(() =>
+    {
+        try
+        {
+            string rtf = @"{\rtf1\ansi\ansicpg1252\deff0\pard{\b hello} {\i world}\par\pard}";
+            string cf = CfHtml.Build("<p><b>hello</b> <i>world</i></p>");
+            Assert.True(ClipboardWriter.WriteRich("hello world", cf, rtf));
+
+            uint rtfId = RegisterClipboardFormat("Rich Text Format");
+            var (formats, rtfBytes) = WithClipboard(() => (EnumFormats(), ReadBytes(rtfId)));
+
+            Assert.Contains(rtfId, formats);
+            var got = Encoding.UTF8.GetString(rtfBytes).TrimEnd('\0');
+            Assert.Equal(rtf, got);
         }
         finally { Clear(); }
     });
