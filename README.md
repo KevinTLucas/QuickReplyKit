@@ -129,7 +129,9 @@ The optional `DefaultLibrary/Examples` seed folder contains small, removable dem
 reusable response includes, one restricted expression, and one clearly labeled full-trust PowerShell script. The
 PowerShell example stays untrusted after seeding: review its exact source under **Settings → Scripts…** and explicitly
 trust it before it can run. Each example is a separate file, so the demos are easy to copy or delete; the composed
-response needs its two `Shared …` include files. Ordinary support examples do not depend on the demos.
+response needs its two `Shared …` include files. Existing libraries are never modified automatically; to add these
+examples after an upgrade, copy the `Examples` folder from `DefaultLibrary` into your response library. Ordinary
+support examples do not depend on the demos.
 
 ## Sharing responses
 
