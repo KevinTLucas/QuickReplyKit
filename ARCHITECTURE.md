@@ -208,9 +208,9 @@ view-models, interop, and app wiring.
 
 ## Known completion boundaries
 
-The implemented product paths above are merged and tested through B34. [`docs/STATUS.md`](docs/STATUS.md) records the
-exact audited baseline, and [`docs/BACKLOG.md`](docs/BACKLOG.md) contains unfinished requested work only. B35 and B36
-are currently isolated in separate rich-format QA branches and are not part of `main` yet.
+The implemented product paths above are merged and tested through B34 plus B36. [`docs/STATUS.md`](docs/STATUS.md)
+records the exact audited baseline, and [`docs/BACKLOG.md`](docs/BACKLOG.md) contains unfinished requested work only.
+B35 remains isolated for manual Microsoft Word acceptance and is not part of `main` yet.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,

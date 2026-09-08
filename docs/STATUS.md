@@ -7,13 +7,12 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `b1749ff` (B34 parser-backed Word RTF conversion).
-- **Current product baseline:** B01-B34 are complete on `main`; B35 and B36 are isolated in QA branches.
+- **Current product merge:** `0ae7786` (B36 rich editor formatting persistence).
+- **Current product baseline:** B01-B34 and B36 are complete on `main`; B35 remains isolated for manual Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **788 passed** on merged `main`; **791** on `feature/word-style-word-fidelity`; **811** on
-  `bugfix/rich-editor-persistence`.
-- **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip (`c755601`) at 69,933,764 bytes (SHA-256
-  `06D4687E64E0E872630CAC5A2971CAAB20AB20D12C99A9570C62EC332A3BFDC5`). It is self-contained; no external .NET or
+- **Tests:** **811 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
+- **Portable publish:** `release/QuickReplyKit.exe` was built from product merge `0ae7786` at 69,937,725 bytes (SHA-256
+  `D8AC0CD204433D4E74DEDB4EE7486C62051B7258ECF9AF7481177944871D1FA5`). It is self-contained; no external .NET or
   Visual C++ installation is needed.
 - **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
   This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
@@ -24,13 +23,14 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable; two related rich-formatting fixes are in isolated QA branches. The tracked release executable
-  predates `main` and must be rebuilt from the next green product merge.
+- **State:** launchable and green. Editor formatting persistence is fixed; only B35's manual Microsoft Word paste
+  acceptance remains outside `main`.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B36 rich editor formatting persistence | `0ae7786` | 811/811; 57/57 focused; two independent exact-tip reviews; every exposed editor format, apply/remove, JSON reload, mixed selections, list/link edge cases | Complete |
 | B34 parser-backed Word RTF conversion | `b1749ff` | 788/788; RTF round-trip covers bold, italic, color and font size | Complete |
 | B32 end-user GitHub guide | `1f9839b` | 785/785; 11 privacy-checked images; links/HTML/Markdown/labels/paths/security wording independently verified | Complete |
 | B31 whole-app UI consistency | `08de27d` | 785/785; 20/20 focused; Light/Dark/compact captures; real automation peers, live-DPI sizing, themed menus, keyboard and layout checks | Complete |
@@ -102,13 +102,6 @@
 
 ## Remaining Work
 
-**B36 is ready for independent QA** on `bugfix/rich-editor-persistence`. It fixes the confirmed Save/reopen loss of
-bold, italic, and underline at the shared FlowDocument → HTML boundary. The heavy regression matrix covers every
-exposed editor format, loaded-format removal, mixed partial selections, formatted lists/links, Clear, and real JSON
-save/reload. Release build is clean, 811 tests pass, and `--selftest-paste-rich` reports `RICHPASTE=ok`. Independent
-review found and the branch now fixes repeated-save growth in aligned multi-paragraph list items and link-selection
-crashes for whole-document/cross-paragraph ranges; exact-tip re-QA is pending.
-
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
 merging it.
@@ -116,11 +109,10 @@ merging it.
 Manual B35 build: `publish/word-fidelity-test/QuickReplyKit.exe` (69,933,438 bytes; SHA-256
 `FC419E4B74236B71082BA44942862610A5D5184BA3B83A06DBF779230753C209`).
 
-**Known confirmed regressions/defects:** `main` loses native WPF run-property formatting when editor content is saved
-(B36), and Word may choose the plain clipboard representation before rich formats (B35).
+**Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
-**Active branches:** `bugfix/rich-editor-persistence` owns B36; `feature/word-style-word-fidelity` owns B35. A stale
-interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active branch:** `feature/word-style-word-fidelity` owns B35. A stale interrupted historical hotkey worktree remains
+quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -152,7 +144,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **788** green on `main`, **791** on B35, or **811** on B36. Registry tests need normal
+4. Run build + tests; expect **811** green on `main` or **791** on B35's older base. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
