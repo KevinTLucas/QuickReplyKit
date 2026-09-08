@@ -9,16 +9,27 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-### B30 - Sample dynamic variables and scripts
+### B31 - Whole-app UI and interaction consistency pass
 
-- **Severity / status:** P3 · QA passed · Ready to merge
-- **Acceptance:** after every higher-priority item is complete, add a small set of clearly named, safe examples that
-  demonstrate built-in variables, response includes, the restricted expression language, and explicitly trusted
-  PowerShell. Include the requested randomized greeting example with ten greetings and an added “Happy Friday” line
-  on Fridays. Examples must be optional seed content, contain no user-specific paths or data, explain the trust model,
-  and remain easy to delete or copy into a real library.
-- **Current branch:** independently QA'd on `examples/dynamic-scripts`; Release build is clean and 765/765 tests pass.
-  Security/content and Light/Dark/compact visual checks pass. Merge and portable publish remain.
+- **Severity / status:** P2 · Requested · Queued second-to-last
+- **Acceptance:** inspect every user-facing window, menu, context menu, dialog, toolbar, button, icon, tooltip, hover,
+  pressed, disabled, selected, and keyboard-focus state in Light, Dark, compact, and normal layouts. Exercise the real
+  workflows rather than reviewing screenshots in isolation. Fix only small, low-risk inconsistencies that improve
+  clarity or consistency, such as an isolated border, mismatched hover color, unclear icon state, spacing drift, or
+  missing accessible label. Preserve native High Contrast behavior and avoid broad redesigns or scope expansion.
+  Validate the resulting UI with representative screenshots and focused interaction tests.
+
+### B32 - End-user GitHub README and complete visual guide
+
+- **Severity / status:** P2 · Requested · Queued last
+- **Acceptance:** make the root `README.md` a polished end-user landing page that presents QuickReplyKit clearly and
+  documents every shipped workflow: installation and portable distribution, first run, launcher hotkey, search and
+  folder navigation, preview, rich/plain paste and copy, instant response hotkeys, creating/editing/organizing
+  responses, tags, variables/includes/scripts and trust, import/export review, backups/restore, Trash, themes,
+  settings, tray, diagnostics/logs, troubleshooting, and accessibility/keyboard use. Include current, readable
+  screenshots from the shipping UI in both themes where useful. Move detailed build, architecture, dependency, and
+  contributor material into appropriately named internal docs without losing it. Keep the README easy to scan,
+  accurate for the final executable, and attractive on GitHub.
 
 ## Deferred Ideas
 

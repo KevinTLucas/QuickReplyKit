@@ -6,15 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `8a3de68` (B29 response edit label);
+- **Current product merge:** `fc3a5a5` (B30 optional dynamic-variable and script examples);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B29 are complete on `main`. B30 is independently QA'd on
-  `examples/dynamic-scripts` and is ready to merge; it is not yet shipped.
+- **Current product baseline:** B01-B30 are complete on `main`. B31 and B32 are queued in that order.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **761 passed** on merged `main` after B29. The unmerged B30 branch has a clean Release build and
-  **765/765 passed** (4 focused seed-example tests added), independently rerun after visual/security review.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `8a3de68` at 69,931,950 bytes (SHA-256
-  `1C6CFA6B7F425F81F7D753699987EF7D7B49F5789253FA0F98B318FA4D41F1AD`). The prior packaged rich-clipboard gate exits 0.
+- **Tests:** **765 passed** on merged `main` after B30, independently rerun after visual/security review.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `fc3a5a5` at 69,931,952 bytes (SHA-256
+  `09E882472845D6A97B0F6ECBB621D29B5B4958E3FB800F29A63C61BC3E84E9EF`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -26,13 +24,14 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable. Restricted expressions and explicitly trusted native PowerShell are both shipped and
-  independently security/UI tested. B30 optional examples passed QA and await merge; see [`BACKLOG.md`](BACKLOG.md).
+- **State:** launchable. Restricted expressions, explicitly trusted native PowerShell, and optional safe examples are
+  shipped and independently security/UI tested. B31 UI consistency and B32 end-user documentation remain.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B30 optional dynamic-variable/script examples | `fc3a5a5` | 765/765; Light/Dark/compact launcher and Script Manager; trust/security/content review; native example remains untrusted | Complete |
 | B29 response edit label | `8a3de68` | 761/761; 4/4 focused; Light/Dark/compact context-menu and compose captures; handler and transient behavior unchanged | Complete |
 | B21 explicitly trusted native scripts | `4fa69ec` | 760/760; 62/62 security/integration; 14/14 runtime; Light/Dark/compact Script Manager and Import Review; UTF-8, duplicate hotkey, and layout blockers fixed | Complete |
 | B28 icon-only Import / Export trigger | `99d8efd` | 732/732; 25/25 focused; Light/Dark/compact captures; keyboard menu anchored to trigger | Complete |
@@ -99,17 +98,14 @@
 
 ## Remaining Work
 
-B30 is the only active item in [`BACKLOG.md`](BACKLOG.md) and is explicitly last. Its implementation and independent
-QA are complete on `examples/dynamic-scripts`: optional seed files demonstrate built-ins, response includes, a
-deterministic restricted expression, and an enabled-but-untrusted full-permission PowerShell greeting. Release build
-is clean, all 765 tests pass, and Light/Dark/compact plus security/content checks pass. The `--no-ff` merge and a
-portable rebuild from the resulting `main` tip remain.
+B31 and B32 are the only active items in [`BACKLOG.md`](BACKLOG.md), in that order. B31 is a scoped whole-app UI and
+interaction consistency pass limited to small, low-risk polish. B32 is the final end-user GitHub README and visual
+guide; developer-heavy README material must move into internal documentation without being lost.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** `examples/dynamic-scripts` at `.worktrees/dynamic-script-examples` owns B30 only, passed
-independent QA, and is ready to merge. A stale interrupted historical hotkey worktree remains quarantined and is not
-an active source of changes.
+**Active worktrees:** no reviewed feature branch is active. A stale interrupted historical hotkey worktree remains
+quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -140,7 +136,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **761** green after B29. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **765** green after B30. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.
