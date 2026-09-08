@@ -39,40 +39,19 @@ internal static class DiagnosticsReport
             ? Diag.Threshold == LogLevel.Verbose ? "active (verbose)" : "active (normal)"
             : "unavailable");
         text.AppendLine();
-        Row("Library folder", Redact(config.LibraryPath));
-        Row("Config file", @"%APPDATA%\QuickReplyKit\config.json");
-        Row("Logs folder", @"%APPDATA%\QuickReplyKit\logs");
-        Row("Backup folder", Redact(config.BackupPath));
-        Row("Trash folder", @"%APPDATA%\QuickReplyKit\trash");
-        Row("Script trust file", @"%APPDATA%\QuickReplyKit\script-trust.json");
+        Row("Library folder", ResolvePath(config.LibraryPath));
+        Row("Config file", AppPaths.ConfigPath);
+        Row("Logs folder", AppPaths.LogsDir);
+        Row("Backup folder", ResolvePath(config.BackupPath));
+        Row("Trash folder", AppPaths.TrashDir);
+        Row("Script trust file", AppPaths.ScriptTrustPath);
         return text.ToString();
     }
 
-    internal static string Redact(string path)
+    private static string ResolvePath(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) return "(not configured)";
-
-        string normalized;
-        try { normalized = Path.GetFullPath(path).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar); }
+        try { return Path.GetFullPath(Environment.ExpandEnvironmentVariables(path)); }
         catch { return "[invalid location]"; }
-
-        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
-            .TrimEnd(Path.DirectorySeparatorChar);
-        if (normalized.Equals(profile, StringComparison.OrdinalIgnoreCase)) return "%USERPROFILE%";
-        if (normalized.StartsWith(profile + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            return @"%USERPROFILE%\[private path]";
-
-        // Also hide 8.3 aliases such as C:\Users\KEVIN_~1, which GetFullPath does not expand.
-        string root = Path.GetPathRoot(normalized) ?? "";
-        string usersPrefix = root + "Users" + Path.DirectorySeparatorChar;
-        if (normalized.StartsWith(usersPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            int remainder = normalized.IndexOf(Path.DirectorySeparatorChar, usersPrefix.Length);
-            return remainder < 0 ? "%USERPROFILE%" : @"%USERPROFILE%\[private path]";
-        }
-
-        return normalized.StartsWith("\\\\", StringComparison.Ordinal)
-            ? "[network location]"
-            : "[custom location]";
     }
 }

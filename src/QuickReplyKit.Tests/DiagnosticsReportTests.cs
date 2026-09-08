@@ -10,24 +10,25 @@ namespace QuickReplyKit.Tests;
 public class DiagnosticsReportTests
 {
     [Fact]
-    public void ReportUsesActualState_AndOmitsResponseBindingDetails()
+    public void ReportUsesActualStateAndResolvedPaths_WithoutResponseContent()
     {
         using var temp = new TempDir();
-        string secret = "PRIVATE-" + Guid.NewGuid().ToString("N");
+        string contentSecret = "PRIVATE-" + Guid.NewGuid().ToString("N");
         string scannedLibrary = temp.Of("library");
-        TestFiles.WriteResponse(Path.Combine(scannedLibrary, secret + ".json"), $"<p>{secret}</p>", secret);
+        string configuredLibrary = temp.Of("configured-library");
+        string configuredBackups = temp.Of("configured-backups");
+        TestFiles.WriteResponse(Path.Combine(scannedLibrary, contentSecret + ".json"), $"<p>{contentSecret}</p>", contentSecret);
         File.WriteAllText(Path.Combine(scannedLibrary, "broken.json"), "{");
-        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         var config = new AppConfig
         {
-            LibraryPath = Path.Combine(profile, secret, "Responses"),
-            BackupPath = @"\\server\" + secret + @"\backups",
+            LibraryPath = configuredLibrary,
+            BackupPath = configuredBackups,
             HotkeyGesture = "Ctrl+Alt+D",
             VerboseLogging = false,
             ResponseHotkeys =
             {
-                new() { RelativePath = secret + ".json", Gesture = "Ctrl+Alt+1" },
+                new() { RelativePath = contentSecret + ".json", Gesture = "Ctrl+Alt+1" },
                 new() { RelativePath = "missing.json", Gesture = "Ctrl+Alt+2" },
             },
         };
@@ -35,7 +36,7 @@ public class DiagnosticsReportTests
         var entries = new[]
         {
             new HotkeyService.Entry("Ctrl+Alt+D", true, null, false, true),
-            new HotkeyService.Entry("Ctrl+Alt+1", false, secret + ".json", false, true),
+            new HotkeyService.Entry("Ctrl+Alt+1", false, contentSecret + ".json", false, true),
             new HotkeyService.Entry("Ctrl+Alt+2", false, "missing.json", false, false),
         };
 
@@ -51,14 +52,16 @@ public class DiagnosticsReportTests
             Assert.Contains("Logging               : active (verbose)", report);
             Assert.Contains("Trash folder", report);
             Assert.Contains("Scripts               : 0 total, 0 enabled, 0 trusted, 0 invalid", report);
-            Assert.Contains(@"Script trust file     : %APPDATA%\QuickReplyKit\script-trust.json", report);
-            Assert.Equal(@"%USERPROFILE%\[private path]", DiagnosticsReport.Redact(Path.Combine(profile, "Documents", "QRK")));
-            Assert.Equal("%USERPROFILE%", DiagnosticsReport.Redact(profile));
-            Assert.Equal(@"%USERPROFILE%\[private path]",
-                DiagnosticsReport.Redact(@"C:\Users\KEVIN_~1\AppData\Local\Temp\QRK"));
-            Assert.Equal("[custom location]", DiagnosticsReport.Redact(@"D:\Customer Name\Shared Responses"));
-            Assert.Equal("[network location]", DiagnosticsReport.Redact(@"\\server\customer\responses"));
-            Assert.DoesNotContain(secret, report, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Library folder        : " + Path.GetFullPath(configuredLibrary), report);
+            Assert.Contains("Config file           : " + AppPaths.ConfigPath, report);
+            Assert.Contains("Logs folder           : " + AppPaths.LogsDir, report);
+            Assert.Contains("Backup folder         : " + Path.GetFullPath(configuredBackups), report);
+            Assert.Contains("Trash folder          : " + AppPaths.TrashDir, report);
+            Assert.Contains("Script trust file     : " + AppPaths.ScriptTrustPath, report);
+            Assert.DoesNotContain("%APPDATA%", report);
+            Assert.DoesNotContain("%USERPROFILE%", report);
+            Assert.DoesNotContain("[private path]", report);
+            Assert.DoesNotContain(contentSecret, report, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("Ctrl+Alt+1", report);
             Assert.DoesNotContain("Ctrl+Alt+2", report);
         }
@@ -73,5 +76,14 @@ public class DiagnosticsReportTests
         Diag.Shutdown();
         string report = DiagnosticsReport.Build(new AppConfig(), library, Array.Empty<HotkeyService.Entry>(), "test");
         Assert.Contains("Logging               : unavailable", report);
+        Assert.Contains("Library folder        : " + AppPaths.DefaultLibraryDir, report);
+        Assert.Contains("Config file           : " + AppPaths.ConfigPath, report);
+        Assert.Contains("Logs folder           : " + AppPaths.LogsDir, report);
+        Assert.Contains("Backup folder         : " + AppPaths.BackupsDir, report);
+        Assert.Contains("Trash folder          : " + AppPaths.TrashDir, report);
+        Assert.Contains("Script trust file     : " + AppPaths.ScriptTrustPath, report);
+        Assert.DoesNotContain("%APPDATA%", report);
+        Assert.DoesNotContain("%USERPROFILE%", report);
+        Assert.DoesNotContain("[private path]", report);
     }
 }
