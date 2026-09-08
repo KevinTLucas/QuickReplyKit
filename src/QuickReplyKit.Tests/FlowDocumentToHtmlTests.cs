@@ -204,8 +204,15 @@ public class FlowDocumentToHtmlTests
 
             using var temp = new TempDir();
             ResponseFile.Save(new ResponseItem { Name = "Formatted", Html = html }, temp.Path);
-            Assert.Equal(html, ResponseFile.Load(temp.Of("Formatted.json"), temp.Path).Html);
-            Assert.Equal(html, FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(html)));
+            string loadedHtml = ResponseFile.Load(temp.Of("Formatted.json"), temp.Path).Html;
+            Assert.Equal(html, loadedHtml);
+            var loaded = HtmlToFlowDocument.Convert(loadedHtml);
+            var loadedRun = Runs(loaded).Single(r => r.Text == "formatted");
+            Assert.Equal(FontWeights.Bold, loadedRun.FontWeight);
+            Assert.Equal(FontStyles.Italic, loadedRun.FontStyle);
+            Assert.Contains(loadedRun.TextDecorations,
+                d => d.Location == TextDecorationLocation.Underline);
+            Assert.Equal(html, FlowDocumentToHtml.Convert(loaded));
         });
     }
 
@@ -224,7 +231,14 @@ public class FlowDocumentToHtmlTests
             string html = FlowDocumentToHtml.Convert(editor.Document);
             Assert.Equal("<p><s><span style=\"color:#FF0000; background-color:#FFFF00; font-size:24px\">styled</span></s></p>", html);
 
-            Assert.Equal(html, FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(html)));
+            var loaded = HtmlToFlowDocument.Convert(html);
+            var loadedRun = Runs(loaded).Single(r => r.Text == "styled");
+            Assert.Contains(loadedRun.TextDecorations,
+                d => d.Location == TextDecorationLocation.Strikethrough);
+            Assert.Equal(Colors.Red, ((SolidColorBrush)loadedRun.Foreground).Color);
+            Assert.Equal(Colors.Yellow, ((SolidColorBrush)loadedRun.Background).Color);
+            Assert.Equal(24, loadedRun.FontSize);
+            Assert.Equal(html, FlowDocumentToHtml.Convert(loaded));
         });
     }
 
@@ -255,6 +269,8 @@ public class FlowDocumentToHtmlTests
             {
                 var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(hex)!;
                 string html = FlowDocumentToHtml.Convert(new FlowDocument(new Paragraph(new Run("color") { Foreground = brush })));
+                var restored = Runs(HtmlToFlowDocument.Convert(html)).Single(r => r.Text == "color");
+                Assert.Equal(brush.Color, ((SolidColorBrush)restored.Foreground).Color);
                 Assert.Equal(html, FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(html)));
             }
 
@@ -262,6 +278,8 @@ public class FlowDocumentToHtmlTests
             {
                 var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(hex)!;
                 string html = FlowDocumentToHtml.Convert(new FlowDocument(new Paragraph(new Run("highlight") { Background = brush })));
+                var restored = Runs(HtmlToFlowDocument.Convert(html)).Single(r => r.Text == "highlight");
+                Assert.Equal(brush.Color, ((SolidColorBrush)restored.Background).Color);
                 Assert.Equal(html, FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(html)));
             }
         });
@@ -436,6 +454,31 @@ public class FlowDocumentToHtmlTests
             using var temp = new TempDir();
             ResponseFile.Save(new ResponseItem { Name = "List and link", Html = saved }, temp.Path);
             Assert.Equal(saved, ResponseFile.Load(temp.Of("List and link.json"), temp.Path).Html);
+            var restored = HtmlToFlowDocument.Convert(saved);
+            var list = restored.Blocks.OfType<System.Windows.Documents.List>().Single();
+            Assert.Equal(FontWeights.Bold, Runs(list.ListItems.First().Blocks).Single().FontWeight);
+            var link = list.ListItems.Last().Blocks.OfType<Paragraph>().Single().Inlines
+                .OfType<Hyperlink>().Single();
+            Assert.Equal(new Uri("https://example.com/"), link.NavigateUri);
+            Assert.Equal(FontStyles.Italic, Runs(link.Inlines).Single().FontStyle);
+        });
+    }
+
+    [Fact]
+    public void VariableTextFormatting_SaveAndReload()
+    {
+        Sta(() =>
+        {
+            var paragraph = new Paragraph(new Run("{{greeting}}"));
+            var editor = new RichTextBox { Document = new FlowDocument(paragraph) };
+            editor.SelectAll();
+            EditingCommands.ToggleBold.Execute(null, editor);
+
+            string html = FlowDocumentToHtml.Convert(editor.Document);
+            Assert.Equal("<p><b>{{greeting}}</b></p>", html);
+            var restored = Runs(HtmlToFlowDocument.Convert(html)).Single();
+            Assert.Equal("{{greeting}}", restored.Text);
+            Assert.Equal(FontWeights.Bold, restored.FontWeight);
         });
     }
 
@@ -453,6 +496,18 @@ public class FlowDocumentToHtmlTests
             if (inline is Run run) yield return run;
             else if (inline is Span span)
                 foreach (var child in Runs(span.Inlines)) yield return child;
+        }
+    }
+
+    private static IEnumerable<Run> Runs(BlockCollection blocks)
+    {
+        foreach (var block in blocks)
+        {
+            if (block is Paragraph paragraph)
+                foreach (var run in Runs(paragraph.Inlines)) yield return run;
+            else if (block is System.Windows.Documents.List list)
+                foreach (var item in list.ListItems)
+                    foreach (var run in Runs(item.Blocks)) yield return run;
         }
     }
 
