@@ -1,0 +1,7 @@
+{
+  "id": "example-restricted-greeting",
+  "name": "Example Restricted Greeting",
+  "language": "qrk-expr-1",
+  "enabled": true,
+  "expression": "concat(if(hour < 12, \"Good morning\", if(hour < 17, \"Good afternoon\", \"Good evening\")), \" - \" , date())"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "app": "QuickReplyKit",
+  "tags": [
+    "example",
+    "variables"
+  ],
+  "html": "<p><b>{{greeting}}!</b></p><p>Today is {{day}}, {{date}}. The current time is {{time}}.</p><p>Custom date: {{date:yyyy-MM-dd}}</p>",
+  "favorite": false
+}

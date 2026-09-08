@@ -20,6 +20,12 @@ TestResults/
 /AGENTS.md
 /CLAUDE.md
 
+!/release/
+!/release/QuickReplyKit.exe
+!/release/DefaultLibrary/
+!/release/DefaultLibrary/Examples/
+!/release/DefaultLibrary/Examples/**/*
+
 ## OS
 Thumbs.db
 Desktop.ini

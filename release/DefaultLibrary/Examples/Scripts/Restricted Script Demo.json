@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "app": "QuickReplyKit",
+  "tags": [
+    "example",
+    "script",
+    "restricted"
+  ],
+  "html": "<p>{{script:Example Restricted Greeting}}</p><p>This value comes from a bounded QuickReplyKit expression.</p>",
+  "favorite": false
+}

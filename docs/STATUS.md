@@ -12,7 +12,7 @@
 - **Current product baseline:** B01-B32 are complete on `main`. The active backlog is empty.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **785 passed** on merged `main` after B32, independently rerun after documentation QA.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt after `1f9839b` at 69,932,895 bytes (SHA-256
+- **Portable publish:** `release/QuickReplyKit.exe` was built from `main` tip after `1f9839b` at 69,932,895 bytes (SHA-256
   `86EF685893579E0C248FBD569862EA53231BE0906BB1413736001A39ECD6C0BE`). It is self-contained; no external .NET or
   Visual C++ installation is needed.
 - **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.

@@ -106,7 +106,10 @@ dotnet publish src\QuickReplyKit\QuickReplyKit.csproj `
 Distribution choices:
 
 - `publish\QuickReplyKit.exe` alone: complete application/runtime, empty first-run library.
-- `publish\QuickReplyKit.exe` plus `publish\DefaultLibrary\`: same executable plus optional first-run seed content.
+- `release\QuickReplyKit.exe` plus `release\DefaultLibrary\Examples\`: same executable plus optional first-run sample responses.
+
+The repository tracks a curated distributable `release` folder containing `QuickReplyKit.exe` and
+`DefaultLibrary\Examples`. Rebuild it from `publish\` after each product/runtime merge.
 
 The project copies `assets\DefaultLibrary` to publish output. It is data, not a runtime dependency. An existing
 non-empty user library is not reseeded or overwritten.
