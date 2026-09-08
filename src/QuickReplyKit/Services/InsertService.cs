@@ -17,13 +17,20 @@ namespace QuickReplyKit.Services;
 public sealed class InsertService : IInsertService
 {
     private readonly ForegroundTargetTracker _tracker;
+    private readonly Func<bool> _sendPaste;
 
     /// <summary>Time to let the target consume Ctrl+V before we put the user's clipboard back.</summary>
     private const int PasteConsumeMs = 120;
 
     private bool _busy;   // guards against a double-insert during the ~300 ms sequence
 
-    public InsertService(ForegroundTargetTracker tracker) => _tracker = tracker;
+    public InsertService(ForegroundTargetTracker tracker) : this(tracker, InputSender.SendCtrlV) { }
+
+    internal InsertService(ForegroundTargetTracker tracker, Func<bool> sendPaste)
+    {
+        _tracker = tracker;
+        _sendPaste = sendPaste;
+    }
 
     public void InsertRich(ResponseItem item) => Insert(item, rich: true);
 
@@ -100,7 +107,7 @@ public sealed class InsertService : IInsertService
                 return;
             }
 
-            bool sent = InputSender.SendCtrlV();
+            bool sent = _sendPaste();
             Diag.Verbose("InsertService", "Paste", $"input send={sent}");
             Thread.Sleep(PasteConsumeMs);
 

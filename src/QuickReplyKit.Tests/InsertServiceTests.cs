@@ -9,7 +9,9 @@ namespace QuickReplyKit.Tests;
 /// <summary>
 /// Behavioural tests for <see cref="InsertService"/> that don't need a live target window:
 /// the target-gone fallback (leave text on the clipboard, no throw) and the user-intended Copy.
-/// The full focus-restore + Ctrl+V sequence is exercised by the <c>--selftest-paste</c> E2E gate.
+/// The full clipboard-safe insert sequence is exercised by the <c>--selftest-paste</c> E2E gate;
+/// it uses native Ctrl+V when Windows grants foreground input and a direct test-only Notepad paste
+/// trigger when a background automation host is correctly denied foreground access.
 /// All bodies run on an STA thread because they touch WPF <see cref="Clipboard"/>.
 /// </summary>
 public class InsertServiceTests
