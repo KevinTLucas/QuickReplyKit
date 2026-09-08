@@ -8,7 +8,8 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `b5a6ff0` (B19 enterprise UI standards polish plus stable, normally-closing Notepad
   self-tests); use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B19 are complete. The active backlog is empty.
+- **Current product baseline:** B01-B19 are complete. B20-B29 are active in priority order; B20 is a confirmed
+  release-blocking import crash.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **724 passed** after the B19 combined regression and independent UI/accessibility review.
 - **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` were rebuilt from
@@ -25,7 +26,8 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable. [`BACKLOG.md`](BACKLOG.md) has no active items.
+- **State:** launchable for existing workflows, but **not release-ready** until B20 is fixed and independently
+  regression-tested. See [`BACKLOG.md`](BACKLOG.md) for B20-B29.
 
 ## Merged And QA'd
 
@@ -85,12 +87,15 @@
 
 ## Remaining Work
 
-No active implementation remains. Add future requested work to [`BACKLOG.md`](BACKLOG.md) before starting it.
+B20-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B20 first; then B21/B22; then the focused
+UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
+regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
-**Known confirmed regressions/defects:** none on merged `main`.
+**Known confirmed regressions/defects:** B20, an import failure can crash the entire application. Treat it as the
+current release blocker until a safe-failure regression proves the app and library remain usable and uncorrupted.
 
-**Active worktrees:** none after the B19 integration worktree is removed. A stale interrupted historical hotkey
-worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** no active implementation worktree at this planning baseline. A stale interrupted historical
+hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
