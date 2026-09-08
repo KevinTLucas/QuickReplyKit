@@ -6,15 +6,17 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `28a12ad` (B16 feature tip after final QA fixes; `main` merge commit follows); use
-  `git rev-parse HEAD` for the docs-inclusive tip.
+- **Current product merge:** `db07f5e` (B16 sandboxed script variables merged into `main`); use `git rev-parse HEAD`
+  for the docs-inclusive tip.
 - **Current product baseline:** B01-B18 are complete; B19 is the only remaining backlog item.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Debug`).
 - **Tests:** **706 passed** after B16 combined runtime/import/manager regression and independent security,
   correctness, accessibility, performance, and blocker re-QA; build remains clean.
-- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/latest/QuickReplyKit.exe` were rebuilt from B17 `main`
-  and match at 69,887,798 bytes (SHA-256 `731445EA15B724E94DEE0110E373686D24144359126F2D408D74A3236B99E8C6`).
-  The published rich-clipboard self-test exits 0. No external .NET install is needed.
+- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` were rebuilt from B16
+  `main` and match at 69,917,818 bytes (SHA-256 `DC64DE46D550516472124DF507EA3B71C3C6C473FDFCF1A078FA4CBA04F3BCFD`).
+  The packaged rich-clipboard self-test exits 0. `publish/latest/QuickReplyKit.exe` is still the older B17 build because
+  that exact file is running and locked; do not close it. Promote the pending file after the user exits that instance.
+  No external .NET install is needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
   `--selftest-foreground` all returned exit code 0.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
@@ -27,7 +29,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| B16 sandboxed dynamic-variable scripts | `28a12ad` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete; merge follows |
+| B16 sandboxed dynamic-variable scripts | `db07f5e` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete |
 | B17 import review selection | `ca730f6` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
 | B18 selected-folder indication | `57576ed` | 569/569; 45/45 focused; system-color bar plus semibold non-color cue; nav row width preserved | Complete |
 | B15 complete About / Diagnostics status | `5c30e8e` | 567/567 integrated; actual hotkey/watcher/logger state; safe path tokens; both themes; separate correctness/privacy/UI QA | Complete |
@@ -86,8 +88,9 @@ Priority and acceptance detail live in [`BACKLOG.md`](BACKLOG.md). Immediate ord
 
 **Known confirmed regressions/defects:** none on merged `main`.
 
-**Active worktrees:** `feature/sandboxed-script-engine` is complete at 706 tests and awaits merge into `main`.
-A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active worktrees:** no product feature is active until B19 begins. The clean, merged
+`feature/sandboxed-script-engine` worktree can be removed. A stale interrupted historical hotkey worktree remains
+quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
