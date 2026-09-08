@@ -8,31 +8,30 @@
 
 - **Last audited:** 2026-09-08
 - **Current product merge:** `08de27d` (B31 whole-app UI and interaction consistency);
-  use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B31 are complete on `main`. B32 is independently QA'd on `end-user-readme` and
-  ready to merge; it has no product-code changes.
+  **current documentation merge:** `1f9839b` (B32 end-user guide). Use `git rev-parse HEAD` for the docs-inclusive tip.
+- **Current product baseline:** B01-B32 are complete on `main`. The active backlog is empty.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **785 passed** on merged `main` after B31, independently rerun after visual/accessibility review.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `08de27d` at 69,932,892 bytes (SHA-256
-  `0F9DF311DA13C6346C8DB9EA42831D412F11A0AA824BFB36D6B8C3F21753C604`). The prior packaged rich-clipboard gate exits 0.
-  The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
-  temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
-  gates after the remaining backlog integrations. No external .NET install is needed.
-- **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
-  `--selftest-foreground` all returned exit code 0 for three consecutive branch rounds and one final packaged
-  `b5a6ff0` round; every temporary Notepad window closed normally and no visible Notepad remained.
+- **Tests:** **785 passed** on merged `main` after B32, independently rerun after documentation QA.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt after `1f9839b` at 69,932,895 bytes (SHA-256
+  `86EF685893579E0C248FBD569862EA53231BE0906BB1413736001A39ECD6C0BE`). It is self-contained; no external .NET or
+  Visual C++ installation is needed.
+- **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
+  This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
+  returned 1 (`PASTE=fail CLIPBOARD_RESTORED=ok`, `UIPASTE=fail`). Interactive QA and earlier foreground-capable rounds
+  pass all four gates. No QuickReplyKit process remained and pre-existing user Notepad windows were not touched.
 - **Git:** `origin` is `https://github.com/KevinTLucas/QuickReplyKit.git`; its initial MIT-license commit was
   preserved when the local history was connected. Completed feature branches listed below are ancestors of `main`.
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable. B31's consistency, accessibility, compact-layout, DPI, and themed-menu changes are shipped and
-  independently QA'd. B32's end-user guide, curated screenshots, and separate maintainer guide are awaiting QA.
+- **State:** launchable and backlog-complete. The end-user README, curated screenshots, maintainer guide, architecture,
+  and handoff state are current and independently QA'd.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B32 end-user GitHub guide | `1f9839b` | 785/785; 11 privacy-checked images; links/HTML/Markdown/labels/paths/security wording independently verified | Complete |
 | B31 whole-app UI consistency | `08de27d` | 785/785; 20/20 focused; Light/Dark/compact captures; real automation peers, live-DPI sizing, themed menus, keyboard and layout checks | Complete |
 | B30 optional dynamic-variable/script examples | `fc3a5a5` | 765/765; Light/Dark/compact launcher and Script Manager; trust/security/content review; native example remains untrusted | Complete |
 | B29 response edit label | `8a3de68` | 761/761; 4/4 focused; Light/Dark/compact context-menu and compose captures; handler and transient behavior unchanged | Complete |
@@ -102,18 +101,12 @@
 
 ## Remaining Work
 
-B32 is the only active item in [`BACKLOG.md`](BACKLOG.md). It is complete and independently QA'd on the isolated
-`end-user-readme` worktree, ready for `--no-ff` merge. The branch moves build/publish/runtime dependency/contributor
-details to `docs/DEVELOPMENT.md`, replaces the root README with an end-user guide, and adds 10 curated current UI
-screenshots plus the app icon. QA checked every user-facing claim against shipping code, recaptured misleading editor
-and shortcut examples, inspected every PNG, validated local links/Markdown/HTML, and confirmed screenshot privacy.
-The Release build is clean and the unchanged product baseline remains 785/785. There is no product-source or
-build-behavior change; the only project-file edit corrects a documentation link in an XML comment.
+No active backlog work. B01-B32 are implemented, independently QA'd, merged, documented, packaged, and pushed.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** `end-user-readme` owns B32 documentation only. A stale interrupted historical hotkey worktree
-remains quarantined and is not an active source of changes.
+**Active worktrees:** no reviewed feature branch is active. A stale interrupted historical hotkey worktree remains
+quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -145,7 +138,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **785** green after B31. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **785** green after B32. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.

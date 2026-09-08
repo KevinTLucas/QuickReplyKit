@@ -205,9 +205,9 @@ view-models, interop, and app wiring.
 
 ## Known completion boundaries
 
-The implemented product paths above are merged and tested through B31. B32 is documentation-only and does not change
+The implemented product paths above are merged and tested through B32; B32 was documentation-only and did not change
 these contracts. [`docs/STATUS.md`](docs/STATUS.md) records the exact audited baseline, and
-[`docs/BACKLOG.md`](docs/BACKLOG.md) contains unfinished requested work only.
+[`docs/BACKLOG.md`](docs/BACKLOG.md) contains unfinished requested work only (currently none).
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
