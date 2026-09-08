@@ -259,7 +259,8 @@ public class LauncherViewModelTests
 
             vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1/Sub");
             vm.Query = "gamma";
-            Assert.Equal("Cat1 › Sub", vm.SearchScopeLabel);
+            Assert.Equal("Sub", vm.SearchScopeLabel);
+            Assert.Equal("Cat1/Sub", vm.CurrentCategory);
 
             vm.SelectedNav = Nav(vm, NavScope.All);
 
