@@ -87,7 +87,7 @@ public sealed class LauncherViewModel : ViewModelBase
 
     public bool HasSearchScope => _selectedNav?.Scope == NavScope.Category;
 
-    public string SearchScopeLabel => CurrentCategory.Replace("/", " › ");
+    public string SearchScopeLabel => HasSearchScope ? _selectedNav!.Title : "";
 
     /// <summary>Return to global search without changing the current query.</summary>
     public void ClearSearchScope()

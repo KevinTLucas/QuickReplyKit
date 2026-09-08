@@ -6,14 +6,14 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `d1f39a0` (B24 hotkey-manager combination-capture removal);
+- **Current product merge:** `99d8efd` (B28 icon-only Import / Export trigger);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B24 are complete. B21 has passed branch QA and awaits merge;
-  B25 is in QA; B26-B30 remain queued.
+- **Current product baseline:** B01-B20 and B22-B28 are complete. B21 passed independent QA and awaits current-main
+  regression; B29 passed branch QA and awaits current-main integration; B30 remains queued last.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **729 passed** after B24 independent hotkey-manager QA; two obsolete data rows for the removed controls were deleted.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `d1f39a0` at 69,920,656 bytes (SHA-256
-  `4C79B1FCFA889A8201B1FC54802FB77586F70B060FF9F88E04D35088ACEB2D5A`). The prior packaged rich-clipboard gate exits 0.
+- **Tests:** **732 passed** on merged `main` after B28.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `99d8efd` at 69,920,438 bytes (SHA-256
+  `9F1269BF074E76A1851BAC326F6AA09F888214FCCAA2454687452F57E009B319`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -26,13 +26,17 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. The confirmed import crash is fixed and independently regression-tested. B21 native-script
-  implementation is isolated, independently QA'd, and ready for merge; it is not yet shipped. See
-  [`BACKLOG.md`](BACKLOG.md) for B21 and B25-B30.
+  implementation is isolated and independently QA'd but not yet shipped. See [`BACKLOG.md`](BACKLOG.md) for B21 and
+  B29-B30.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B28 icon-only Import / Export trigger | `99d8efd` | 732/732; 25/25 focused; Light/Dark/compact captures; keyboard menu anchored to trigger | Complete |
+| B27 native selected-folder background | `44f9267` | 732/732; 47/47 focused; Light/Dark/compact captures; High Contrast system brushes and non-color cue verified | Complete |
+| B26 short scoped-search label | `1ffac1f` | 732/732; 47/47 focused; Light/Dark/compact captures; duplicate leaves retain full-path filtering and accessibility | Complete |
+| B25 backup and Trash settings layout | `8658443` | 730/730; 28/28 focused; Light/Dark/minimum-height captures; scrolling content and fixed actions verified | Complete |
 | B24 remove shortcut-combination lookup | `d1f39a0` | 729/729; 94/94 focused; Light/Dark/minimum-size captures; normal filter/conflict/Edit/Clear preserved | Complete |
 | B23 About / Diagnostics chrome cleanup | `2e23918` | 731/731; 30/30 focused; Light/Dark/minimum-size captures; native X, Alt+F4 and Escape verified | Complete |
 | B22 per-user paths and truthful diagnostics | `dc4b2a8` | 730/730; exact resolved paths; saved custom paths; no hotkey values/content; invalid and environment-variable paths | Complete |
@@ -91,9 +95,9 @@
 
 ## Remaining Work
 
-B21 and B25-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 passed independent branch QA and awaits its normal
-merge/integrated-publish gate; B25 is awaiting its final visual QA gate, B26-B29 are isolated and queued, and B30 is
-explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
+B21 and B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 passed independent security/UI QA and awaits current-main
+regression; B29 passed independent wording/interaction QA and awaits current-main integration; B30 is explicitly last.
+Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **B21 branch evidence:** `feature/native-script-runtime` builds Release with 0 warnings / 0 errors and passes
@@ -107,7 +111,7 @@ the final Release rebuild. It is ready to merge but not shipped yet.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** isolated branches for B21 and B25-B29 are listed by `git worktree list`; none are merged until their
+**Active worktrees:** isolated branches for B21 and B29 are listed by `git worktree list`; neither is merged until its
 individual QA and integrated regression pass. A stale interrupted historical hotkey worktree remains quarantined and
 is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
@@ -140,7 +144,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **729** green after B20. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **732** green after B27. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.

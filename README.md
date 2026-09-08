@@ -78,8 +78,9 @@ So: copy the one exe to any supported Windows PC and it runs — no prerequisite
 
 From the launcher you can, via the `+` / clipboard buttons and the right-click menu on a response:
 
-The active folder or built-in view is marked with a slim selection edge and emphasized label, so the current search
-scope remains visible in Light, Dark, and Windows High Contrast themes.
+The active folder or built-in view uses the native selection background and an emphasized label, so the current search
+scope remains visible without relying on color alone in Light, Dark, and Windows High Contrast themes. The search-scope
+chip uses the selected folder's short display name while filtering with its complete nested path.
 
 - **New** — create a response and choose (or create) its folder in the hierarchy.
 - **New from clipboard** — turn whatever you just copied into a new response, opened in the editor. Clipboard HTML
@@ -128,7 +129,8 @@ language and source: editing either revokes trust, and QuickReplyKit never expor
 
 - **Copy folders/files** directly into your library — the folder hierarchy and responses appear
   automatically (no restart; the app watches the library for changes).
-- Use the launcher's labelled **⇄ Import / Export** menu to import responses or export the full library. Export one
+- Use the launcher's **⇄** menu (tooltip: Import responses or export the full library) to import responses or export
+  the full library. Export one
   response from its result context menu, or export one folder from its folder context menu. Import first shows a
   selectable New/Changed/Duplicate/Identical/Invalid/Unsafe review list; changed paths can be skipped, overwritten,
   or kept as a second copy. Invalid content never blocks valid responses. Script definitions identify restricted versus
@@ -149,7 +151,7 @@ Open from the ⚙ button or the tray. You can set:
 
 - **Global hotkey** (default **Ctrl+Alt+D**).
 - **Library folder** location.
-- **Backup folder** location, with Change/Open/Reset. The default is `%USERPROFILE%\Documents\QuickReplyKit\Backups`;
+- **Backup folder** location, with Change/Open. The default is `%USERPROFILE%\Documents\QuickReplyKit\Backups`;
   managed local or network paths are accepted when they are absolute, writable, and outside the response library.
 - **Default paste behavior** (rich text or plain text).
 - **Appearance** — System / Light / **Dark** theme (System follows your Windows setting).

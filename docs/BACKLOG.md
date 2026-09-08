@@ -25,31 +25,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   Restricted expressions remain the default and existing definitions continue to load unchanged. Ready for the
   normal `--no-ff` merge/integrated publish gate; not shipped yet.
 
-### B25 - Reorganize backup and Trash settings
-
-- **Severity / status:** P2 · QA
-- **Acceptance:** remove the Backup Folder Reset button and its unused handler. Place Backup/Restore Library and Trash
-  controls directly beneath the Backup Folder settings, preserving validation, keyboard access, compact resizing, and
-  both themes.
-
-### B26 - Short scoped-search label
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** the active scoped-search chip shows only the selected folder's display name, not the full hierarchy;
-  search behavior and the full underlying category path remain unchanged.
-
-### B27 - Background-only selected-folder state
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** remove the bar-style selected-folder indicator. Selection is communicated through a subtle but
-  visible background in Light and Dark themes plus the existing non-color cue; preserve High Contrast accessibility.
-
-### B28 - Icon-only Import / Export menu trigger
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** remove the visible “Import / Export” label from the launcher trigger and retain the existing icon,
-  tooltip, automation name, keyboard access, and menu behavior without increasing compact-window clutter.
-
 ### B29 - Rename transient response editing action
 
 - **Severity / status:** P2 · Requested · Queued
