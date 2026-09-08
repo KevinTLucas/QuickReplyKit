@@ -88,7 +88,7 @@ chip uses the selected folder's short display name while filtering with its comp
 - **Edit** — a built-in rich-text editor: bold, italic, underline, **strikethrough**, bullet/numbered
   lists, links, paragraphs, plus **font size/heading, standard text colors, highlight colors, and
   alignment** — no need to touch markup or files. Tags are entered as removable colored chips.
-- **Edit & insert** — open the selected response (with variables already resolved) in the editor, tweak
+- **Edit Response Text…** — open the selected response (with variables already resolved) in the editor, tweak
   the final message, and insert it — **without** saving a new response.
 - **Duplicate**, **Rename**, **Move to…** another folder.
 - **Copy** to the clipboard, **Open containing folder** in Explorer.

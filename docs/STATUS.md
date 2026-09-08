@@ -8,8 +8,8 @@
 - **Last audited:** 2026-09-08
 - **Current product merge:** `4fa69ec` (B21 explicitly trusted native scripts);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B28 are complete. B29 passed branch QA and awaits current-main integration; B30
-  remains queued last.
+- **Current product baseline:** B01-B28 are complete. B29 passed independent QA and current-main regression and awaits merge;
+  B30 remains queued last.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **760 passed** on merged `main` after B21.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `4fa69ec` at 69,931,950 bytes (SHA-256
@@ -97,8 +97,9 @@
 
 ## Remaining Work
 
-B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B29 passed independent wording/interaction QA and awaits current-main
-integration; B30 is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
+B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B29 passed independent Light/Dark/compact wording/interaction QA and
+761/761 current-main tests; it awaits merge. B30 is explicitly last. Each implementation requires
+a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** none after B20.
