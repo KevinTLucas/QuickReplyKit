@@ -185,7 +185,10 @@ future requested work and currently has no active items.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
-  `-ui`, `-foreground`). UI changes also use isolated app launches, repository screenshot helpers, and direct visual
+  `-ui`, `-foreground`). The Notepad gates open one empty temporary document in a new window and close it normally;
+  they use native Ctrl+V when foreground activation succeeds and a test-only `WM_PASTE` sender when Windows correctly
+  denies background automation foreground input, while preserving the real clipboard and command paths. UI changes
+  also use isolated app launches, repository screenshot helpers, and direct visual
   review without GPT Computer Use/UIAutomation or interference with unrelated windows. Two manual spot-checks remain:
   a live hotkey paste into a third-party app,
   and confirming pasted text is absent from Win+V history.
