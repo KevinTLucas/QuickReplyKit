@@ -20,12 +20,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
 
-### B23 - About / Diagnostics window chrome cleanup
-
-- **Severity / status:** P2 · QA
-- **Acceptance:** remove the redundant in-content Close button from About / Diagnostics; the standard window close
-  control remains keyboard- and pointer-accessible, with no layout gap.
-
 ### B24 - Remove shortcut-combination lookup
 
 - **Severity / status:** P2 · Requested · Queued
