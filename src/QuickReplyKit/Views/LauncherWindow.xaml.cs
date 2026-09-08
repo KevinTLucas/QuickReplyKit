@@ -423,7 +423,8 @@ public partial class LauncherWindow : Window
             Diag.Error("LauncherWindow", "Import", "import workflow failed safely", ex);
             ConfirmDialog.Info(this, "Import failed",
                 "QuickReplyKit stopped the import safely. The app and your existing library remain available. " +
-                "Some selected items may not have been imported; the pre-import backup is available if needed. " +
+                "Some selected items may not have been imported. If execution had started, its safety backup is " +
+                "available from Settings. " +
                 "See About / Diagnostics for the log location.");
         });
     }

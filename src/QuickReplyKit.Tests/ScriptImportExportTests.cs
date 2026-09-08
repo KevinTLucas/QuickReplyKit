@@ -149,6 +149,40 @@ public class ScriptImportExportTests
         Assert.False(ledger.IsTrusted(planned));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TrustFailure_RollsBackInstalledScript(bool overwrite)
+    {
+        using var t = new TempDir();
+        string lib = t.Of("lib");
+        Directory.CreateDirectory(lib);
+        string destination = Path.Combine(lib, "Greeting.qrkscript.json");
+        string? original = overwrite ? Script("old", "Old", "\"old\"") : null;
+        if (original is not null) File.WriteAllText(destination, original);
+
+        string source = t.Of("Greeting.qrkscript.json");
+        File.WriteAllText(source, Script("new", "New", "\"new\""));
+        var plan = LibraryPorter.PlanImport(lib, source, "");
+        var entry = Assert.Single(plan.Entries);
+        string blockedParent = t.Of("trust-parent");
+        File.WriteAllText(blockedParent, "not a directory");
+        var opened = ScriptTrustLedger.Open(Path.Combine(blockedParent, "trust.json"));
+
+        var result = LibraryPorter.Import(plan,
+            new Dictionary<int, ImportAction>
+            {
+                [entry.Id] = overwrite ? ImportAction.Overwrite : ImportAction.Import,
+            },
+            new HashSet<int> { entry.Id }, opened.Value!);
+
+        Assert.Equal(ImportOutcomeKind.Failed, Assert.Single(result.Outcomes).Kind);
+        if (original is null) Assert.False(File.Exists(destination));
+        else Assert.Equal(original, File.ReadAllText(destination));
+        Assert.Empty(Directory.EnumerateFiles(lib, "*.rollback-*"));
+        Assert.Empty(Directory.EnumerateFiles(lib, "*.tmp-*"));
+    }
+
     [Fact]
     public void ScriptTraversal_IsUnsafe_AndNeverWritesOutsideLibrary()
     {

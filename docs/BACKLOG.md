@@ -18,7 +18,8 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   Regression coverage must exercise malformed, inaccessible, stale, and failed-write inputs.
 - **Implementation:** `bug/import-crash` fixes the crashing read-only source binding (`Mode=OneWay`), adds a single
   non-throwing boundary around the complete WPF import workflow, records privacy-safe review/execution stage errors,
-  and adds recovery dialogs plus tests proving the library and subsequent actions remain usable.
+  makes script installation/trust transactional with rollback, and adds recovery dialogs plus tests proving the
+  library and subsequent actions remain usable.
 
 ### B21 - Explicitly trusted native scripts
 

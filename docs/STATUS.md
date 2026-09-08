@@ -87,7 +87,7 @@
 
 ## Remaining Work
 
-B20-B29 are active in [`BACKLOG.md`](BACKLOG.md). B20 is implemented on `bug/import-crash` with 727 tests passing and
+B20-B29 are active in [`BACKLOG.md`](BACKLOG.md). B20 is implemented on `bug/import-crash` with 729 tests passing and
 awaits independent QA. Work in severity order: B20 first; then B21/B22; then the focused
 UI cleanup items B23-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
