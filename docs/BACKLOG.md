@@ -20,13 +20,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
 
-### B25 - Reorganize backup and Trash settings
-
-- **Severity / status:** P2 · QA
-- **Acceptance:** remove the Backup Folder Reset button and its unused handler. Place Backup/Restore Library and Trash
-  controls directly beneath the Backup Folder settings, preserving validation, keyboard access, compact resizing, and
-  both themes.
-
 ### B26 - Short scoped-search label
 
 - **Severity / status:** P2 · QA
