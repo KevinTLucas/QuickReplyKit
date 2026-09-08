@@ -177,6 +177,29 @@ public class AsyncScriptIntegrationTests
         });
     }
 
+    [Fact]
+    public void InstantHotkey_DuplicateWhileNativeWorkRuns_IsIgnored()
+    {
+        Sta(async () =>
+        {
+            using var temp = new TempDir();
+            var trust = SaveTrustedScript(temp, "Slow",
+                "Start-Sleep -Milliseconds 500; [Console]::Out.Write('once')");
+            TestFiles.WriteResponse(temp.Of("lib", "Answer.json"),
+                html: "<p>{{script:Slow}}</p>");
+            using var library = Service(temp, trust);
+            var insert = new FakeInsert();
+            using var hotkeys = new HotkeyService(new AppConfig(), library, insert, () => Now);
+
+            hotkeys.InstantPaste("Answer.json", plain: false);
+            Task first = hotkeys.PendingPaste;
+            hotkeys.InstantPaste("Answer.json", plain: false);
+            await first;
+
+            Assert.Equal("<p>once</p>", Assert.Single(insert.Calls).Item.Html);
+        });
+    }
+
     private static ScriptTrustLedger SaveTrustedScript(TempDir temp, string name, string source,
         ScriptTrustLedger? trust = null)
     {

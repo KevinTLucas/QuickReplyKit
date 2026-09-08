@@ -120,6 +120,7 @@ public static class NativeScriptRunner
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardInputEncoding = Encoding.UTF8,
             StandardOutputEncoding = Encoding.UTF8,
         };
         start.ArgumentList.Add("-NoLogo");

@@ -25,6 +25,7 @@ public sealed class HotkeyService : IDisposable
     private readonly Func<DateTimeOffset> _now;
     private readonly CancellationTokenSource _stop = new();
     private bool _disposed;
+    private int _pasteRunning;
 
     private string _launcherGesture;
     private List<Entry> _entries = new();
@@ -96,7 +97,10 @@ public sealed class HotkeyService : IDisposable
     }
 
     internal void InstantPaste(string relativePath, bool plain)
-        => PendingPaste = InstantPasteAsync(relativePath, plain);
+    {
+        if (_disposed || Interlocked.CompareExchange(ref _pasteRunning, 1, 0) != 0) return;
+        PendingPaste = InstantPasteAsync(relativePath, plain);
+    }
 
     internal Task PendingPaste { get; private set; } = Task.CompletedTask;
 
@@ -128,6 +132,7 @@ public sealed class HotkeyService : IDisposable
         {
             Diag.Warn("HotkeyService", "Hotkey", "instant-paste failed safely", ex);
         }
+        finally { Interlocked.Exchange(ref _pasteRunning, 0); }
     }
 
     public void Dispose()
