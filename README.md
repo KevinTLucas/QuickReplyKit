@@ -25,6 +25,9 @@ out of the way and returns you to your work.
 Use the `QuickReplyKit.exe` supplied by your administrator or project maintainer. Put it in a stable folder such as
 `C:\Tools\QuickReplyKit`, then double-click it. QuickReplyKit remains available in the Windows notification area.
 
+If you are taking a build directly from this repository, use the tracked `release` folder. Copy the entire folder contents
+to a stable machine location and run `release\\QuickReplyKit.exe`.
+
 The portable build supports **Windows 11 x64 and Microsoft-supported Windows 10 Enterprise/LTSC x64 releases**. A
 clean PC does not need a separate .NET runtime, SDK, or Visual C++ Redistributable.
 
@@ -33,9 +36,9 @@ You can distribute either:
 | Package | First-run result |
 |---|---|
 | `QuickReplyKit.exe` only | Starts with an empty response library. Users can create or import responses. |
-| `QuickReplyKit.exe` plus `DefaultLibrary\` beside it | Seeds the supplied starter responses and optional examples, but only when the user's library is empty. |
+| `QuickReplyKit.exe` plus `DefaultLibrary\Examples\` beside it | Seeds optional sample response patterns, but only when the user's library is empty. |
 
-Existing libraries are never replaced by `DefaultLibrary`. To add the optional examples after an upgrade, copy the
+Existing libraries are never replaced by `DefaultLibrary\Examples`. To add the optional examples after an upgrade, copy the
 `DefaultLibrary\Examples` folder into the configured response library.
 
 > **Windows may show SmartScreen for an unsigned build.** Use software supplied by a source you trust. An
