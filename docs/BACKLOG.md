@@ -34,9 +34,11 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B28 - Icon-only Import / Export menu trigger
 
-- **Severity / status:** P2 · Requested · Queued
+- **Severity / status:** P2 · QA
 - **Acceptance:** remove the visible “Import / Export” label from the launcher trigger and retain the existing icon,
   tooltip, automation name, keyboard access, and menu behavior without increasing compact-window clutter.
+- **Implemented on:** `ui/import-export-trigger`; Release build is clean and the integrated branch passes 730/730
+  tests. Independent Light/Dark/compact interaction and accessibility QA remains before merge.
 
 ### B29 - Rename transient response editing action
 
