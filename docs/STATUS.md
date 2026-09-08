@@ -7,12 +7,12 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `0ae7786` (B36 rich editor formatting persistence).
-- **Current product baseline:** B01-B34 and B36 are complete on `main`; B35 remains isolated for manual Word QA.
+- **Current product merge:** `17470ce` (B37 PowerShell dynamic-variable execution and failure UX).
+- **Current product baseline:** B01-B34 and B36-B37 are complete on `main`; B35 remains isolated for manual Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **811 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
-- **Portable publish:** `release/QuickReplyKit.exe` was built from product merge `0ae7786` at 69,937,725 bytes (SHA-256
-  `D8AC0CD204433D4E74DEDB4EE7486C62051B7258ECF9AF7481177944871D1FA5`). It is self-contained; no external .NET or
+- **Tests:** **825 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
+- **Portable publish:** `release/QuickReplyKit.exe` was built from product merge `17470ce` at 69,941,774 bytes (SHA-256
+  `9AED7AF2230AEAA1113353514E1B6C27700DB7263A0DBB12C5F64429CE41C7FE`). It is self-contained; no external .NET or
   Visual C++ installation is needed.
 - **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
   This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
@@ -23,14 +23,14 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. Editor formatting persistence is fixed. B37 PowerShell dynamic-variable execution
-  and visible failure handling is active on `bugfix/powershell-script-execution`; B35's manual Microsoft Word paste
-  acceptance remains isolated and must not be mixed into this branch.
+- **State:** launchable and green. PowerShell multiline/Unicode execution, visible failure handling, and preview-result
+  reuse are shipped. Only B35's manual Microsoft Word paste acceptance remains isolated from `main`.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B37 PowerShell execution and failure UX | `17470ce` | 825/825 Release x4 plus two independent exact-tip reviews; cancellation 20/20 and re-QA 20/20; multiline/Unicode shipped example; SID/elevation inheritance; source-free command line; safe blocked/error classes; no failed paste/copy/hide/Recent; preview reuse/invalidation; four inert examples | Complete |
 | B36 rich editor formatting persistence | `0ae7786` | 811/811; 57/57 focused; two independent exact-tip reviews; every exposed editor format, apply/remove, JSON reload, mixed selections, list/link edge cases | Complete |
 | B34 parser-backed Word RTF conversion | `b1749ff` | 788/788; RTF round-trip covers bold, italic, color and font size | Complete |
 | B32 end-user GitHub guide | `1f9839b` | 785/785; 11 privacy-checked images; links/HTML/Markdown/labels/paths/security wording independently verified | Complete |
@@ -90,7 +90,9 @@
 - **Library/editor:** live-watched folder hierarchy; create/edit/duplicate/rename/move; rich editor with standard
   color/highlight palettes, lists, links, alignment, size, strike, response-tag chips, edit-before-insert, templates,
   safe built-in variables, response includes, restricted `{{script:Name}}` expressions, and explicitly trusted
-  full-permission Windows PowerShell definitions. The Script Manager supports
+  full-permission Windows PowerShell definitions. Multiline/Unicode PowerShell runs as QuickReplyKit's Windows account
+  and privilege level; failures stop before paste/copy and show a dialog or tray notice, while fresh preview results
+  are reused for immediate insertion. The Script Manager supports
   create/edit/validate/trust/enable/export/delete and protects dirty drafts.
 - **Safety/sharing:** selectable import preview; zip/file import/export; per-conflict policies; invalid-file tolerance;
   exact per-script source/language review with no bulk code acceptance; local source-bound trust; importer and Trash
@@ -103,18 +105,6 @@
 
 ## Remaining Work
 
-**B37 is in progress** on `bugfix/powershell-script-execution`. The confirmed defect is that script states and runtime
-failures become inline template markers without an actionable popup, and the marker can be pasted as response text.
-The implementation branch is green at **825 tests**: the complete source is parsed from UTF-8 stdin by a fixed
-source-free bootstrap; multiline/Unicode execution and the shipped Friday example work; the child SID matches the
-QuickReplyKit process; blocked/runtime failures are safely classified; failed actions do not paste/copy/hide/mark
-Recent and raise a dialog/tray event; a selected preview result is reused for immediate actions; and four inert
-support-team examples were added. Independent QA/security review and final merge remain.
-One independent full-suite review exposed a timer-starvation flake in the cancellation regression test (the production
-path passed in isolation). The test now uses a child-ready handshake followed by explicit cancellation; it passed
-20/20 focused repetitions and the complete 825-test suite passed four consecutive Release runs. Exact-tip re-QA and
-final merge remain.
-
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
 merging it.
@@ -124,9 +114,8 @@ Manual B35 build: `publish/word-fidelity-test/QuickReplyKit.exe` (69,933,438 byt
 
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
-**Active branches:** `bugfix/powershell-script-execution` owns B37; `feature/word-style-word-fidelity` owns only B35's
-manual acceptance. A stale interrupted historical hotkey worktree remains quarantined and is not an active source of
-changes.
+**Active branch:** `feature/word-style-word-fidelity` owns only B35's manual acceptance. A stale interrupted historical
+hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -158,7 +147,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **811** green on `main` or **791** on B35's older base. Registry tests need normal
+4. Run build + tests; expect **825** green on `main` or **791** on B35's older base. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
