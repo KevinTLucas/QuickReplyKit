@@ -19,7 +19,7 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
-  <!-- Portable single-file publish (see README for the full command). Passing
+  <!-- Portable single-file publish (see docs/DEVELOPMENT.md for the full command). Passing
        -p:PublishSingleFile=true is then enough to also pull the native libs into the
        self-extracting exe and compress it. Trimming is intentionally NOT enabled (WPF is
        not trim-safe). DefaultLibrary content copies loose beside the exe (see below), which

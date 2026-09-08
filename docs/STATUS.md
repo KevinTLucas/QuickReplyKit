@@ -1,6 +1,7 @@
 # QuickReplyKit - Project Status
 
-> Current-state source of truth. Read this after [`../README.md`](../README.md). Update it with every
+> Current-state source of truth. Maintainers read this after [`DEVELOPMENT.md`](DEVELOPMENT.md); the root
+> [`README.md`](../README.md) is the end-user guide. Update this file with every
 > meaningful change; a change is not complete until this file agrees with the code, tests, and backlog.
 
 ## Audited Baseline
@@ -8,7 +9,8 @@
 - **Last audited:** 2026-09-08
 - **Current product merge:** `08de27d` (B31 whole-app UI and interaction consistency);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B31 are complete on `main`. B32 is queued last.
+- **Current product baseline:** B01-B31 are complete on `main`. B32 is implemented on `end-user-readme` and awaiting
+  independent documentation QA; it has no product-code changes.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **785 passed** on merged `main` after B31, independently rerun after visual/accessibility review.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `08de27d` at 69,932,892 bytes (SHA-256
@@ -25,7 +27,7 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. B31's consistency, accessibility, compact-layout, DPI, and themed-menu changes are shipped and
-  independently QA'd. B32 end-user documentation remains queued last.
+  independently QA'd. B32's end-user guide, curated screenshots, and separate maintainer guide are awaiting QA.
 
 ## Merged And QA'd
 
@@ -99,13 +101,18 @@
 
 ## Remaining Work
 
-B32 is the only active item in [`BACKLOG.md`](BACKLOG.md). It is the final end-user GitHub README and visual guide;
-developer-heavy README material must move into internal documentation without being lost.
+B32 is the only active item in [`BACKLOG.md`](BACKLOG.md). It is implemented on the isolated `end-user-readme`
+worktree and awaits independent editorial, link, screenshot, and accuracy QA. The branch moves build/publish/runtime
+dependency/contributor details to `docs/DEVELOPMENT.md`, replaces the root README with an end-user guide, and adds
+10 curated current UI screenshots plus the app icon. Local links, every PNG, image-tracking rules, code fences,
+headings, and screenshot privacy were checked; the Release build is clean and the unchanged product baseline remains
+785/785. There is no product-source or build-behavior change; the only project-file edit corrects a documentation
+link in an XML comment.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** no reviewed feature branch is active. A stale interrupted historical hotkey worktree remains
-quarantined and is not an active source of changes.
+**Active worktrees:** `end-user-readme` owns B32 documentation only. A stale interrupted historical hotkey worktree
+remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -132,7 +139,8 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 
 ## Cold-Pickup Checklist
 
-1. Read [`../README.md`](../README.md), this file, then [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+1. Read [`DEVELOPMENT.md`](DEVELOPMENT.md), this file, then [`../ARCHITECTURE.md`](../ARCHITECTURE.md). The root
+   [`README.md`](../README.md) is the end-user guide.
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.

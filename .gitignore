@@ -9,7 +9,7 @@ obj/
 artifacts/
 publish/
 
-## Test / capture artifacts
+## Test / capture artifacts (only curated GitHub documentation images are tracked)
 *.png
 !docs/**/*.png
 TestResults/
