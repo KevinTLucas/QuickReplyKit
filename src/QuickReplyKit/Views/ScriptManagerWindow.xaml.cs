@@ -1,6 +1,7 @@
 using System.IO;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Win32;
@@ -12,6 +13,13 @@ namespace QuickReplyKit.Views;
 
 public partial class ScriptManagerWindow : Window
 {
+    private const string ExpressionStarter = "\"Hello\"";
+    private const string PowerShellStarter = "Write-Output \"Hello\"";
+    private const string NativeWarningText =
+        "This full-trust Windows PowerShell script runs as your signed-in Windows user. " +
+        "It can read, change, or delete files; access the network, registry, environment, and credentials; " +
+        "and start processes. Trust only code whose exact source you reviewed.";
+
     private readonly ScriptManagerModel _model;
     private ScriptCatalogItem? _selected;
     private bool _loading;
@@ -69,7 +77,9 @@ public partial class ScriptManagerWindow : Window
         _loading = true;
         NameBox.Text = item.Definition?.Name ?? item.Name;
         ExpressionBox.Text = item.Definition?.Expression ?? "";
+        SetLanguage(item.Definition?.Language ?? ScriptDefinitionFile.Language);
         EnabledCheck.IsChecked = item.Definition?.Enabled == true;
+        UpdateLanguagePresentation();
         _loading = false;
         _dirty = false;
         TrustState.Text = item.Status;
@@ -88,8 +98,10 @@ public partial class ScriptManagerWindow : Window
         _selected = null;
         _loading = true;
         NameBox.Clear();
-        ExpressionBox.Text = "\"Hello\"";
+        SetLanguage(ScriptDefinitionFile.Language);
+        ExpressionBox.Text = ExpressionStarter;
         EnabledCheck.IsChecked = true;
+        UpdateLanguagePresentation();
         _loading = false;
         _dirty = false;
         TrustState.Text = "New · not saved or trusted";
@@ -106,10 +118,25 @@ public partial class ScriptManagerWindow : Window
         UpdateButtons();
     }
 
+    private void Language_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        if (ExpressionBox.Text is ExpressionStarter or PowerShellStarter)
+        {
+            _loading = true;
+            ExpressionBox.Text = SelectedLanguage == ScriptDefinitionFile.NativeLanguage
+                ? PowerShellStarter : ExpressionStarter;
+            _loading = false;
+        }
+        UpdateLanguagePresentation();
+        Draft_Changed(sender, e);
+    }
+
     private void Validate_Click(object sender, RoutedEventArgs e)
     {
-        var result = _model.Validate(NameBox.Text, ExpressionBox.Text, EnabledCheck.IsChecked == true, _selected);
-        ShowStatus(result.Success ? "Expression is valid." : result.Error ?? result.Marker, !result.Success);
+        var result = _model.Validate(NameBox.Text, ExpressionBox.Text, EnabledCheck.IsChecked == true,
+            SelectedLanguage, _selected);
+        ShowStatus(result.Success ? "Source is valid." : result.Error ?? result.Marker, !result.Success);
     }
 
     private void Save_Click(object sender, RoutedEventArgs e) => Save(trust: false);
@@ -117,8 +144,9 @@ public partial class ScriptManagerWindow : Window
 
     private bool Save(bool trust)
     {
+        if (trust && !ConfirmTrust(SelectedLanguage, ConfirmNativeTrust)) return false;
         var result = _model.Save(_selected, NameBox.Text, ExpressionBox.Text,
-            EnabledCheck.IsChecked == true, trust);
+            EnabledCheck.IsChecked == true, SelectedLanguage, trust);
         if (!result.Success) { ShowStatus(result.Error ?? "The script could not be saved.", true); return false; }
         _dirty = false;
         RefreshList(result.Item?.FullPath);
@@ -129,6 +157,7 @@ public partial class ScriptManagerWindow : Window
     private void Trust_Click(object sender, RoutedEventArgs e)
     {
         if (_selected?.Definition is not { } reviewed || _dirty) return;
+        if (!ConfirmTrust(reviewed.Language, ConfirmNativeTrust)) return;
         var result = _model.Trust(_selected, reviewed);
         if (!result.Success)
         {
@@ -153,6 +182,13 @@ public partial class ScriptManagerWindow : Window
             _ => false,
         };
     }
+
+    internal static bool ConfirmTrust(string language, Func<bool> confirmNative) =>
+        language != ScriptDefinitionFile.NativeLanguage || confirmNative();
+
+    private bool ConfirmNativeTrust() => ConfirmDialog.Confirm(this, "Trust full-trust Windows PowerShell",
+        NativeWarningText + "\n\nConfirm that you reviewed the exact source visible in the Scripts window.",
+        "Trust PowerShell");
 
     private void Close_Click(object sender, RoutedEventArgs e)
     {
@@ -206,6 +242,24 @@ public partial class ScriptManagerWindow : Window
         DeleteButton.IsEnabled = saved;
         ExportButton.IsEnabled = _selected?.IsValid == true;
         TrustButton.IsEnabled = _selected is { IsValid: true, IsTrusted: false } && !_dirty;
+    }
+
+    private string SelectedLanguage => (LanguageBox.SelectedItem as ComboBoxItem)?.Tag as string
+        ?? ScriptDefinitionFile.Language;
+
+    private void SetLanguage(string language) => LanguageBox.SelectedIndex =
+        language == ScriptDefinitionFile.NativeLanguage ? 1 : 0;
+
+    private void UpdateLanguagePresentation()
+    {
+        bool native = SelectedLanguage == ScriptDefinitionFile.NativeLanguage;
+        SourceLabel.Text = native ? "Windows PowerShell source" : "Expression source";
+        AutomationProperties.SetName(ExpressionBox, native
+            ? "Exact full-trust Windows PowerShell source"
+            : "Exact restricted QuickReplyKit expression source");
+        AutomationProperties.SetHelpText(ExpressionBox, native ? NativeWarningText
+            : "Restricted QuickReplyKit expression language; no file, network, registry, environment, credential, or process access.");
+        NativeWarning.Visibility = native ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void ShowStatus(string message, bool error = false)

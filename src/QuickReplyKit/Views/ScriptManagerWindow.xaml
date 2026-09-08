@@ -35,8 +35,8 @@
         <Grid Grid.Row="0" Margin="0,0,0,12">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel>
-                <TextBlock Text="Sandboxed scripts" FontSize="18" FontWeight="SemiBold"/>
-                <TextBlock Text="Scripts use QuickReplyKit's restricted expression language and run only after you trust them."
+                <TextBlock Text="Scripts" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock Text="Choose a restricted QuickReplyKit expression or full-trust Windows PowerShell. Scripts run only after local trust approval."
                            Foreground="{DynamicResource TextMuted}" FontSize="11" TextWrapping="Wrap"/>
             </StackPanel>
             <Button Grid.Column="1" Content="New script" Style="{StaticResource Btn}" Margin="12,0,0,0"
@@ -78,6 +78,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -94,8 +95,18 @@
                               VerticalAlignment="Center" Checked="Draft_Changed" Unchecked="Draft_Changed"/>
                 </Grid>
 
-                <TextBlock Grid.Row="1" Text="Expression source" Style="{StaticResource Label}"/>
-                <TextBox Grid.Row="2" x:Name="ExpressionBox" Style="{StaticResource Field}"
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="Language" Style="{StaticResource Label}"/>
+                    <ComboBox x:Name="LanguageBox" Style="{StaticResource Field}"
+                              AutomationProperties.Name="Script language"
+                              SelectionChanged="Language_Changed">
+                        <ComboBoxItem Content="Restricted QuickReplyKit expression" Tag="qrk-expr-1"/>
+                        <ComboBoxItem Content="Full-trust Windows PowerShell" Tag="powershell-1"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <TextBlock Grid.Row="2" x:Name="SourceLabel" Text="Expression source" Style="{StaticResource Label}"/>
+                <TextBox Grid.Row="3" x:Name="ExpressionBox" Style="{StaticResource Field}"
                          AutomationProperties.Name="Exact script expression source"
                          AutomationProperties.HelpText="Restricted QuickReplyKit expression language; no operating-system or network access"
                          FontFamily="Cascadia Mono,Consolas,monospace" FontSize="13"
@@ -103,7 +114,14 @@
                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                          TextChanged="Draft_Changed"/>
 
-                <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                    <Border x:Name="NativeWarning" Visibility="Collapsed" Padding="10,8" Margin="0,0,0,8"
+                            Background="{DynamicResource WindowBg}" BorderBrush="{DynamicResource Warning}"
+                            BorderThickness="2" CornerRadius="4"
+                            AutomationProperties.Name="Full-trust Windows PowerShell security warning">
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource Warning}" TextWrapping="Wrap"
+                                   Text="Full-trust Windows PowerShell runs as your signed-in Windows user. It can read, change, or delete files; access the network, registry, environment, and credentials; and start processes. Only trust code you have reviewed."/>
+                    </Border>
                     <TextBlock x:Name="TrustState" FontWeight="SemiBold" TextWrapping="Wrap"/>
                     <TextBlock x:Name="StatusText" Foreground="{DynamicResource TextMuted}" FontSize="11"
                                TextWrapping="Wrap" Margin="0,3,0,0"
@@ -111,7 +129,7 @@
                                views:LiveRegion.Content="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                 </StackPanel>
 
-                <WrapPanel Grid.Row="4" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <WrapPanel Grid.Row="5" HorizontalAlignment="Right" Margin="0,10,0,0">
                     <Button x:Name="ValidateButton" Content="Validate" Style="{StaticResource Btn}" Click="Validate_Click"/>
                     <Button x:Name="SaveButton" Content="Save" Style="{StaticResource Btn}" Click="Save_Click"/>
                     <Button x:Name="SaveTrustButton" Content="Save &amp; trust" Style="{StaticResource Btn}"
