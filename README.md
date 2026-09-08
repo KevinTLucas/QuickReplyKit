@@ -79,7 +79,8 @@ So: copy the one exe to any supported Windows PC and it runs — no prerequisite
 From the launcher you can, via the `+` / clipboard buttons and the right-click menu on a response:
 
 The active folder or built-in view uses the native selection background and an emphasized label, so the current search
-scope remains visible without relying on color alone in Light, Dark, and Windows High Contrast themes.
+scope remains visible without relying on color alone in Light, Dark, and Windows High Contrast themes. The search-scope
+chip uses the selected folder's short display name while filtering with its complete nested path.
 
 - **New** — create a response and choose (or create) its folder in the hierarchy.
 - **New from clipboard** — turn whatever you just copied into a new response, opened in the editor. Clipboard HTML

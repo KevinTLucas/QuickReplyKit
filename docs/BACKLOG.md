@@ -20,12 +20,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
 
-### B26 - Short scoped-search label
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** the active scoped-search chip shows only the selected folder's display name, not the full hierarchy;
-  search behavior and the full underlying category path remain unchanged.
-
 ### B27 - Background-only selected-folder state
 
 - **Severity / status:** P2 · QA

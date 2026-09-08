@@ -259,13 +259,38 @@ public class LauncherViewModelTests
 
             vm.SelectedNav = Nav(vm, NavScope.Category, "Cat1/Sub");
             vm.Query = "gamma";
-            Assert.Equal("Cat1 › Sub", vm.SearchScopeLabel);
+            Assert.Equal("Sub", vm.SearchScopeLabel);
+            Assert.Equal("Cat1/Sub", vm.CurrentCategory);
 
             vm.SelectedNav = Nav(vm, NavScope.All);
 
             Assert.False(vm.HasSearchScope);
             Assert.Equal("gamma", vm.Query);
             Assert.Equal(new[] { "Gamma" }, vm.Results.Select(r => r.Name).ToArray());
+        });
+    }
+
+    [Fact]
+    public void DuplicateLeafFolders_ShowSameShortLabel_ButKeepDistinctScopes()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "IXL", "Tickets", "IXL Reply.json"));
+            TestFiles.WriteResponse(dir.Of("lib", "Canvas", "Tickets", "Canvas Reply.json"));
+            using var svc = NewService(dir);
+            var vm = NewVm(svc, new FakeInsertService());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "IXL/Tickets");
+            vm.Query = "reply";
+            Assert.Equal("Tickets", vm.SearchScopeLabel);
+            Assert.Equal("IXL/Tickets", vm.CurrentCategory);
+            Assert.Equal(new[] { "IXL Reply" }, vm.Results.Select(r => r.Name).ToArray());
+
+            vm.SelectedNav = Nav(vm, NavScope.Category, "Canvas/Tickets");
+            Assert.Equal("Tickets", vm.SearchScopeLabel);
+            Assert.Equal("Canvas/Tickets", vm.CurrentCategory);
+            Assert.Equal(new[] { "Canvas Reply" }, vm.Results.Select(r => r.Name).ToArray());
         });
     }
 

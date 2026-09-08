@@ -6,13 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `8658443` (B25 backup and Trash settings layout);
+- **Current product merge:** `1ffac1f` (B26 short scoped-search label with full-path accessibility);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B25 are complete. B21 is in progress; B27 is in QA; B26 and B28-B30 remain queued.
+- **Current product baseline:** B01-B20 and B22-B26 are complete. B21 is in progress; B27 passed QA and awaits current-main regression; B28-B30 remain queued.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **730 passed** on merged `main` after B25.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `8658443` at 69,920,536 bytes (SHA-256
-  `54F0FF014E01B16FBDD6C8E0B3A90BAD0183A492E85E4619B57D123CD9D1A033`). The prior packaged rich-clipboard gate exits 0.
+- **Tests:** **732 passed** on merged `main` after B26.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `1ffac1f` at 69,920,525 bytes (SHA-256
+  `AB85A1412843C38B230D5DFA6734435979D8195481395424D5300C99882574DB`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -25,12 +25,13 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. The confirmed import crash is fixed and independently regression-tested. See
-  [`BACKLOG.md`](BACKLOG.md) for B21 and B26-B30.
+  [`BACKLOG.md`](BACKLOG.md) for B21 and B27-B30.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B26 short scoped-search label | `1ffac1f` | 732/732; 47/47 focused; Light/Dark/compact captures; duplicate leaves retain full-path filtering and accessibility | Complete |
 | B25 backup and Trash settings layout | `8658443` | 730/730; 28/28 focused; Light/Dark/minimum-height captures; scrolling content and fixed actions verified | Complete |
 | B24 remove shortcut-combination lookup | `d1f39a0` | 729/729; 94/94 focused; Light/Dark/minimum-size captures; normal filter/conflict/Edit/Clear preserved | Complete |
 | B23 About / Diagnostics chrome cleanup | `2e23918` | 731/731; 30/30 focused; Light/Dark/minimum-size captures; native X, Alt+F4 and Escape verified | Complete |
@@ -90,14 +91,14 @@
 
 ## Remaining Work
 
-B21 and B26-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in independent security/UI QA; B27 passes 730/730
-branch tests and awaits independent visual/accessibility QA; B26 and B28-B29 are isolated and queued; B30 is explicitly
-last. Each implementation requires a scoped human-readable branch, independent QA, green full
+B21 and B27-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in independent security/UI QA; B27 passed independent
+Light/Dark/compact and accessibility QA on its pre-B26 baseline and awaits current-main regression; B28-B29 are isolated
+and queued; B30 is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** isolated branches for B21 and B26-B29 are listed by `git worktree list`; none are merged until their
+**Active worktrees:** isolated branches for B21 and B27-B29 are listed by `git worktree list`; none are merged until their
 individual QA and integrated regression pass. A stale interrupted historical hotkey worktree remains quarantined and
 is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
