@@ -105,7 +105,7 @@
 
 **B37 is in progress** on `bugfix/powershell-script-execution`. The confirmed defect is that script states and runtime
 failures become inline template markers without an actionable popup, and the marker can be pasted as response text.
-The implementation branch is green at **824 tests**: the complete source is parsed from UTF-8 stdin by a fixed
+The implementation branch is green at **825 tests**: the complete source is parsed from UTF-8 stdin by a fixed
 source-free bootstrap; multiline/Unicode execution and the shipped Friday example work; the child SID matches the
 QuickReplyKit process; blocked/runtime failures are safely classified; failed actions do not paste/copy/hide/mark
 Recent and raise a dialog/tray event; a selected preview result is reused for immediate actions; and four inert

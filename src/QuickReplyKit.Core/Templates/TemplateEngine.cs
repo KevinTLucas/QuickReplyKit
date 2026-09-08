@@ -66,6 +66,7 @@ public static class TemplateEngine
         public int Cycles;
         public int Limited;
         public int Scripts;
+        public int ScriptFailures;
     }
 
     private static readonly Dictionary<string, Func<DateTimeOffset, string?, string>> Builtins =
@@ -203,6 +204,7 @@ public static class TemplateEngine
         if (++context.ScriptCalls > MaxScriptCalls)
         {
             context.Metrics.Limited++;
+            context.Metrics.ScriptFailures++;
             context.Append("[scripts: too many]");
             context.Errors.Add("This response calls too many scripts.");
             return;
@@ -211,6 +213,7 @@ public static class TemplateEngine
         context.Metrics.Scripts++;
         if (context.EvaluateScript is null)
         {
+            context.Metrics.ScriptFailures++;
             context.Append($"[script missing: {System.Net.WebUtility.HtmlEncode(name)}]");
             context.Errors.Add("Script evaluation is unavailable.");
             return;
@@ -221,10 +224,14 @@ public static class TemplateEngine
             var result = context.EvaluateScript(name, context.Now);
             context.Append(result.Output);
             if (!result.Success)
+            {
+                context.Metrics.ScriptFailures++;
                 context.Errors.Add(result.Error ?? "A response script failed.");
+            }
         }
         catch
         {
+            context.Metrics.ScriptFailures++;
             context.Append("[script error: evaluation-failed]");
             context.Errors.Add("A response script failed unexpectedly.");
         }
@@ -264,7 +271,7 @@ public static class TemplateEngine
 
     private static void Log(int inputLength, int outputLength, Metrics metrics, long elapsedMs) =>
         Diag.Verbose("TemplateEngine", "Template",
-            $"resolve complete inputLength={inputLength} outputLength={outputLength} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} scripts={metrics.Scripts} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={elapsedMs}");
+            $"resolve complete inputLength={inputLength} outputLength={outputLength} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} scripts={metrics.Scripts} scriptFailures={metrics.ScriptFailures} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={elapsedMs}");
 
     private static string Greeting(DateTimeOffset now) =>
         now.Hour < 12 ? "Good morning" : now.Hour < 17 ? "Good afternoon" : "Good evening";
