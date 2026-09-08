@@ -1,6 +1,6 @@
 # QuickReplyKit - Project Status
 
-> Current-state source of truth. Read this after [`../CLAUDE.md`](../CLAUDE.md). Update it with every
+> Current-state source of truth. Read this after [`../README.md`](../README.md). Update it with every
 > meaningful change; a change is not complete until this file agrees with the code, tests, and backlog.
 
 ## Audited Baseline
@@ -22,7 +22,7 @@
   `b5a6ff0` round; every temporary Notepad window closed normally and no visible Notepad remained.
 - **Git:** `origin` is `https://github.com/KevinTLucas/QuickReplyKit.git`; its initial MIT-license commit was
   preserved when the local history was connected. Completed feature branches listed below are ancestors of `main`.
-  Unmerged work is isolated in the
+  Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** launchable. [`BACKLOG.md`](BACKLOG.md) has no active items.
@@ -117,7 +117,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 
 ## Cold-Pickup Checklist
 
-1. Read [`../CLAUDE.md`](../CLAUDE.md), this file, then [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+1. Read [`../README.md`](../README.md), this file, then [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.

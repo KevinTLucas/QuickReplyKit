@@ -17,6 +17,8 @@ TestResults/
 ## Agent worktrees / session data
 .claude/
 .worktrees/
+/AGENTS.md
+/CLAUDE.md
 
 ## OS
 Thumbs.db

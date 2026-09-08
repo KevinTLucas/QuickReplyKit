@@ -3,7 +3,7 @@
 A lightweight Windows "response launcher": global hotkey → find a prewritten response → insert it at the
 cursor in whatever app was focused, **preserving the user's clipboard** and **keeping the content out of
 Windows clipboard history**. This doc is the current design + a map of where things live in the code.
-For the running state, see [`docs/STATUS.md`](docs/STATUS.md); for how to build/run, see [`CLAUDE.md`](CLAUDE.md).
+For the running state, see [`docs/STATUS.md`](docs/STATUS.md); for how to build/run, see [`README.md`](README.md).
 
 ## Stack
 - **WPF, C#, .NET 10** (`net10.0-windows`, `UseWPF=true`). Solution: **`QuickReplyKit.slnx`** (XML solution format).
