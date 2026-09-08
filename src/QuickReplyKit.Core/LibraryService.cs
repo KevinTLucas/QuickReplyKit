@@ -40,6 +40,11 @@ public sealed class LibraryService : IDisposable
     /// <summary>Portable script definitions and their effective local status.</summary>
     public IReadOnlyList<ScriptCatalogItem> Scripts => _scripts.Items;
 
+    /// <summary>Whether template resolution may execute trusted out-of-process scripts.</summary>
+    public bool HasTrustedNativeScripts => _scripts.Items.Any(item =>
+        item.IsValid && item.IsEnabled && item.IsTrusted &&
+        item.Definition?.Language == ScriptDefinitionFile.NativeLanguage);
+
     /// <summary>Raised after the library changed on disk and <see cref="Snapshot"/> was rebuilt.</summary>
     public event Action? Updated;
 
@@ -146,6 +151,24 @@ public sealed class LibraryService : IDisposable
             name => snapshot.ValidResponses.FirstOrDefault(r =>
                 string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Html,
             now, scripts.Evaluate);
+    }
+
+    /// <summary>Resolve a template on a worker so native scripts never block a UI caller.</summary>
+    public Task<string> ResolveTemplateAsync(string html, DateTimeOffset now,
+        CancellationToken cancellationToken = default)
+    {
+        var snapshot = Snapshot;
+        var scripts = _scripts;
+        return Task.Run(() =>
+        {
+            string result = TemplateEngine.Resolve(html,
+                name => snapshot.ValidResponses.FirstOrDefault(r =>
+                    string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Html,
+                now, (name, clock) => scripts.EvaluateAsync(name, clock, cancellationToken)
+                    .GetAwaiter().GetResult());
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
+        }, cancellationToken);
     }
 
     /// <summary>

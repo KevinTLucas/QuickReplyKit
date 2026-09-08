@@ -9,35 +9,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-### B21 - Explicitly trusted native scripts
-
-- **Severity / status:** P1 · In progress
-- **Problem:** `qrk-expr-1` intentionally cannot read files or perform the internal data-processing workflows now
-  requested by users.
-- **Acceptance:** add an explicitly identified native script type that can access local files, parse data, and return
-  response content. Execution must be out of process, bounded by timeout/output limits, cancellable, and isolated from
-  the app process so syntax/runtime failures cannot crash or hang QuickReplyKit. Trust remains local and source-bound;
-  imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
-  clearly that approved native scripts have the same access as the signed-in Windows user.
-
-### B26 - Short scoped-search label
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** the active scoped-search chip shows only the selected folder's display name, not the full hierarchy;
-  search behavior and the full underlying category path remain unchanged.
-
-### B27 - Background-only selected-folder state
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** remove the bar-style selected-folder indicator. Selection is communicated through a subtle but
-  visible background in Light and Dark themes plus the existing non-color cue; preserve High Contrast accessibility.
-
-### B28 - Icon-only Import / Export menu trigger
-
-- **Severity / status:** P2 · Requested · Queued
-- **Acceptance:** remove the visible “Import / Export” label from the launcher trigger and retain the existing icon,
-  tooltip, automation name, keyboard access, and menu behavior without increasing compact-window clutter.
-
 ### B29 - Rename transient response editing action
 
 - **Severity / status:** P2 · QA passed · Ready to merge

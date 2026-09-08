@@ -55,6 +55,19 @@ public class LauncherControlStyleTests
                 .Select(e => (string?)e.Attribute("Content")));
     }
 
+    [Fact]
+    public void Launcher_SearchScopeChip_AnnouncesFullCategoryPath()
+    {
+        var launcher = Load("src/QuickReplyKit/Views/LauncherWindow.xaml");
+        var chip = launcher.Descendants().Single(e =>
+            (string?)e.Attribute("Visibility") == "{Binding HasSearchScope, Converter={StaticResource BoolVis}}");
+
+        Assert.Equal("{Binding CurrentCategory, StringFormat=Search in folder {0}}",
+            (string?)chip.Attribute("AutomationProperties.Name"));
+        Assert.Contains(chip.Descendants(), e =>
+            e.Name.LocalName == "TextBlock" && (string?)e.Attribute("Text") == "{Binding SearchScopeLabel}");
+    }
+
     private static XDocument Load(string path) => XDocument.Load(TestFiles.RepoAsset(path));
 
     private static XElement Named(XDocument document, string name) => document.Descendants()

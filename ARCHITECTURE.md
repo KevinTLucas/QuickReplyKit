@@ -26,7 +26,7 @@ src/
     Diagnostics/             rolling Logger + process-wide Diag facade
     Text/                    HtmlToFlowDocument, FlowDocumentToHtml, HtmlText (plain), CfHtml, ClipboardHtml
     Templates/               TemplateEngine (built-ins + response includes + bounded script tokens)
-    Scripts/                 strict portable definitions, expression interpreter, catalog, local trust ledger
+    Scripts/                 strict definitions, restricted expression interpreter, native runner, catalog, trust ledger
     ImportExport/            LibraryPorter (export/import), LibraryBackup (rolling snapshots + restore)
   QuickReplyKit/             WPF app
     Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ScriptManager, ImportPreview,
@@ -65,9 +65,11 @@ view-models, interop, and app wiring.
   theme, remember-window, verbose logging, Trash retention, onboarding flag, and **per-response instant-paste
   hotkeys** keyed by library-relative path). **Recent** is `%APPDATA%\QuickReplyKit\recent.json`; Favorites remain
   in response files so they travel when shared.
-- Script definitions use the strict portable `*.qrkscript.json` schema beside responses in the library; the scanner
+- Script definitions use the strict portable `*.qrkscript.json` schema beside responses in the library; `language` is
+  either restricted `qrk-expr-1` or full-trust `powershell-1`. The scanner
   excludes them from responses/search/favorites/recent. Local approval fingerprints live only in
-  `%APPDATA%\QuickReplyKit\script-trust.json` and never travel with a definition or export.
+  `%APPDATA%\QuickReplyKit\script-trust.json`, cover the exact language and source, and never travel with a definition
+  or export.
 - Other local state: rolling logs in `%APPDATA%\QuickReplyKit\logs`, rolling library backups in
   `%USERPROFILE%\Documents\QuickReplyKit\Backups` by default, and recoverable deleted responses in
   `%APPDATA%\QuickReplyKit\trash`. None is scanned as library content.
@@ -85,16 +87,29 @@ view-models, interop, and app wiring.
   built-in variables (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) and **includes**
   (`{{Response Name}}` splices another response's resolved HTML). Cycle detection, a fan-out expansion budget, and
   inline `[missing:…]`/`[cycle:…]`/`[includes: too many]` markers.
-- **Sandboxed scripts** use `{{script:Name}}`. `qrk-expr-1` is a deliberately non-general-purpose interpreter with
+- **Restricted scripts** use `{{script:Name}}`. `qrk-expr-1` is a deliberately non-general-purpose interpreter with
   literals, fixed clock values, comparisons/boolean operators, and a closed set of pure string/date functions. It has
   no assignment, loops, user functions, reflection, filesystem, process, environment, registry, network, clipboard,
   UI, native loading, regex, or dynamic-evaluation capability. Definitions, parsing, AST depth/count, evaluation,
   arguments, literals, output, aggregate calls (64), and resolved content (250,000 chars) are bounded. Substitution
   occurs only in HTML text nodes, never tags or attributes. Invalid, disabled, ambiguous, missing, changed, or untrusted
   scripts fail closed with visible markers. All render paths use one captured clock.
+- **Native scripts** use the same token form with a `powershell-1` definition. `NativeScriptRunner` starts the absolute
+  system `WindowsPowerShell\v1.0\powershell.exe` path, never a PATH-resolved executable, with `-NoLogo -NoProfile
+  -NonInteractive -Command -`; source is sent over standard input and stdout is HTML-encoded before substitution.
+  Runs are out of process with a 4,096-character source limit, 8,192-character output limit, 5-second deadline,
+  caller cancellation, process-tree termination, drained/discarded stderr, and a two-run concurrency cap. The child
+  receives only `QRK_LIBRARY_ROOT` and `QRK_NOW` as QuickReplyKit-specific environment values. Runtime failures expose
+  stable markers and privacy-safe diagnostics, not script source or stderr. These controls bound failure and UI impact;
+  they are not a sandbox. Approved PowerShell has the signed-in Windows user's filesystem, network, registry,
+  environment, credential, and process access.
 - `ScriptTrustLedger` stores only local ID/source fingerprints using bounded strict JSON, atomic writes, and a named
-  mutex with reload-before-mutate semantics. Source changes revoke trust. The Script Manager binds Trust to the exact
-  source displayed to the user and protects unsaved drafts with Save/Discard/Cancel.
+  mutex with reload-before-mutate semantics. Language or source changes revoke trust. The Script Manager defaults new
+  definitions to the restricted language, binds Trust to the exact language/source displayed to the user, requires an
+  additional confirmation before trusting native code, and protects unsaved drafts with Save/Discard/Cancel.
+- Preview, launcher paste/plain/copy, edit-before-insert, and instant hotkeys use cancellable asynchronous template
+  resolution. New preview work cancels stale work; insert actions suppress duplicate concurrent activation. The old
+  restricted path remains compatible and fast, while a slow native child never blocks the WPF dispatcher.
 
 ## Paste engine (the core value) — `Interop/*` + `Services/InsertService`
 - A `ForegroundMonitor` (WinEvent `EVENT_SYSTEM_FOREGROUND`, `WINEVENT_SKIPOWNPROCESS`) continuously records the
@@ -116,15 +131,17 @@ view-models, interop, and app wiring.
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
   Preview actions wrap at compact widths; icon targets keep stable usable dimensions without boxed pointer chrome.
-  The active nav item retains native TreeView selection and adds a system-color edge marker plus semibold label,
-  so scope remains clear without relying on color alone.
+  The active nav item uses the native system Highlight/HighlightText background and foreground plus a semibold label,
+  so scope remains clear in High Contrast and without relying on color alone.
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
-- The labelled **Import / Export** toolbar menu exposes response import and full-library export. Exporting one response
+- The icon-only **⇄** toolbar menu exposes response import and full-library export; its tooltip and automation name
+  state the complete purpose. Exporting one response
   or one folder remains in the corresponding result/folder context menu, so each command's scope is explicit without
   duplicating actions across menus.
 - Search ANDs whitespace tokens across name, response tags, app, category, and body. A selected category supplies the
   candidate set before ranking, limited to that folder subtree; Favorites and Recent likewise search only their own
-  collections, while All Responses is global. The removable category chip preserves the query when cleared. Typo
+  collections, while All Responses is global. The removable category chip shows the selected folder's leaf title,
+  retains the complete category path internally, and preserves the query when cleared. Typo
   fallback uses bounded per-word edit distance within the active candidate set, with subsequence matching only for
   short abbreviations; literal body matches keep their snippets and long tokens never join across words.
 - **Startup is non-blocking:** the window shows immediately in a "Loading library…" state; the initial scan runs
@@ -146,8 +163,9 @@ view-models, interop, and app wiring.
   source/destination fingerprints. Execution rechecks those fingerprints, reports stale entries without writing them,
   and atomically replaces individual files. Valid siblings continue when another entry is invalid, unsafe, stale, or
   fails. A required rolling backup is created after the user accepts the plan and before any write.
-- Portable script definitions participate in import/export but trust never does. Script rows show exact source,
-  begin unchecked, and cannot be selected by Select all. Each exact plan entry needs a separate user acceptance;
+- Portable script definitions participate in import/export but trust never does. Script rows identify restricted versus
+  full-trust code, show exact source, begin unchecked, and cannot be selected by Select all. Native rows also display
+  an explicit signed-in-user capability warning. Each exact plan entry needs a separate user acceptance;
   Core execution independently rejects unaccepted code. An accepted script is trusted only after its destination is
   written, reloaded, and byte-verified. Stale, unsafe, invalid, or failed writes remain untrusted.
 - `LibraryBackup` writes a versioned ZIP containing `library/`, `config.json` when present, and a manifest. Retention
@@ -182,7 +200,8 @@ view-models, interop, and app wiring.
 ## Known completion boundaries
 
 The implemented paths above are merged and tested. [`docs/BACKLOG.md`](docs/BACKLOG.md) is the source of truth for
-future requested work. B21-B29 are currently active; see that file for priority and acceptance criteria.
+future requested work. B21 is awaiting independent QA and B25-B30 remain active; see that file for priority and
+acceptance criteria.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
