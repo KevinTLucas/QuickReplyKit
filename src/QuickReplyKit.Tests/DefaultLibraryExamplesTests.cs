@@ -18,7 +18,7 @@ public class DefaultLibraryExamplesTests
         var examples = LibraryScanner.Scan(Path.Combine(Root, "Examples")).AllResponses;
         var now = new DateTimeOffset(2026, 9, 7, 9, 30, 0, TimeSpan.Zero);
 
-        Assert.Equal(6, examples.Count);
+        Assert.Equal(7, examples.Count);
         Assert.All(examples, response => Assert.True(response.IsValid, response.Error));
         string html = Assert.Single(examples, x => x.Name == "Built-in Variables Demo").Html;
         foreach (string token in new[] { "{{greeting}}", "{{date}}", "{{time}}", "{{day}}", "{{date:yyyy-MM-dd}}" })
@@ -53,7 +53,7 @@ public class DefaultLibraryExamplesTests
     {
         string scripts = Path.Combine(Root, "Examples", "Scripts");
         string[] paths = Directory.GetFiles(scripts, "*" + ScriptDefinitionFile.Extension);
-        Assert.Equal(2, paths.Length);
+        Assert.Equal(6, paths.Length);
 
         var definitions = paths.Select(path =>
         {
@@ -108,5 +108,34 @@ public class DefaultLibraryExamplesTests
         Assert.DoesNotContain("USERPROFILE", native.Expression, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("$HOME", native.Expression, StringComparison.OrdinalIgnoreCase);
         Assert.InRange(native.Expression.Length, 1, NativeScriptRunner.MaxSourceChars);
+    }
+
+    [Fact]
+    public async Task AdditionalPowerShellExamples_AreInertPortableAndExecutableAfterApproval()
+    {
+        string scripts = Path.Combine(Root, "Examples", "Scripts");
+        string[] names =
+        [
+            "Example Next Business Day",
+            "Example Business Hours Status",
+            "Example Professional Closing",
+            "Example Case Note Timestamp",
+        ];
+        var now = new DateTimeOffset(2026, 9, 11, 18, 30, 0, TimeSpan.FromHours(-5));
+
+        foreach (string name in names)
+        {
+            var definition = Assert.IsType<ScriptDefinition>(ScriptDefinitionFile.Load(
+                Path.Combine(scripts, name + ScriptDefinitionFile.Extension)).Value);
+            Assert.False(definition.Enabled);
+            Assert.Equal(ScriptDefinitionFile.NativeLanguage, definition.Language);
+            Assert.InRange(definition.Expression.Length, 1, NativeScriptRunner.MaxSourceChars);
+            Assert.DoesNotMatch(@"(?i)(invoke-webrequest|invoke-restmethod|start-process|new-object\s+net\.|get-content|set-content|\[io\.file\]|registry::)",
+                definition.Expression);
+
+            var result = await NativeScriptRunner.EvaluateAsync(definition.Expression, now);
+            Assert.True(result.Success, $"{name}: {result.Error}");
+            Assert.False(string.IsNullOrWhiteSpace(result.Output));
+        }
     }
 }

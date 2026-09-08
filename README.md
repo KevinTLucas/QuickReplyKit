@@ -245,13 +245,20 @@ native code. Invalid, missing, disabled, changed, ambiguous, or untrusted defini
 
 ### Full-trust Windows PowerShell
 
-> **Full-trust PowerShell is not sandboxed.** A trusted `powershell-1` definition runs as the signed-in Windows user
+> **Full-trust PowerShell is not sandboxed.** A trusted `powershell-1` definition runs as the same Windows account
+> and privilege level as QuickReplyKit
 > and can read, change, or delete files; access the network, registry, environment, credentials, and processes; and
 > start programs. Review every line and trust only code from a source you fully understand.
 
 Full-trust definitions require the inbox **Windows PowerShell** executable. QuickReplyKit runs approved source out of
 process, without a profile or visible console, and applies source, output, time, cancellation, and concurrency limits.
 Those limits protect app responsiveness; they do not remove the script's Windows permissions.
+
+If a response references a missing, disabled, untrusted, blocked, or failed script, QuickReplyKit does not paste or
+copy the error marker. Launcher actions show a clear error dialog; instant-paste hotkeys show a tray notification.
+PowerShell source and raw error output are never written to diagnostics logs. When a resolved preview is already on
+screen, Paste reuses that exact result, avoiding a second PowerShell startup and ensuring the pasted text matches the
+preview.
 
 Open **Settings > Scripts…** to create, validate, enable, inspect, trust, export, or delete definitions. New scripts
 default to the restricted language. Trust is local and tied to the exact language and source; editing either revokes
@@ -260,8 +267,9 @@ trust. Trust is never stored in exported definitions.
 ![Script Manager showing an untrusted full-trust example](docs/images/scripts-dark.png)
 
 The optional Examples folder demonstrates built-ins, includes, a restricted expression, and a clearly labeled
-PowerShell greeting that randomly chooses from ten phrases and adds a separate Friday line. The PowerShell example
-remains untrusted until reviewed and explicitly approved.
+PowerShell greeting that randomly chooses from ten phrases and adds a separate Friday line. Additional inert examples
+show a next-business-day date, business-hours status, random professional closing, and case-note timestamp. Full-trust
+examples remain disabled or untrusted until each exact source is reviewed and explicitly approved.
 
 ## Instant per-response hotkeys
 

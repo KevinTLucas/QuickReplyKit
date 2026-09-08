@@ -5,6 +5,13 @@ using QuickReplyKit.Core.Scripts;
 
 namespace QuickReplyKit.Core.Templates;
 
+public sealed record TemplateResolutionResult(string Html, IReadOnlyList<string> Errors)
+{
+    public bool Success => Errors.Count == 0;
+    public string ErrorText => string.Join(Environment.NewLine, Errors.Take(3).Select(error => "- " + error)) +
+        (Errors.Count > 3 ? $"{Environment.NewLine}- {Errors.Count - 3} more script error(s)." : "");
+}
+
 /// <summary>
 /// Resolves allow-listed built-ins, response includes, and optional sandboxed scripts in stored HTML.
 /// Script tokens execute only in text-node content; cycles and all limits produce visible markers.
@@ -29,6 +36,7 @@ public static class TemplateEngine
         public readonly Metrics Metrics = metrics;
         public readonly HashSet<string> Path = new(StringComparer.OrdinalIgnoreCase);
         public readonly StringBuilder Output = new();
+        public readonly List<string> Errors = [];
         public int IncludesLeft = MaxIncludes;
         public int ScriptCalls;
         public bool OutputLimited;
@@ -58,6 +66,7 @@ public static class TemplateEngine
         public int Cycles;
         public int Limited;
         public int Scripts;
+        public int ScriptFailures;
     }
 
     private static readonly Dictionary<string, Func<DateTimeOffset, string?, string>> Builtins =
@@ -77,12 +86,17 @@ public static class TemplateEngine
     /// </summary>
     public static string Resolve(string html, Func<string, string?> lookupHtmlByName, DateTimeOffset now,
         Func<string, DateTimeOffset, ScriptEvaluationResult>? evaluateScript = null)
+        => ResolveDetailed(html, lookupHtmlByName, now, evaluateScript).Html;
+
+    public static TemplateResolutionResult ResolveDetailed(string html,
+        Func<string, string?> lookupHtmlByName, DateTimeOffset now,
+        Func<string, DateTimeOffset, ScriptEvaluationResult>? evaluateScript = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         if (string.IsNullOrEmpty(html))
         {
             Log(0, 0, new Metrics(), sw.ElapsedMilliseconds);
-            return html ?? "";
+            return new(html ?? "", []);
         }
 
         var metrics = new Metrics();
@@ -90,7 +104,7 @@ public static class TemplateEngine
         ResolveInternal(html, context, 0, scriptsAllowed: true);
         string output = context.OutputLimited ? OutputLimitMarker : context.Output.ToString();
         Log(html.Length, output.Length, metrics, sw.ElapsedMilliseconds);
-        return output;
+        return new(output, context.Errors.Distinct(StringComparer.Ordinal).ToArray());
     }
 
     /// <summary>True when text contains a real <c>{{…}}</c> token, ignoring <c>{{{{</c> escapes.</summary>
@@ -190,19 +204,37 @@ public static class TemplateEngine
         if (++context.ScriptCalls > MaxScriptCalls)
         {
             context.Metrics.Limited++;
+            context.Metrics.ScriptFailures++;
             context.Append("[scripts: too many]");
+            context.Errors.Add("This response calls too many scripts.");
             return;
         }
 
         context.Metrics.Scripts++;
         if (context.EvaluateScript is null)
         {
+            context.Metrics.ScriptFailures++;
             context.Append($"[script missing: {System.Net.WebUtility.HtmlEncode(name)}]");
+            context.Errors.Add("Script evaluation is unavailable.");
             return;
         }
 
-        try { context.Append(context.EvaluateScript(name, context.Now).Output); }
-        catch { context.Append("[script error: evaluation-failed]"); }
+        try
+        {
+            var result = context.EvaluateScript(name, context.Now);
+            context.Append(result.Output);
+            if (!result.Success)
+            {
+                context.Metrics.ScriptFailures++;
+                context.Errors.Add(result.Error ?? "A response script failed.");
+            }
+        }
+        catch
+        {
+            context.Metrics.ScriptFailures++;
+            context.Append("[script error: evaluation-failed]");
+            context.Errors.Add("A response script failed unexpectedly.");
+        }
     }
 
     private static void ResolveInclude(string name, Context context, int depth, bool scriptsAllowed)
@@ -239,7 +271,7 @@ public static class TemplateEngine
 
     private static void Log(int inputLength, int outputLength, Metrics metrics, long elapsedMs) =>
         Diag.Verbose("TemplateEngine", "Template",
-            $"resolve complete inputLength={inputLength} outputLength={outputLength} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} scripts={metrics.Scripts} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={elapsedMs}");
+            $"resolve complete inputLength={inputLength} outputLength={outputLength} tokens={metrics.Tokens} builtins={metrics.Builtins} includeAttempts={metrics.IncludeAttempts} resolvedIncludes={metrics.ResolvedIncludes} scripts={metrics.Scripts} scriptFailures={metrics.ScriptFailures} missing={metrics.Missing} cycles={metrics.Cycles} limited={metrics.Limited} elapsedMs={elapsedMs}");
 
     private static string Greeting(DateTimeOffset now) =>
         now.Hour < 12 ? "Good morning" : now.Hour < 17 ? "Good afternoon" : "Good evening";

@@ -25,6 +25,8 @@ public sealed class LauncherViewModel : ViewModelBase
     private readonly Func<DateTimeOffset> _now;
     private readonly DispatcherTimer _copiedHintTimer;
     private CancellationTokenSource? _previewCancellation;
+    private ResponseItem? _previewResolvedItem;
+    private TemplateResolutionResult? _previewResolution;
     private long _previewVersion;
     private int _actionRunning;
 
@@ -33,6 +35,9 @@ public sealed class LauncherViewModel : ViewModelBase
 
     /// <summary>Raised after an insert so the window can hide itself.</summary>
     public event Action? RequestHide;
+
+    /// <summary>Raised when an action is stopped because a response script could not run.</summary>
+    public event Action<string>? RequestScriptError;
 
     public RelayCommand PasteCommand { get; }
     public RelayCommand PastePlainCommand { get; }
@@ -313,7 +318,9 @@ public sealed class LauncherViewModel : ViewModelBase
             else
             {
                 // Preserve the immediate qrk-expr-1 preview path.
-                PreviewDocument = HtmlToFlowDocument.Convert(Resolve(item.Html));
+                var resolution = _library.ResolveTemplateDetailed(item.Html, _now());
+                CachePreview(item, resolution);
+                PreviewDocument = HtmlToFlowDocument.Convert(resolution.Html);
                 PreviewCompletion = Task.CompletedTask;
             }
         }
@@ -327,10 +334,11 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         try
         {
-            string html = await _library.ResolveTemplateAsync(item.Html, _now(), cancellation.Token);
+            var resolution = await _library.ResolveTemplateDetailedAsync(item.Html, _now(), cancellation.Token);
             if (cancellation.IsCancellationRequested || version != _previewVersion ||
                 !ReferenceEquals(_selectedResult?.Item, item)) return;
-            PreviewDocument = HtmlToFlowDocument.Convert(html);
+            CachePreview(item, resolution);
+            PreviewDocument = HtmlToFlowDocument.Convert(resolution.Html);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
         catch (Exception ex)
@@ -354,7 +362,17 @@ public sealed class LauncherViewModel : ViewModelBase
         _previewCancellation = null;
         cancellation?.Cancel();
         cancellation?.Dispose();
+        _previewResolvedItem = null;
+        _previewResolution = null;
     }
+
+    private void CachePreview(ResponseItem item, TemplateResolutionResult resolution)
+    {
+        _previewResolvedItem = item;
+        _previewResolution = resolution;
+    }
+
+    public void RefreshPreview() => UpdatePreview();
 
     private static string BuildMeta(ResponseItem item)
     {
@@ -412,6 +430,7 @@ public sealed class LauncherViewModel : ViewModelBase
         var item = ValidSelectedItem();
         if (item == null) return;
         var resolved = await ResolvedCopyAsync(item);
+        if (resolved is null) return;
         bool plain = _config.DefaultPasteMode == PasteMode.PlainText;
         Diag.Verbose("LauncherViewModel", "Action", $"insert requested mode={(plain ? "plain" : "rich")}");
         if (plain) _insert.InsertPlain(resolved);
@@ -425,7 +444,9 @@ public sealed class LauncherViewModel : ViewModelBase
         var item = ValidSelectedItem();
         if (item == null) return;
         Diag.Verbose("LauncherViewModel", "Action", "insert requested mode=plain source=shortcut");
-        _insert.InsertPlain(await ResolvedCopyAsync(item));
+        var resolved = await ResolvedCopyAsync(item);
+        if (resolved is null) return;
+        _insert.InsertPlain(resolved);
         _library.MarkUsed(item);
         RequestHide?.Invoke();
     }
@@ -435,7 +456,14 @@ public sealed class LauncherViewModel : ViewModelBase
     /// includes expanded, so the user edits the actual message rather than the template.
     /// </summary>
     public string ResolveComposed(ResponseItem item) => Resolve(item.Html);
-    public Task<string> ResolveComposedAsync(ResponseItem item) => ResolveAsync(item.Html);
+    public async Task<string> ResolveComposedAsync(ResponseItem item) =>
+        (await ResolveDetailedAsync(item.Html, item)).Html;
+
+    public async Task<string?> TryResolveComposedAsync(ResponseItem item)
+    {
+        var resolution = await ResolveDetailedAsync(item.Html, item);
+        return Accept(resolution) ? resolution.Html : null;
+    }
 
     /// <summary>
     /// Insert a one-off message composed in the editor (edited, NOT saved to any file). Resolves any
@@ -447,7 +475,9 @@ public sealed class LauncherViewModel : ViewModelBase
 
     internal async Task InsertComposedAsync(string html, bool plain)
     {
-        var item = new ResponseItem { Html = await ResolveAsync(html) };
+        var resolution = await ResolveDetailedAsync(html);
+        if (!Accept(resolution)) return;
+        var item = new ResponseItem { Html = resolution.Html };
         if (plain) _insert.InsertPlain(item);
         else _insert.InsertRich(item);
         RequestHide?.Invoke();
@@ -457,7 +487,9 @@ public sealed class LauncherViewModel : ViewModelBase
     {
         var item = ValidSelectedItem();
         if (item == null) return;
-        _insert.Copy(await ResolvedCopyAsync(item));
+        var resolved = await ResolvedCopyAsync(item);
+        if (resolved is null) return;
+        _insert.Copy(resolved);
         _library.MarkUsed(item);
         // Copy leaves the launcher open so the user can keep browsing; flash a brief confirmation.
         CopiedHint = "Copied ✓";
@@ -471,18 +503,35 @@ public sealed class LauncherViewModel : ViewModelBase
     /// <summary>Resolve <c>{{…}}</c> tokens in the stored HTML against the current library and clock.</summary>
     private string Resolve(string html) => _library.ResolveTemplate(html, _now());
 
-    private Task<string> ResolveAsync(string html)
+    private async Task<TemplateResolutionResult> ResolveDetailedAsync(string html, ResponseItem? item = null)
     {
+        if (item is not null && ReferenceEquals(item, _selectedResult?.Item) &&
+            !PreviewCompletion.IsCompleted)
+            await PreviewCompletion;
+        if (item is not null && ReferenceEquals(item, _previewResolvedItem) &&
+            _previewResolution is not null)
+            return _previewResolution;
+
         DateTimeOffset now = _now();
         return _library.HasTrustedNativeScripts
-            ? _library.ResolveTemplateAsync(html, now)
-            : Task.FromResult(_library.ResolveTemplate(html, now));
+            ? await _library.ResolveTemplateDetailedAsync(html, now)
+            : _library.ResolveTemplateDetailed(html, now);
     }
 
-    private async Task<ResponseItem> ResolvedCopyAsync(ResponseItem item)
+    private async Task<ResponseItem?> ResolvedCopyAsync(ResponseItem item)
     {
-        string html = await ResolveAsync(item.Html);
+        var resolution = await ResolveDetailedAsync(item.Html, item);
+        if (!Accept(resolution)) return null;
+        string html = resolution.Html;
         return html == item.Html ? item : CopyWithHtml(item, html);
+    }
+
+    private bool Accept(TemplateResolutionResult resolution)
+    {
+        if (resolution.Success) return true;
+        Diag.Warn("LauncherViewModel", "Script", "response action blocked by script failure");
+        RequestScriptError?.Invoke(resolution.ErrorText);
+        return false;
     }
 
     private static ResponseItem CopyWithHtml(ResponseItem item, string html) => new()

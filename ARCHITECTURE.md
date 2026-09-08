@@ -101,24 +101,31 @@ view-models, interop, and app wiring.
   scripts fail closed with visible markers. All render paths use one captured clock.
 - **Native scripts** use the same token form with a `powershell-1` definition. `NativeScriptRunner` starts the absolute
   system `WindowsPowerShell\v1.0\powershell.exe` path, never a PATH-resolved executable, with `-NoLogo -NoProfile
-  -NonInteractive -Command -`; source is sent over standard input and stdout is HTML-encoded before substitution.
-  Runs are out of process with a 4,096-character source limit, 8,192-character output limit, 5-second deadline,
-  caller cancellation, process-tree termination, drained/discarded stderr, and a two-run concurrency cap. The child
+  -NonInteractive` and a fixed source-free bootstrap. The complete UTF-8 source is parsed from standard input so
+  multiline and Unicode scripts work without exposing reversible source in process command-line telemetry. Stdout is
+  HTML-encoded and line breaks become `<br>` before substitution. Runs are out of process with a 4,096-character
+  source limit, 8,192-character output limit, 5-second deadline, caller cancellation, process-tree termination,
+  bounded in-memory stderr classification, and a two-run concurrency cap. The child
   receives only `QRK_LIBRARY_ROOT` and `QRK_NOW` as QuickReplyKit-specific environment values. Runtime failures expose
-  stable markers and privacy-safe diagnostics, not script source or stderr. These controls bound failure and UI impact;
-  they are not a sandbox. Approved PowerShell has the signed-in Windows user's filesystem, network, registry,
-  environment, credential, and process access.
+  stable markers and privacy-safe diagnostics, not script source or raw stderr. These controls bound failure and UI
+  impact; they are not a sandbox. Approved PowerShell inherits QuickReplyKit's Windows account and privilege level,
+  including that user's filesystem, network, registry, environment, credential, and process access.
 - `ScriptTrustLedger` stores only local ID/source fingerprints using bounded strict JSON, atomic writes, and a named
   mutex with reload-before-mutate semantics. Language or source changes revoke trust. The Script Manager defaults new
   definitions to the restricted language, binds Trust to the exact language/source displayed to the user, requires an
   additional confirmation before trusting native code, and protects unsaved drafts with Save/Discard/Cancel.
 - Preview, launcher paste/plain/copy, edit-before-insert, and instant hotkeys use cancellable asynchronous template
-  resolution. New preview work cancels stale work; insert actions suppress duplicate concurrent activation. The old
-  restricted path remains compatible and fast, while a slow native child never blocks the WPF dispatcher.
+  resolution. `TemplateResolutionResult` preserves safe script failures separately from preview HTML. Insert/copy
+  actions stop before the clipboard, Recent update, or launcher hide when any script fails; launcher actions raise a
+  themed dialog and instant hotkeys raise a tray notification. New preview work cancels stale work, and the selected
+  response's completed preview result is reused by an immediate action so random values match and PowerShell does not
+  run twice. Insert actions suppress duplicate concurrent activation. The restricted path remains compatible and fast,
+  while a slow native child never blocks the WPF dispatcher.
 - `assets/DefaultLibrary/Examples` demonstrates every built-in token, named response includes, `qrk-expr-1`, and
   `powershell-1` without coupling normal support examples to the demos. Portable definitions contain no approval
-  state. In particular, the full-trust sample remains inert until the user reviews its exact source and creates a
-  local source-bound trust record in the Script Manager.
+  state. Full-trust examples cover a random Friday greeting, next business day, business-hours status, professional
+  closing, and case-note timestamp; they remain inert until the user reviews each exact source and creates a local
+  source-bound trust record in the Script Manager (and enables definitions shipped disabled).
 
 ## Paste engine (the core value) — `Interop/*` + `Services/InsertService`
 - A `ForegroundMonitor` (WinEvent `EVENT_SYSTEM_FOREGROUND`, `WINEVENT_SKIPOWNPROCESS`) continuously records the

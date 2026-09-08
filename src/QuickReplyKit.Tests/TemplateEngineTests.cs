@@ -1,5 +1,6 @@
 using System.Globalization;
 using QuickReplyKit.Core.Templates;
+using QuickReplyKit.Core.Scripts;
 
 namespace QuickReplyKit.Tests;
 
@@ -81,6 +82,17 @@ public class TemplateEngineTests
     {
         var result = TemplateEngine.Resolve("<p>{{greeting}}, team.</p>", None, Morning);
         Assert.Equal("<p>Good morning, team.</p>", result);
+    }
+
+    [Fact]
+    public void ResolveDetailed_PreservesScriptFailureForTheCallingWorkflow()
+    {
+        var result = TemplateEngine.ResolveDetailed("<p>{{script:Denied}}</p>", None, Morning,
+            (_, _) => ScriptEvaluationResult.Fail("process-failed", "PowerShell was denied access."));
+
+        Assert.False(result.Success);
+        Assert.Equal("<p>[script error: process-failed]</p>", result.Html);
+        Assert.Equal("- PowerShell was denied access.", result.ErrorText);
     }
 
     // ---- includes ----
