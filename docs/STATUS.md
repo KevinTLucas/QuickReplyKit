@@ -110,6 +110,10 @@ source-free bootstrap; multiline/Unicode execution and the shipped Friday exampl
 QuickReplyKit process; blocked/runtime failures are safely classified; failed actions do not paste/copy/hide/mark
 Recent and raise a dialog/tray event; a selected preview result is reused for immediate actions; and four inert
 support-team examples were added. Independent QA/security review and final merge remain.
+One independent full-suite review exposed a timer-starvation flake in the cancellation regression test (the production
+path passed in isolation). The test now uses a child-ready handshake followed by explicit cancellation; it passed
+20/20 focused repetitions and the complete 825-test suite passed four consecutive Release runs. Exact-tip re-QA and
+final merge remain.
 
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before

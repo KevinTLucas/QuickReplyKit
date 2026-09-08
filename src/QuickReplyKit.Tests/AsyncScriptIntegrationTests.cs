@@ -295,15 +295,21 @@ public class AsyncScriptIntegrationTests
     {
         using var temp = new TempDir();
         string probe = temp.Of("lib", "after-cancel.tmp");
+        string ready = temp.Of("lib", "cancel-ready.tmp");
         var trust = SaveTrustedScript(temp, "Slow",
-            "Start-Sleep -Milliseconds 900; Set-Content -LiteralPath " +
-            "(Join-Path $env:QRK_LIBRARY_ROOT 'after-cancel.tmp') -Value 'bad'");
+            "[IO.File]::WriteAllText((Join-Path $env:QRK_LIBRARY_ROOT 'cancel-ready.tmp'),'ready'); " +
+            "Start-Sleep -Seconds 10; " +
+            "[IO.File]::WriteAllText((Join-Path $env:QRK_LIBRARY_ROOT 'after-cancel.tmp'),'bad')");
         using var library = Service(temp, trust);
-        using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(250));
+        using var stop = new CancellationTokenSource();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            library.ResolveTemplateAsync("{{script:Slow}}", Now, stop.Token));
-        await Task.Delay(1100);
+        Task resolve = library.ResolveTemplateAsync("{{script:Slow}}", Now, stop.Token);
+        Assert.True(SpinWait.SpinUntil(() => File.Exists(ready), TimeSpan.FromSeconds(5)),
+            "PowerShell did not signal that the cancellable script had started.");
+        stop.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resolve);
+        await Task.Delay(500);
 
         Assert.False(File.Exists(probe));
     }
