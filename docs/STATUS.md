@@ -8,7 +8,7 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `1ffac1f` (B26 short scoped-search label with full-path accessibility);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B26 are complete. B21 is in progress; B27-B30 remain queued.
+- **Current product baseline:** B01-B20 and B22-B26 are complete. B21 is in progress; B27 passed QA and current-main regression and awaits merge; B28-B30 remain queued.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **732 passed** on merged `main` after B26.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `1ffac1f` at 69,920,525 bytes (SHA-256
@@ -91,7 +91,8 @@
 
 ## Remaining Work
 
-B21 and B27-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in independent security/UI QA; B27-B29 are isolated
+B21 and B27-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in independent security/UI QA; B27 passed independent
+Light/Dark/compact and accessibility QA plus current-main regression with 732/732 tests; B28-B29 are isolated
 and queued; B30 is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 

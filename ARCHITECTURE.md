@@ -116,8 +116,8 @@ view-models, interop, and app wiring.
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
   Preview actions wrap at compact widths; icon targets keep stable usable dimensions without boxed pointer chrome.
-  The active nav item retains native TreeView selection and adds a system-color edge marker plus semibold label,
-  so scope remains clear without relying on color alone.
+  The active nav item uses the native system Highlight/HighlightText background and foreground plus a semibold label,
+  so scope remains clear in High Contrast and without relying on color alone.
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
 - The labelled **Import / Export** toolbar menu exposes response import and full-library export. Exporting one response
   or one folder remains in the corresponding result/folder context menu, so each command's scope is explicit without
