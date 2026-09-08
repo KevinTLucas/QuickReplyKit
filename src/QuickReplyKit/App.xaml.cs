@@ -212,6 +212,12 @@ public partial class App : Application
     {
         _hotkeys = new HotkeyService(_config, _library!, new InsertService(_target));
         _hotkeys.LauncherPressed += ShowLauncher;   // fires on the UI thread
+        _hotkeys.ScriptFailed += message => Dispatcher.BeginInvoke(new Action(() =>
+        {
+            string text = message + " Nothing was pasted. Open Script Manager for details.";
+            if (text.Length > 240) text = text[..237] + "...";
+            _tray?.ShowBalloonTip(7000, "Response could not be prepared", text, Forms.ToolTipIcon.Error);
+        }));
         _hotkeys.ReloadAll();                        // launcher + every per-response instant-paste bind
         if (!_hotkeys.LauncherRegistered)
             _tray?.ShowBalloonTip(5000, "QuickReplyKit",

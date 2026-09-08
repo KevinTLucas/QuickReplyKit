@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "app": "QuickReplyKit",
+  "tags": [
+    "example",
+    "script",
+    "full-trust"
+  ],
+  "html": "<p><b>Next business day:</b> {{script:Example Next Business Day}}</p><p><b>Business-hours status:</b> {{script:Example Business Hours Status}}</p><p><b>Professional closing:</b> {{script:Example Professional Closing}}</p><p><b>Case-note timestamp:</b> {{script:Example Case Note Timestamp}}</p><p>These examples stay inactive until you review, enable, and trust each exact PowerShell source in Settings &gt; Scripts.</p>",
+  "favorite": false
+}

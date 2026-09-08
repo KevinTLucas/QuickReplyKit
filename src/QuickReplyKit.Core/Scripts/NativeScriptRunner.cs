@@ -12,6 +12,7 @@ public static class NativeScriptRunner
 {
     public const int MaxSourceChars = 4_096;
     public const int MaxOutputChars = 8_192;
+    private const int MaxErrorChars = 4_096;
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
 
     private static readonly SemaphoreSlim Slots = new(2, 2);
@@ -48,35 +49,36 @@ public static class NativeScriptRunner
             using var process = new Process { StartInfo = StartInfo(executablePath, libraryRoot, now) };
             try
             {
-                if (!process.Start()) return Finish("runtime-unavailable", timer);
+                if (!process.Start()) return Finish("runtime-blocked", timer);
             }
             catch
             {
-                return Finish("runtime-unavailable", timer);
+                return Finish("runtime-blocked", timer);
             }
 
             int outputExceeded = 0;
-            Task<string> output = CaptureOutput(process.StandardOutput, process,
+            int errorExceeded = 0;
+            Task<string> output = Capture(process.StandardOutput, MaxOutputChars, process,
                 () => Interlocked.Exchange(ref outputExceeded, 1), stop.Token);
-            Task errors = process.StandardError.BaseStream.CopyToAsync(Stream.Null, stop.Token);
+            Task<string> errors = Capture(process.StandardError, MaxErrorChars, process,
+                () => Interlocked.Exchange(ref errorExceeded, 1), stop.Token);
 
             try
             {
-                await process.StandardInput.WriteLineAsync(
-                    "$OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)")
-                    .ConfigureAwait(false);
                 await process.StandardInput.WriteAsync(source).ConfigureAwait(false);
                 process.StandardInput.Close();
-
                 await process.WaitForExitAsync(stop.Token).ConfigureAwait(false);
                 string text = await output.ConfigureAwait(false);
-                await errors.ConfigureAwait(false);
+                string error = await errors.ConfigureAwait(false);
+                string encoded = EncodeOutput(text);
 
-                if (outputExceeded != 0 || WebUtility.HtmlEncode(text).Length > MaxOutputChars)
+                if (outputExceeded != 0 || encoded.Length > MaxOutputChars)
                     return Finish("output-limit", timer, process.ExitCode);
+                if (errorExceeded != 0)
+                    return Finish("error-output-limit", timer, process.ExitCode);
                 if (process.ExitCode != 0)
-                    return Finish("process-failed", timer, process.ExitCode);
-                return Finish(ScriptEvaluationResult.Ok(WebUtility.HtmlEncode(text)), "success", timer,
+                    return Finish("process-failed", timer, process.ExitCode, error);
+                return Finish(ScriptEvaluationResult.Ok(encoded), "success", timer,
                     process.ExitCode);
             }
             catch (OperationCanceledException)
@@ -120,20 +122,22 @@ public static class NativeScriptRunner
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            StandardInputEncoding = Encoding.UTF8,
+            StandardInputEncoding = new UTF8Encoding(false),
             StandardOutputEncoding = Encoding.UTF8,
         };
         start.ArgumentList.Add("-NoLogo");
         start.ArgumentList.Add("-NoProfile");
         start.ArgumentList.Add("-NonInteractive");
         start.ArgumentList.Add("-Command");
-        start.ArgumentList.Add("-");
+        start.ArgumentList.Add("$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; " +
+            "$OutputEncoding=[Console]::InputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); " +
+            "& ([ScriptBlock]::Create([Console]::In.ReadToEnd()))");
         start.Environment["QRK_LIBRARY_ROOT"] = libraryRoot ?? "";
         start.Environment["QRK_NOW"] = now.ToString("O", CultureInfo.InvariantCulture);
         return start;
     }
 
-    private static async Task<string> CaptureOutput(StreamReader reader, Process process,
+    private static async Task<string> Capture(StreamReader reader, int limit, Process process,
         Action exceeded, CancellationToken cancellationToken)
     {
         var result = new StringBuilder();
@@ -142,7 +146,7 @@ public static class NativeScriptRunner
         {
             int read = await reader.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
             if (read == 0) return result.ToString();
-            if (result.Length + read > MaxOutputChars)
+            if (result.Length + read > limit)
             {
                 exceeded();
                 Kill(process);
@@ -168,8 +172,9 @@ public static class NativeScriptRunner
         catch { }
     }
 
-    private static ScriptEvaluationResult Finish(string code, Stopwatch timer, int? exitCode = null) =>
-        Finish(ScriptEvaluationResult.Fail(code, SafeError(code)), code, timer, exitCode);
+    private static ScriptEvaluationResult Finish(string code, Stopwatch timer, int? exitCode = null,
+        string? standardError = null) =>
+        Finish(ScriptEvaluationResult.Fail(code, SafeError(code, standardError)), code, timer, exitCode);
 
     private static ScriptEvaluationResult Finish(ScriptEvaluationResult result, string outcome,
         Stopwatch timer, int? exitCode = null)
@@ -179,12 +184,31 @@ public static class NativeScriptRunner
         return result;
     }
 
-    private static string SafeError(string code) => code switch
+    private static string SafeError(string code, string? standardError = null) => code switch
     {
         "runtime-unavailable" => "Windows PowerShell is unavailable.",
+        "runtime-blocked" => "Windows PowerShell could not start. It may be blocked by organizational application-control policy.",
         "timeout" => "The script exceeded its time limit.",
         "output-limit" => $"The script output exceeds {MaxOutputChars} characters.",
+        "error-output-limit" => "The script produced too much error output.",
         "canceled" => "The script was canceled.",
-        _ => "The script process failed.",
+        _ when Contains(standardError, "running scripts is disabled") ||
+               Contains(standardError, "not digitally signed") =>
+            "Windows PowerShell blocked the script because of the current execution policy.",
+        _ when Contains(standardError, "access is denied") ||
+               Contains(standardError, "unauthorizedaccess") ||
+               Contains(standardError, "permissiondenied") =>
+            "Windows PowerShell was denied access. Scripts run as the signed-in user; check that user's file, network, registry, and command permissions.",
+        _ when Contains(standardError, "is not recognized as the name") =>
+            "A command used by the PowerShell script is unavailable on this computer.",
+        _ => "Windows PowerShell returned an error. Review the script in Script Manager and try again.",
     };
+
+    private static bool Contains(string? value, string text) =>
+        value?.Contains(text, StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string EncodeOutput(string text) => WebUtility.HtmlEncode(text.TrimEnd('\r', '\n'))
+        .Replace("\r\n", "<br>", StringComparison.Ordinal)
+        .Replace("\r", "<br>", StringComparison.Ordinal)
+        .Replace("\n", "<br>", StringComparison.Ordinal);
 }

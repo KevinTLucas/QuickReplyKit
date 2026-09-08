@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net;
+using System.Security.Principal;
 using System.Text.Json;
 using QuickReplyKit.Core.Scripts;
 
@@ -82,6 +83,56 @@ public class NativeScriptRunnerTests
     }
 
     [Fact]
+    public async Task EvaluateAsync_NonTerminatingPowerShellErrorFailsWithUsefulSafeCategory()
+    {
+        var result = await NativeScriptRunner.EvaluateAsync("Write-Error 'Access is denied: private-path'", Now);
+
+        Assert.False(result.Success);
+        Assert.Contains("signed-in user", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("private-path", result.Error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_PolicyAndMissingCommandErrorsAreClassifiedWithoutLeakingDetails()
+    {
+        var policy = await NativeScriptRunner.EvaluateAsync(
+            "Write-Error 'running scripts is disabled on SECRET-HOST'", Now);
+        var command = await NativeScriptRunner.EvaluateAsync(
+            "Write-Error 'Widget-Secret is not recognized as the name of a cmdlet'", Now);
+
+        Assert.Contains("execution policy", policy.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("SECRET-HOST", policy.Error, StringComparison.Ordinal);
+        Assert.Contains("command", command.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Widget-Secret", command.Error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_RunsAsTheCurrentSignedInWindowsUser()
+    {
+        string expectedSid = WindowsIdentity.GetCurrent().User!.Value;
+        var result = await NativeScriptRunner.EvaluateAsync(
+            "[Console]::Out.Write([Security.Principal.WindowsIdentity]::GetCurrent().User.Value)", Now);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Equal(expectedSid, WebUtility.HtmlDecode(result.Output));
+    }
+
+    [Fact]
+    public async Task ShippedFullTrustExample_ExecutesThroughTheRealRunner()
+    {
+        string path = TestFiles.RepoAsset(Path.Combine("assets", "DefaultLibrary", "Examples", "Scripts",
+            "Example Full-Trust Random Friday Greeting" + ScriptDefinitionFile.Extension));
+        var definition = Assert.IsType<ScriptDefinition>(ScriptDefinitionFile.Load(path).Value);
+        var friday = new DateTimeOffset(2026, 9, 11, 9, 0, 0, TimeSpan.FromHours(-5));
+
+        var result = await NativeScriptRunner.EvaluateAsync(definition.Expression, friday);
+
+        Assert.True(result.Success, result.Error);
+        Assert.EndsWith("<br>Happy Friday!", WebUtility.HtmlDecode(result.Output).Trim(),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task EvaluateAsync_MissingRuntimeReturnsStableMarker()
     {
         var result = await NativeScriptRunner.EvaluateAsync("'ok'", Now, null,
@@ -89,6 +140,21 @@ public class NativeScriptRunnerTests
             TimeSpan.FromSeconds(1));
 
         Assert.Equal("[script error: runtime-unavailable]", result.Output);
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_RuntimeStartDeniedReturnsApplicationControlGuidance()
+    {
+        using var temp = new TempDir();
+        string invalidExecutable = temp.Of("blocked.exe");
+        File.WriteAllText(invalidExecutable, "not an executable");
+
+        var result = await NativeScriptRunner.EvaluateAsync("'ok'", Now, null,
+            CancellationToken.None, invalidExecutable, TimeSpan.FromSeconds(1));
+
+        Assert.False(result.Success);
+        Assert.Equal("[script error: runtime-blocked]", result.Output);
+        Assert.Contains("application-control", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -152,6 +218,18 @@ public class NativeScriptRunnerTests
 
         Assert.True(result.Success, result.Error);
         Assert.Equal(WebUtility.HtmlEncode("こんにちは 👋 <&>"), result.Output);
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_MultilineUnicodeBlocksExecuteWithoutSourceMojibake()
+    {
+        const string source = "$values = @(\n    'こんにちは',\n    'Привет'\n)\n" +
+            "foreach ($value in $values) { $value }";
+
+        var result = await NativeScriptRunner.EvaluateAsync(source, Now);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Equal("こんにちは<br>Привет", WebUtility.HtmlDecode(result.Output));
     }
 
     [Fact]

@@ -83,14 +83,23 @@ public sealed class ScriptCatalog
         if (entry.Definition is null) return Fail("invalid", name);
         if (!entry.Definition.Enabled) return Fail("disabled", name);
         if (!_trust.IsTrusted(entry.Definition)) return Fail("untrusted", name);
-        return entry.Definition.Language == ScriptDefinitionFile.NativeLanguage
+        var result = entry.Definition.Language == ScriptDefinitionFile.NativeLanguage
             ? await NativeScriptRunner.EvaluateAsync(entry.Definition.Expression, now, _libraryRoot,
                 cancellationToken).ConfigureAwait(false)
             : ScriptExpression.Evaluate(entry.Definition.Expression, now);
+        return result.Success ? result : result with
+        {
+            Error = $"Script '{SafeName(entry.Definition.Name)}': {result.Error}",
+        };
     }
 
-    private static ScriptEvaluationResult Fail(string state, string name) =>
-        new(false, $"[script {state}: {WebUtility.HtmlEncode(name)}]", $"Script '{name}' is {state}.");
+    private static ScriptEvaluationResult Fail(string state, string name)
+    {
+        string safe = SafeName(name);
+        return new(false, $"[script {state}: {WebUtility.HtmlEncode(safe)}]", $"Script '{safe}' is {state}.");
+    }
+
+    private static string SafeName(string name) => new(name.Where(c => !char.IsControl(c)).Take(80).ToArray());
 }
 
 /// <summary>Read-only status used by management and diagnostics; expression source is never logged.</summary>

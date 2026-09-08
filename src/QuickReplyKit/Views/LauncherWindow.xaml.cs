@@ -41,6 +41,9 @@ public partial class LauncherWindow : Window
         InitializeComponent();
         DataContext = _vm;
         _vm.RequestHide += HideLauncher;
+        _vm.RequestScriptError += message => ConfirmDialog.Info(this,
+            "Response could not be prepared",
+            message + "\n\nNothing was pasted or copied. Open Script Manager to review its trust, source, and status.");
     }
 
     /// <summary>Bring the launcher up, cleared and focused on the search box, ready to type.</summary>
@@ -53,6 +56,7 @@ public partial class LauncherWindow : Window
         Topmost = true;
         Topmost = false;
         _vm.Query = "";
+        _vm.RefreshPreview();
         SearchBox.Focus();
         SearchBox.SelectAll();
     }
@@ -260,8 +264,8 @@ public partial class LauncherWindow : Window
         _openingCompose = true;
         try
         {
-            string html = await _vm.ResolveComposedAsync(item);
-            if (IsVisible)
+            string? html = await _vm.TryResolveComposedAsync(item);
+            if (html is not null && IsVisible)
                 EditorWindow.OpenCompose(this, html, _vm.InsertComposed, _vm.ScriptNames());
         }
         catch (Exception ex)

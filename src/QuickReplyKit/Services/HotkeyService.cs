@@ -33,6 +33,9 @@ public sealed class HotkeyService : IDisposable
     /// <summary>Raised on the UI thread when the launcher hotkey is pressed.</summary>
     public event Action? LauncherPressed;
 
+    /// <summary>Raised when an instant-paste is blocked by a response script failure.</summary>
+    public event Action<string>? ScriptFailed;
+
     public HotkeyService(AppConfig config, LibraryService library, IInsertService insert, Func<DateTimeOffset>? now = null)
     {
         _config = config;
@@ -118,11 +121,17 @@ public sealed class HotkeyService : IDisposable
             }
 
             Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
-            string html = _library.HasTrustedNativeScripts
-                ? await _library.ResolveTemplateAsync(item.Html, _now(), _stop.Token)
-                : _library.ResolveTemplate(item.Html, _now());
+            var resolution = _library.HasTrustedNativeScripts
+                ? await _library.ResolveTemplateDetailedAsync(item.Html, _now(), _stop.Token)
+                : _library.ResolveTemplateDetailed(item.Html, _now());
             if (_disposed || _stop.IsCancellationRequested) return;
-            var resolved = new ResponseItem { Html = html };
+            if (!resolution.Success)
+            {
+                Diag.Warn("HotkeyService", "Script", "instant-paste blocked by script failure");
+                ScriptFailed?.Invoke(resolution.ErrorText);
+                return;
+            }
+            var resolved = new ResponseItem { Html = resolution.Html };
             if (plain) _insert.InsertPlain(resolved);
             else _insert.InsertRich(resolved);
             _library.MarkUsed(item);

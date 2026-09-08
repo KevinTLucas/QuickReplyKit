@@ -23,8 +23,9 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. Editor formatting persistence is fixed; only B35's manual Microsoft Word paste
-  acceptance remains outside `main`.
+- **State:** launchable and green. Editor formatting persistence is fixed. B37 PowerShell dynamic-variable execution
+  and visible failure handling is active on `bugfix/powershell-script-execution`; B35's manual Microsoft Word paste
+  acceptance remains isolated and must not be mixed into this branch.
 
 ## Merged And QA'd
 
@@ -102,6 +103,14 @@
 
 ## Remaining Work
 
+**B37 is in progress** on `bugfix/powershell-script-execution`. The confirmed defect is that script states and runtime
+failures become inline template markers without an actionable popup, and the marker can be pasted as response text.
+The implementation branch is green at **824 tests**: the complete source is parsed from UTF-8 stdin by a fixed
+source-free bootstrap; multiline/Unicode execution and the shipped Friday example work; the child SID matches the
+QuickReplyKit process; blocked/runtime failures are safely classified; failed actions do not paste/copy/hide/mark
+Recent and raise a dialog/tray event; a selected preview result is reused for immediate actions; and four inert
+support-team examples were added. Independent QA/security review and final merge remain.
+
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
 merging it.
@@ -111,8 +120,9 @@ Manual B35 build: `publish/word-fidelity-test/QuickReplyKit.exe` (69,933,438 byt
 
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
-**Active branch:** `feature/word-style-word-fidelity` owns B35. A stale interrupted historical hotkey worktree remains
-quarantined and is not an active source of changes.
+**Active branches:** `bugfix/powershell-script-execution` owns B37; `feature/word-style-word-fidelity` owns only B35's
+manual acceptance. A stale interrupted historical hotkey worktree remains quarantined and is not an active source of
+changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

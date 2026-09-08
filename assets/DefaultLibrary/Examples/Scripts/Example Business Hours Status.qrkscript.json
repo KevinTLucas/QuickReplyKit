@@ -1,0 +1,7 @@
+{
+  "id": "example-business-hours-status",
+  "name": "Example Business Hours Status",
+  "language": "powershell-1",
+  "enabled": false,
+  "expression": "$now = [DateTimeOffset]::Parse($env:QRK_NOW, [Globalization.CultureInfo]::InvariantCulture)\n$openHour = 8\n$closeHour = 17\n$isWeekday = $now.DayOfWeek -notin @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)\nif ($isWeekday -and $now.Hour -ge $openHour -and $now.Hour -lt $closeHour) {\n    [Console]::Out.Write('Our support team is available today until 5:00 PM.')\n} else {\n    $next = $now.Date.AddDays(1)\n    while ($next.DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {\n        $next = $next.AddDays(1)\n    }\n    [Console]::Out.Write(('Our support team will be available again {0} at 8:00 AM.' -f $next.ToString('dddd')))\n}"
+}

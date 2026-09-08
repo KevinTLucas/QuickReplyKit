@@ -144,24 +144,31 @@ public sealed class LibraryService : IDisposable
 
     /// <summary>Resolve built-ins, response includes, and trusted scripts against one library snapshot.</summary>
     public string ResolveTemplate(string html, DateTimeOffset now)
+        => ResolveTemplateDetailed(html, now).Html;
+
+    public TemplateResolutionResult ResolveTemplateDetailed(string html, DateTimeOffset now)
     {
         var snapshot = Snapshot;
         var scripts = _scripts;
-        return TemplateEngine.Resolve(html,
+        return TemplateEngine.ResolveDetailed(html,
             name => snapshot.ValidResponses.FirstOrDefault(r =>
                 string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Html,
             now, scripts.Evaluate);
     }
 
     /// <summary>Resolve a template on a worker so native scripts never block a UI caller.</summary>
-    public Task<string> ResolveTemplateAsync(string html, DateTimeOffset now,
+    public async Task<string> ResolveTemplateAsync(string html, DateTimeOffset now,
+        CancellationToken cancellationToken = default) =>
+        (await ResolveTemplateDetailedAsync(html, now, cancellationToken).ConfigureAwait(false)).Html;
+
+    public Task<TemplateResolutionResult> ResolveTemplateDetailedAsync(string html, DateTimeOffset now,
         CancellationToken cancellationToken = default)
     {
         var snapshot = Snapshot;
         var scripts = _scripts;
         return Task.Run(() =>
         {
-            string result = TemplateEngine.Resolve(html,
+            var result = TemplateEngine.ResolveDetailed(html,
                 name => snapshot.ValidResponses.FirstOrDefault(r =>
                     string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase))?.Html,
                 now, (name, clock) => scripts.EvaluateAsync(name, clock, cancellationToken)
