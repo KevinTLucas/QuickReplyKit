@@ -409,6 +409,19 @@ public class FlowDocumentToHtmlTests
     }
 
     [Fact]
+    public void EditorStrike_RemovesLoadedFormatting()
+    {
+        Sta(() =>
+        {
+            var editor = new RichTextBox { Document = HtmlToFlowDocument.Convert("<p><s>formatted</s></p>") };
+            editor.SelectAll();
+            EditorFormatting.ToggleStrike(editor.Selection);
+
+            Assert.Equal("<p>formatted</p>", FlowDocumentToHtml.Convert(editor.Document));
+        });
+    }
+
+    [Fact]
     public void ListItemAlignment_SaveAndReload()
     {
         Sta(() =>
@@ -422,6 +435,22 @@ public class FlowDocumentToHtmlTests
             var restored = HtmlToFlowDocument.Convert(html).Blocks.OfType<System.Windows.Documents.List>().Single();
             Assert.Equal(TextAlignment.Center,
                 restored.ListItems.Single().Blocks.OfType<Paragraph>().Single().TextAlignment);
+        });
+    }
+
+    [Theory]
+    [InlineData("<ul><li>item</li></ul>", "bullet")]
+    [InlineData("<ol><li>item</li></ol>", "number")]
+    public void EditorCommands_RemoveLoadedList(string html, string listType)
+    {
+        Sta(() =>
+        {
+            var editor = new RichTextBox { Document = HtmlToFlowDocument.Convert(html) };
+            editor.SelectAll();
+            (listType == "bullet" ? EditingCommands.ToggleBullets : EditingCommands.ToggleNumbering)
+                .Execute(null, editor);
+
+            Assert.Equal("<p>item</p>", FlowDocumentToHtml.Convert(editor.Document));
         });
     }
 
