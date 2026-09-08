@@ -6,18 +6,20 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `1bf0d66` (B19 enterprise UI standards polish). The scoped Notepad self-test reliability
-  fix is `4221380`; use `git rev-parse HEAD` for the docs-inclusive tip after its recorded `--no-ff` merge.
+- **Current product merge:** `b5a6ff0` (B19 enterprise UI standards polish plus stable, normally-closing Notepad
+  self-tests); use `git rev-parse HEAD` for the docs-inclusive tip.
 - **Current product baseline:** B01-B19 are complete. The active backlog is empty.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **724 passed** after the B19 combined regression and independent UI/accessibility review.
-- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` are the B19 `main` release
-  at 69,920,116 bytes (SHA-256 `DE6F5A0798057D3EE0AAE5C6B3C4C6393C4A5A1468C787A10F422A17BEEB9A88`).
-  Rebuild them after merging `4221380`. The older `publish/latest/QuickReplyKit.exe` is running and locked; do not
-  close it. No external .NET install is needed.
+- **Portable publish:** `publish/QuickReplyKit.exe` and `publish/pending/QuickReplyKit.exe` were rebuilt from
+  `b5a6ff0` and match at 69,920,606 bytes (SHA-256
+  `7949268476273ECB8FDD908C6DF0ABF36721ECB0914EA4237386A3D81D39ED2C`). All four packaged self-tests exit 0.
+  `publish/latest/QuickReplyKit.exe` is still the older 69,887,798-byte build because that exact file is running and
+  locked; do not close it. Promote the pending file after the user exits that instance. No external .NET install is
+  needed.
 - **Windows self-tests:** `--selftest-paste`, `--selftest-paste-rich`, `--selftest-paste-ui`, and
-  `--selftest-foreground` all returned exit code 0 for three consecutive rounds on `4221380`; every temporary
-  Notepad window closed normally and no visible Notepad remained.
+  `--selftest-foreground` all returned exit code 0 for three consecutive branch rounds and one final packaged
+  `b5a6ff0` round; every temporary Notepad window closed normally and no visible Notepad remained.
 - **Git:** completed feature branches listed below are ancestors of `main`. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
@@ -27,8 +29,8 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| Notepad self-test reliability/cleanup | `4221380` feature tip | 724/724; all four self-tests x3; foreground-denied fallback; exact temp window closes normally | Complete; merge pending |
-| B19 enterprise UI standards audit | `79692a5` feature tip | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
+| Notepad self-test reliability/cleanup | `b5a6ff0` | 724/724; all four self-tests x3; foreground-denied fallback; exact temp window closes normally | Complete |
+| B19 enterprise UI standards audit | `1bf0d66` | 724/724 integrated; independent accessibility review + blocker re-QA; Light/Dark compact/large captures; all four self-tests | Complete |
 | B16 sandboxed dynamic-variable scripts | `db07f5e` | 706/706 integrated; 99 foundation tests; separate persistence, evaluator, runtime, import, trust, accessibility, performance, and blocker re-QA | Complete |
 | B17 import review selection | `ca730f6` | 572/572 integrated; 41/41 focused; checkbox selection, safe Keep-both conflict default, non-bulk approval seam, immutable plan preserved | Complete |
 | B18 selected-folder indication | `57576ed` | 569/569; 45/45 focused; system-color bar plus semibold non-color cue; nav row width preserved | Complete |
