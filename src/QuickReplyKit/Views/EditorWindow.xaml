@@ -28,6 +28,58 @@
             <Setter Property="FontSize" Value="13"/>
         </Style>
 
+        <Style x:Key="ToolToggle" TargetType="ToggleButton">
+            <Setter Property="MinWidth" Value="30"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4"/>
+                            <Border x:Name="State" Background="Transparent" CornerRadius="4"
+                                    IsHitTestVisible="False"/>
+                            <Border x:Name="FocusOutline" BorderBrush="{DynamicResource ButtonOutlineOuter}"
+                                    BorderThickness="0" CornerRadius="4" IsHitTestVisible="False"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="State" Property="Background"
+                                        Value="{DynamicResource ButtonHoverOverlay}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Selection}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="Chrome" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="{x:Null}">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                                <Setter TargetName="State" Property="Background"
+                                        Value="{DynamicResource ButtonHoverOverlay}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="FocusOutline" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="16,7"/>
             <Setter Property="Margin" Value="8,0,0,0"/>
@@ -101,29 +153,30 @@
         <Border Grid.Row="2" Background="{DynamicResource CardBg}" CornerRadius="8,8,0,0"
                 BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,1,1,0" Padding="8,6">
             <WrapPanel Orientation="Horizontal">
-                <Button Style="{StaticResource ToolButton}" FontWeight="Bold" Content="B"
-                        ToolTip="Bold (Ctrl+B)"
+                <ToggleButton x:Name="BoldButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        FontWeight="Bold" Content="B" ToolTip="Bold (Ctrl+B)" AutomationProperties.Name="Bold"
                         Command="EditingCommands.ToggleBold" CommandTarget="{Binding ElementName=Body}"/>
-                <Button Style="{StaticResource ToolButton}" FontStyle="Italic" Content="I"
-                        ToolTip="Italic (Ctrl+I)"
+                <ToggleButton x:Name="ItalicButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        FontStyle="Italic" Content="I" ToolTip="Italic (Ctrl+I)" AutomationProperties.Name="Italic"
                         Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=Body}">
-                    <Button.Resources>
+                    <ToggleButton.Resources>
                         <Style TargetType="TextBlock"><Setter Property="FontStyle" Value="Italic"/></Style>
-                    </Button.Resources>
-                </Button>
-                <Button Style="{StaticResource ToolButton}" Content="U"
-                        ToolTip="Underline (Ctrl+U)"
+                    </ToggleButton.Resources>
+                </ToggleButton>
+                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="U" ToolTip="Underline (Ctrl+U)" AutomationProperties.Name="Underline"
                         Command="EditingCommands.ToggleUnderline" CommandTarget="{Binding ElementName=Body}">
-                    <Button.Resources>
+                    <ToggleButton.Resources>
                         <Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Underline"/></Style>
-                    </Button.Resources>
-                </Button>
-                <Button x:Name="StrikeButton" Style="{StaticResource ToolButton}" Content="S"
-                        ToolTip="Strikethrough" Click="Strike_Click">
-                    <Button.Resources>
+                    </ToggleButton.Resources>
+                </ToggleButton>
+                <ToggleButton x:Name="StrikeButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="S" ToolTip="Strikethrough" AutomationProperties.Name="Strikethrough"
+                        Click="Strike_Click">
+                    <ToggleButton.Resources>
                         <Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Strikethrough"/></Style>
-                    </Button.Resources>
-                </Button>
+                    </ToggleButton.Resources>
+                </ToggleButton>
                 <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
                 <Button x:Name="SizeButton" Style="{StaticResource ToolButton}" Content="Size ▾"
                         ToolTip="Text size" Click="Size_Click">
@@ -140,14 +193,14 @@
                         ToolTip="Text colour" AutomationProperties.Name="Text color" Click="TextColor_Click">
                     <Button.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Black" Tag="#111111" Click="TextSwatch_Click" AutomationProperties.Name="Black text"/>
-                            <MenuItem Header="Gray" Tag="#6B7280" Click="TextSwatch_Click" AutomationProperties.Name="Gray text"/>
-                            <MenuItem Header="Red" Tag="#DC2626" Click="TextSwatch_Click" AutomationProperties.Name="Red text"/>
-                            <MenuItem Header="Orange" Tag="#EA580C" Click="TextSwatch_Click" AutomationProperties.Name="Orange text"/>
-                            <MenuItem Header="Green" Tag="#16A34A" Click="TextSwatch_Click" AutomationProperties.Name="Green text"/>
-                            <MenuItem Header="Cyan" Tag="#0891B2" Click="TextSwatch_Click" AutomationProperties.Name="Cyan text"/>
-                            <MenuItem Header="Blue" Tag="#2563EB" Click="TextSwatch_Click" AutomationProperties.Name="Blue text"/>
-                            <MenuItem Header="Purple" Tag="#7C3AED" Click="TextSwatch_Click" AutomationProperties.Name="Purple text"/>
+                            <MenuItem Header="Black" Tag="#111111" Click="TextSwatch_Click" AutomationProperties.Name="Black text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#111111" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Gray" Tag="#6B7280" Click="TextSwatch_Click" AutomationProperties.Name="Gray text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#6B7280" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Red" Tag="#DC2626" Click="TextSwatch_Click" AutomationProperties.Name="Red text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#DC2626" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Orange" Tag="#EA580C" Click="TextSwatch_Click" AutomationProperties.Name="Orange text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#EA580C" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Green" Tag="#16A34A" Click="TextSwatch_Click" AutomationProperties.Name="Green text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#16A34A" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Cyan" Tag="#0891B2" Click="TextSwatch_Click" AutomationProperties.Name="Cyan text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#0891B2" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Blue" Tag="#2563EB" Click="TextSwatch_Click" AutomationProperties.Name="Blue text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#2563EB" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Purple" Tag="#7C3AED" Click="TextSwatch_Click" AutomationProperties.Name="Purple text"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#7C3AED" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
                             <Separator/>
                             <MenuItem Header="Automatic (theme default)" Tag="auto" Click="TextSwatch_Click"/>
                         </ContextMenu>
@@ -157,28 +210,33 @@
                         ToolTip="Highlight" AutomationProperties.Name="Text highlight" Click="Highlight_Click">
                     <Button.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Yellow" Tag="#FEF08A" Click="HighlightSwatch_Click" AutomationProperties.Name="Yellow highlight"/>
-                            <MenuItem Header="Green" Tag="#BBF7D0" Click="HighlightSwatch_Click" AutomationProperties.Name="Green highlight"/>
-                            <MenuItem Header="Blue" Tag="#BFDBFE" Click="HighlightSwatch_Click" AutomationProperties.Name="Blue highlight"/>
-                            <MenuItem Header="Pink" Tag="#FBCFE8" Click="HighlightSwatch_Click" AutomationProperties.Name="Pink highlight"/>
-                            <MenuItem Header="Orange" Tag="#FED7AA" Click="HighlightSwatch_Click" AutomationProperties.Name="Orange highlight"/>
-                            <MenuItem Header="Purple" Tag="#E9D5FF" Click="HighlightSwatch_Click" AutomationProperties.Name="Purple highlight"/>
+                            <MenuItem Header="Yellow" Tag="#FEF08A" Click="HighlightSwatch_Click" AutomationProperties.Name="Yellow highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#FEF08A" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Green" Tag="#BBF7D0" Click="HighlightSwatch_Click" AutomationProperties.Name="Green highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#BBF7D0" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Blue" Tag="#BFDBFE" Click="HighlightSwatch_Click" AutomationProperties.Name="Blue highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#BFDBFE" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Pink" Tag="#FBCFE8" Click="HighlightSwatch_Click" AutomationProperties.Name="Pink highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#FBCFE8" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Orange" Tag="#FED7AA" Click="HighlightSwatch_Click" AutomationProperties.Name="Orange highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#FED7AA" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
+                            <MenuItem Header="Purple" Tag="#E9D5FF" Click="HighlightSwatch_Click" AutomationProperties.Name="Purple highlight"><MenuItem.Icon><Rectangle Width="12" Height="12" Fill="#E9D5FF" Stroke="{DynamicResource CardBorder}"/></MenuItem.Icon></MenuItem>
                             <Separator/>
                             <MenuItem Header="None" Tag="none" Click="HighlightSwatch_Click"/>
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
                 <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
-                <Button Style="{StaticResource ToolButton}" Content="⯇" ToolTip="Align left"
+                <ToggleButton x:Name="AlignLeftButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="⯇" ToolTip="Align left" AutomationProperties.Name="Align left"
                         Command="EditingCommands.AlignLeft" CommandTarget="{Binding ElementName=Body}"/>
-                <Button Style="{StaticResource ToolButton}" Content="≡" ToolTip="Align centre"
+                <ToggleButton x:Name="AlignCenterButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="≡" ToolTip="Align centre" AutomationProperties.Name="Align center"
                         Command="EditingCommands.AlignCenter" CommandTarget="{Binding ElementName=Body}"/>
-                <Button Style="{StaticResource ToolButton}" Content="⯈" ToolTip="Align right"
+                <ToggleButton x:Name="AlignRightButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="⯈" ToolTip="Align right" AutomationProperties.Name="Align right"
                         Command="EditingCommands.AlignRight" CommandTarget="{Binding ElementName=Body}"/>
                 <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
-                <Button Style="{StaticResource ToolButton}" Content="• List" ToolTip="Bullet list"
+                <ToggleButton x:Name="BulletListButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="• List" ToolTip="Bullet list" AutomationProperties.Name="Bullet list"
                         Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=Body}"/>
-                <Button Style="{StaticResource ToolButton}" Content="1. List" ToolTip="Numbered list"
+                <ToggleButton x:Name="NumberListButton" Style="{StaticResource ToolToggle}" IsThreeState="True"
+                        Content="1. List" ToolTip="Numbered list" AutomationProperties.Name="Numbered list"
                         Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=Body}"/>
                 <Border Width="1" Background="{DynamicResource CardBorder}" Margin="4,2,8,2"/>
                 <Button x:Name="LinkButton" Style="{StaticResource ToolButton}" Content="🔗 Link"
@@ -213,9 +271,10 @@
                      AutomationProperties.Name="Response body"
                      AutomationProperties.HelpText="Edit the formatted response content"
                      Background="{DynamicResource CardBg}" Foreground="{DynamicResource TextPrimary}"
-                     BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
-                     VerticalScrollBarVisibility="Auto"
-                     AcceptsTab="True" SpellCheck.IsEnabled="True">
+                      BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
+                      VerticalScrollBarVisibility="Auto"
+                      AcceptsTab="True" SpellCheck.IsEnabled="True"
+                      SelectionChanged="Body_SelectionChanged">
             <RichTextBox.Resources>
                 <Style TargetType="Hyperlink">
                     <Setter Property="Foreground" Value="{DynamicResource Hyperlink}"/>
@@ -225,12 +284,17 @@
 
         <!-- Error + actions -->
         <Grid Grid.Row="4" Margin="0,12,0,0">
-            <TextBlock x:Name="ErrorText" Foreground="{DynamicResource Error}" FontSize="12"
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="120"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="ErrorText" Grid.Column="0" Margin="0,0,12,0"
+                       Foreground="{DynamicResource Error}" FontSize="12"
                        AutomationProperties.LiveSetting="Assertive"
                        views:LiveRegion.Content="{Binding Text, RelativeSource={RelativeSource Self}}"
                        VerticalAlignment="Center" TextWrapping="Wrap"
                        HorizontalAlignment="Left" Visibility="Collapsed"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <WrapPanel Grid.Column="1" MaxWidth="300" HorizontalAlignment="Right">
                 <Button Content="Cancel" Style="{StaticResource ActionButton}" IsCancel="True"
                         Click="Cancel_Click"/>
                 <!-- "Edit & insert" mode swaps Save for these one-off insert actions (no file saved). -->
@@ -242,7 +306,7 @@
                         ToolTip="Insert the edited text into the app you were in (nothing is saved)"/>
                 <Button x:Name="SaveButton" Content="Save" Style="{StaticResource PrimaryButton}" IsDefault="True"
                         Click="Save_Click"/>
-            </StackPanel>
+            </WrapPanel>
         </Grid>
     </Grid>
 </Window>
