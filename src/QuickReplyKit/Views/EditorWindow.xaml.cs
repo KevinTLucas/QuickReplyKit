@@ -193,17 +193,14 @@ public partial class EditorWindow : Window
 
     private void ClearFormatting_Click(object sender, RoutedEventArgs e)
     {
-        Body.Selection.ClearAllProperties();   // clears colour/highlight/size/decorations too
+        EditorFormatting.Clear(Body.Selection);
         UpdateToolbarState();
         Body.Focus();
     }
 
     private void Strike_Click(object sender, RoutedEventArgs e)
     {
-        var cur = Body.Selection.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection;
-        bool on = cur != null && cur.Any(d => d.Location == TextDecorationLocation.Strikethrough);
-        Body.Selection.ApplyPropertyValue(Inline.TextDecorationsProperty,
-            on ? new TextDecorationCollection() : TextDecorations.Strikethrough);
+        EditorFormatting.ToggleStrike(Body.Selection);
         UpdateToolbarState();
         Body.Focus();
     }
@@ -235,7 +232,7 @@ public partial class EditorWindow : Window
     {
         if (sender is MenuItem { Tag: string tag })
         {
-            if (tag == "auto") ClearForeground(Body.Selection);   // → inherits theme colour
+            if (tag == "auto") EditorFormatting.UseDefaultForeground(Body.Selection, Body.Foreground);
             else Body.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, Brush(tag));
         }
         Body.Focus();
@@ -244,21 +241,11 @@ public partial class EditorWindow : Window
     private void HighlightSwatch_Click(object sender, RoutedEventArgs e)
     {
         if (sender is MenuItem { Tag: string tag })
-            Body.Selection.ApplyPropertyValue(TextElement.BackgroundProperty,
-                tag == "none" ? System.Windows.Media.Brushes.Transparent : Brush(tag));
+        {
+            if (tag == "none") EditorFormatting.RemoveHighlight(Body.Selection);
+            else Body.Selection.ApplyPropertyValue(TextElement.BackgroundProperty, Brush(tag));
+        }
         Body.Focus();
-    }
-
-    // Clear an explicit text colour over the selection so it inherits the theme (WPF has no direct
-    // "clear property over range": re-apply the current colour to split runs at the selection edges,
-    // then ClearValue the now-fully-selected runs). UnsetValue via ApplyPropertyValue throws.
-    private static void ClearForeground(TextSelection sel)
-    {
-        if (sel.GetPropertyValue(TextElement.ForegroundProperty) is System.Windows.Media.Brush b)
-            sel.ApplyPropertyValue(TextElement.ForegroundProperty, b);
-        for (var p = sel.Start; p != null && p.CompareTo(sel.End) < 0;
-             p = p.GetNextContextPosition(LogicalDirection.Forward))
-            (p.Parent as Run)?.ClearValue(TextElement.ForegroundProperty);
     }
 
     private static SolidColorBrush Brush(string hex)
@@ -285,13 +272,23 @@ public partial class EditorWindow : Window
     private void Link_Click(object sender, RoutedEventArgs e)
     {
         var sel = Body.Selection;
-        string existing = FindHyperlink(sel.Start)?.NavigateUri?.ToString() ?? "";
+        var existingLink = EditorFormatting.SelectedLink(sel);
+        string existing = existingLink?.NavigateUri?.ToString() ?? "";
 
         string? url = InputDialog.Prompt(this, "Insert link", "Link URL:", existing);
         if (url == null) return;
-        if (!System.Uri.TryCreate(url, System.UriKind.Absolute, out var uri))
+        if (!System.Uri.TryCreate(url, System.UriKind.Absolute, out var uri) ||
+            !HtmlToFlowDocument.IsSafeLink(uri))
         {
-            ShowError("That doesn't look like a valid URL (include http:// or https://).");
+            ShowError("Use an http://, https://, or mailto: link.");
+            return;
+        }
+
+        if (existingLink != null)
+        {
+            existingLink.NavigateUri = uri;
+            existingLink.ToolTip = uri.ToString();
+            Body.Focus();
             return;
         }
 
@@ -302,23 +299,23 @@ public partial class EditorWindow : Window
             Body.Selection.Select(sel.Start, sel.End);
         }
 
-        if (!Body.Selection.IsEmpty)
+        if (!EditorFormatting.CanCreateLink(Body.Selection))
+        {
+            ShowError("Select text within one paragraph that is not already linked.");
+            return;
+        }
+
+        try
         {
             var link = new Hyperlink(Body.Selection.Start, Body.Selection.End) { NavigateUri = uri };
             link.ToolTip = uri.ToString();
         }
-        Body.Focus();
-    }
-
-    /// <summary>Walk up from a text position to the enclosing <see cref="Hyperlink"/>, if any.</summary>
-    private static Hyperlink? FindHyperlink(TextPointer pos)
-    {
-        for (DependencyObject? p = pos.Parent; p != null; )
+        catch (InvalidOperationException)
         {
-            if (p is Hyperlink h) return h;
-            p = p is FrameworkContentElement fce ? fce.Parent : null;
+            ShowError("That selection can't be converted into one link.");
+            return;
         }
-        return null;
+        Body.Focus();
     }
 
     // --- Save ---------------------------------------------------------------

@@ -9,10 +9,10 @@ using System.Windows.Navigation;
 namespace QuickReplyKit.Core.Text;
 
 /// <summary>
-/// Renders the stored rich-text HTML subset (p, br, b/strong, i/em, u, ul/ol/li, a) into a
-/// read-only WPF <see cref="FlowDocument"/> for preview. Bounded subset only, so a small
-/// stack machine is enough — no HTML library. Malformed input never throws (best-effort:
-/// keep whatever built). Hyperlinks open in the default browser on click.
+/// Renders the stored rich-text HTML subset (paragraphs, line breaks, emphasis, strike, lists,
+/// links, color, highlight, size, and alignment) into a WPF <see cref="FlowDocument"/> for preview
+/// or editing. The bounded subset needs only a small stack machine. Malformed input never throws;
+/// valid content parsed before the error is retained.
 /// </summary>
 public static class HtmlToFlowDocument
 {
@@ -22,7 +22,8 @@ public static class HtmlToFlowDocument
         {
             PagePadding = new Thickness(0),
             FontFamily = new FontFamily("Segoe UI"),
-            FontSize = 13,
+            FontSize = FlowDocumentToHtml.NormalFontSize,
+            TextAlignment = TextAlignment.Left,
         };
         if (string.IsNullOrEmpty(html)) return doc;
 
@@ -35,8 +36,10 @@ public static class HtmlToFlowDocument
     {
         Paragraph? para = null;
         var inlines = new Stack<InlineCollection>();
+        var formats = new Stack<InlineFormat>();
         var lists = new Stack<List>();
         var items = new Stack<ListItem>();
+        formats.Push(new InlineFormat());
 
         BlockCollection BlockTarget() => items.Count > 0 ? items.Peek().Blocks : doc.Blocks;
 
@@ -49,6 +52,7 @@ public static class HtmlToFlowDocument
             BlockTarget().Add(para);
             inlines.Clear();
             inlines.Push(para.Inlines);
+            while (formats.Count > 1) formats.Pop();
         }
 
         void PushSpan(Span span)
@@ -56,8 +60,13 @@ public static class HtmlToFlowDocument
             EnsurePara();
             inlines.Peek().Add(span);
             inlines.Push(span.Inlines);
+            formats.Push(FormatOf(formats.Peek(), span));
         }
-        void PopSpan() { if (inlines.Count > 1) inlines.Pop(); }
+        void PopSpan()
+        {
+            if (inlines.Count > 1) inlines.Pop();
+            if (formats.Count > 1) formats.Pop();
+        }
 
         void AddText(string raw)
         {
@@ -67,7 +76,9 @@ public static class HtmlToFlowDocument
             string text = WebUtility.HtmlDecode(collapsed);
             if (text.Length == 0) return;
             EnsurePara();
-            inlines.Peek().Add(new Run(text));
+            var run = new Run(text);
+            ApplyFormat(run, formats.Peek());
+            inlines.Peek().Add(run);
         }
 
         void HandleTag(string tag)
@@ -114,7 +125,7 @@ public static class HtmlToFlowDocument
                     if (closing) { PopSpan(); break; }
                     var link = new Hyperlink();
                     string? href = Attr(tag, "href");
-                    if (href != null && Uri.TryCreate(href, UriKind.Absolute, out var uri) && SafeLink(uri))
+                    if (href != null && Uri.TryCreate(href, UriKind.Absolute, out var uri) && IsSafeLink(uri))
                     {
                         link.NavigateUri = uri;
                         link.RequestNavigate += OnNavigate;
@@ -139,7 +150,6 @@ public static class HtmlToFlowDocument
                     var li = new ListItem();
                     lists.Peek().ListItems.Add(li);
                     items.Push(li);
-                    EnsurePara();
                     break;
                 // unknown tags: ignore, keep inner text
             }
@@ -172,10 +182,55 @@ public static class HtmlToFlowDocument
         e.Handled = true;
     }
 
-    private static bool SafeLink(Uri uri) =>
+    public static bool IsSafeLink(Uri uri) =>
         uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
         uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
         uri.Scheme.Equals(Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase);
+
+    private static InlineFormat FormatOf(InlineFormat current, Span span)
+    {
+        if (span is Bold) current = current with { Bold = true };
+        if (span is Italic) current = current with { Italic = true };
+        if (span is Underline) current = current with { Underline = true };
+        if (span.ReadLocalValue(Inline.TextDecorationsProperty) is TextDecorationCollection decorations)
+            current = current with
+            {
+                Underline = current.Underline || decorations.Any(d => d.Location == TextDecorationLocation.Underline),
+                Strike = current.Strike || decorations.Any(d => d.Location == TextDecorationLocation.Strikethrough),
+            };
+        if (span.ReadLocalValue(TextElement.ForegroundProperty) is SolidColorBrush foreground)
+            current = current with { Foreground = foreground };
+        if (span.ReadLocalValue(TextElement.BackgroundProperty) is SolidColorBrush background)
+            current = current with { Background = background };
+        if (span.ReadLocalValue(TextElement.FontSizeProperty) is double size)
+            current = current with { Size = size };
+        return current;
+    }
+
+    private static void ApplyFormat(Run run, InlineFormat format)
+    {
+        if (format.Bold) run.FontWeight = FontWeights.Bold;
+        if (format.Italic) run.FontStyle = FontStyles.Italic;
+        if (format.Underline || format.Strike)
+        {
+            var decorations = new TextDecorationCollection();
+            if (format.Underline) decorations.Add(TextDecorations.Underline[0]);
+            if (format.Strike) decorations.Add(TextDecorations.Strikethrough[0]);
+            run.TextDecorations = decorations;
+        }
+        if (format.Foreground != null) run.Foreground = format.Foreground;
+        if (format.Background != null) run.Background = format.Background;
+        if (format.Size != null) run.FontSize = format.Size.Value;
+    }
+
+    private readonly record struct InlineFormat(
+        bool Bold = false,
+        bool Italic = false,
+        bool Underline = false,
+        bool Strike = false,
+        double? Size = null,
+        SolidColorBrush? Foreground = null,
+        SolidColorBrush? Background = null);
 
     // <span style="color:…; background-color:…; font-size:…px"> → a Span carrying those local
     // properties. Unknown/unparseable declarations are ignored (best effort, never throws).

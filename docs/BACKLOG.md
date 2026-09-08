@@ -9,7 +9,16 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-No active work. B01-B32 are complete; verification history is in [`STATUS.md`](STATUS.md) and Git.
+- **B35 · P1 · QA — Microsoft Word rich-paste fidelity.** Current `main` can let Word select the plain-text clipboard
+  representation before RTF, which drops inline formatting. `feature/word-style-word-fidelity` publishes RTF → HTML
+  → Unicode, skips empty RTF, and uses the editor's normal 14-unit size. Automated QA is green; a manual paste into
+  Microsoft Word remains before merge because Word is not installed on this machine.
+- **B36 · P1 · QA — rich editor formatting persistence.** The editor's native WPF bold, italic, and underline
+  commands stored formatting on text-run properties that the HTML serializer ignored, so formatting looked correct
+  until Save/reopen. `bugfix/rich-editor-persistence` normalizes loaded and newly edited formatting at text runs,
+  preserves independent underline/strikethrough state, fixes Automatic color/Clear/aligned-list behavior, and uses
+  the same safe-link schemes on edit and reload. Release build is clean and 811 tests pass; independent re-QA remains
+  after fixing aligned multi-paragraph list stability and unsafe cross-paragraph link selections found in review.
 
 ## Deferred Ideas
 

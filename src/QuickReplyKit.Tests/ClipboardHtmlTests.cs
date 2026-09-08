@@ -216,7 +216,7 @@ public class ClipboardHtmlTests
 
     [Fact]
     public void Sanitize_KeepsSupportedFormattingAndDropsUnsupportedStyles() =>
-        Assert.Equal("<p style=\"text-align:center\"><span style=\"color:#FF0000\"><b>x</b></span></p>",
+        Assert.Equal("<p style=\"text-align:center\"><b><span style=\"color:#FF0000\">x</span></b></p>",
             ClipboardHtml.Sanitize("<p style='text-align:center;position:fixed'><span style='color:red;left:0'><b>x</b></span></p>"));
 
     [Fact]
