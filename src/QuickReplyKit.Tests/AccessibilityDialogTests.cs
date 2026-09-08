@@ -47,7 +47,6 @@ public class AccessibilityDialogTests
     [Fact]
     public void Dialogs_HaveSafeKeyboardDefaults()
     {
-        AssertDefaultButton("AboutWindow.xaml", "Close");
         AssertDefaultButton("BackupWindow.xaml", "Close");
         AssertDefaultButton("TrashWindow.xaml", "_Close");
         Assert.Equal("True", (string?)Named(Load("ImportPreviewWindow.xaml"), "ImportButton").Attribute("IsDefault"));

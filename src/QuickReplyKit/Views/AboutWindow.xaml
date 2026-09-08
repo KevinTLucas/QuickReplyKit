@@ -4,7 +4,8 @@
         Title="About / Diagnostics" Width="620" Height="500" MinWidth="420" MinHeight="300"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
         ShowInTaskbar="False" Background="{DynamicResource WindowBg}"
-        Foreground="{DynamicResource TextPrimary}" FontFamily="Segoe UI">
+        Foreground="{DynamicResource TextPrimary}" FontFamily="Segoe UI"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <Style x:Key="Btn" TargetType="Button" BasedOn="{StaticResource ThemedButton}">
             <Setter Property="Padding" Value="12,5"/>
@@ -52,7 +53,6 @@
             <Button Content="Open backup folder" Style="{StaticResource Btn}" Click="OpenBackup_Click"/>
             <Button Content="Open Trash" Style="{StaticResource Btn}" Click="OpenTrash_Click"/>
             <Button Content="Copy" Style="{StaticResource Btn}" ToolTip="Copy this diagnostics text" Click="Copy_Click"/>
-            <Button Content="Close" Style="{StaticResource Btn}" Margin="0" IsCancel="True" IsDefault="True"/>
         </WrapPanel>
     </Grid>
 </Window>
