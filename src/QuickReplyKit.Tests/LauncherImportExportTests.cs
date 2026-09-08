@@ -22,6 +22,9 @@ public class LauncherImportExportTests
         Assert.Equal("ImportExportButton_Click", (string?)button.Attribute("Click"));
         Assert.DoesNotContain(button.Descendants(), element => element.Name.LocalName == "AccessText");
 
+        var menu = button.Descendants().Single(element => element.Name.LocalName == "ContextMenu");
+        Assert.Equal("Bottom", (string?)menu.Attribute("Placement"));
+
         var headers = button.Descendants()
             .Where(element => element.Name.LocalName == "MenuItem")
             .Select(element => (string?)element.Attribute("Header") ?? "")

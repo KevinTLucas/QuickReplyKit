@@ -147,7 +147,7 @@
                         ToolTip="Import responses or export the full library"
                         Click="ImportExportButton_Click">
                     <Button.ContextMenu>
-                        <ContextMenu>
+                        <ContextMenu Placement="Bottom">
                             <MenuItem Header="_Import responses…" Click="MenuImport_Click"/>
                             <MenuItem Header="Export _full library…" Click="MenuExportLibrary_Click"/>
                         </ContextMenu>
