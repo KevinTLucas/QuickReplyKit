@@ -6,13 +6,13 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-07
-- **Current product merge:** `2e23918` (B23 About / Diagnostics window chrome cleanup);
+- **Current product merge:** `d1f39a0` (B24 hotkey-manager combination-capture removal);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20, B22, and B23 are complete. B24 is in QA; B21 and B25-B29 remain active.
+- **Current product baseline:** B01-B20 and B22-B24 are complete. B21 and B25-B29 remain active.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **729 passed** on the integrated B24 branch; two obsolete data rows for the removed controls were deleted.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `2e23918` at 69,921,126 bytes (SHA-256
-  `C31C335E598491AE7B60EF79E9B58B341CDAD3749052A237CA1CDCFE4FBC071E`). The prior packaged rich-clipboard gate exits 0.
+- **Tests:** **729 passed** after B24 independent hotkey-manager QA; two obsolete data rows for the removed controls were deleted.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `d1f39a0` at 69,920,656 bytes (SHA-256
+  `4C79B1FCFA889A8201B1FC54802FB77586F70B060FF9F88E04D35088ACEB2D5A`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -31,6 +31,7 @@
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B24 remove shortcut-combination lookup | `d1f39a0` | 729/729; 94/94 focused; Light/Dark/minimum-size captures; normal filter/conflict/Edit/Clear preserved | Complete |
 | B23 About / Diagnostics chrome cleanup | `2e23918` | 731/731; 30/30 focused; Light/Dark/minimum-size captures; native X, Alt+F4 and Escape verified | Complete |
 | B22 per-user paths and truthful diagnostics | `dc4b2a8` | 730/730; exact resolved paths; saved custom paths; no hotkey values/content; invalid and environment-variable paths | Complete |
 | B20 import workflow crash | `ba621f5` | 729/729; exact XAML root fixed; full UI boundary containment; transactional script trust/write rollback; independent re-QA | Complete |
@@ -88,8 +89,8 @@
 
 ## Remaining Work
 
-B21 and B24-B29 are active in [`BACKLOG.md`](BACKLOG.md); B24 is currently in QA. Work in severity order: B21 first; then the focused
-UI cleanup items B24-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
+B21 and B25-B29 are active in [`BACKLOG.md`](BACKLOG.md). Work in severity order: B21 first; then the focused
+UI cleanup items B25-B29. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** none after B20.

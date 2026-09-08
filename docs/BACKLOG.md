@@ -20,13 +20,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   imported native code displays its exact source and requires individual acceptance with no bulk-accept path. Document
   clearly that approved native scripts have the same access as the signed-in Windows user.
 
-### B24 - Remove shortcut-combination lookup
-
-- **Severity / status:** P2 · QA
-- **Acceptance:** remove “Find a Shortcut by Combination” because capture is unreliable while global shortcuts are
-  registered. Keep the normal hotkey search field and conflict indicators; delete only code/tests used exclusively by
-  the removed capture workflow.
-
 ### B25 - Reorganize backup and Trash settings
 
 - **Severity / status:** P2 · Requested · Queued
