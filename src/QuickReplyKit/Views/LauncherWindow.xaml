@@ -98,7 +98,7 @@
                             CornerRadius="3" Background="{DynamicResource Selection}"
                             BorderBrush="{DynamicResource CardBorder}" BorderThickness="1"
                             Visibility="{Binding HasSearchScope, Converter={StaticResource BoolVis}}"
-                            AutomationProperties.Name="{Binding SearchScopeLabel, StringFormat=Search in folder {0}}">
+                            AutomationProperties.Name="{Binding CurrentCategory, StringFormat=Search in folder {0}}">
                         <DockPanel LastChildFill="True">
                             <Button DockPanel.Dock="Right" Content="×" Style="{StaticResource IconButton}"
                                     MinWidth="28" MinHeight="28" Padding="0" Margin="3,0,0,0"
@@ -184,23 +184,11 @@
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <TreeView.Resources>
                         <HierarchicalDataTemplate DataType="{x:Type vm:NavNodeVm}" ItemsSource="{Binding Children}">
-                            <Grid>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Icon}" Margin="0,0,6,0"/>
-                                    <TextBlock x:Name="NavTitle" Text="{Binding Title}"
-                                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
-                                </StackPanel>
-                                <Border x:Name="SelectionBar" Width="3" Margin="-2,1,0,1"
-                                        HorizontalAlignment="Left" Background="Transparent"
-                                        IsHitTestVisible="False"/>
-                            </Grid>
-                            <HierarchicalDataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                    <Setter TargetName="SelectionBar" Property="Background"
-                                            Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
-                                    <Setter TargetName="NavTitle" Property="FontWeight" Value="SemiBold"/>
-                                </DataTrigger>
-                            </HierarchicalDataTemplate.Triggers>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Icon}" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding Title}"
+                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+                            </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.Resources>
                     <TreeView.ItemContainerStyle>
@@ -209,6 +197,15 @@
                             <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                             <Setter Property="Padding" Value="2,3"/>
                             <Setter Property="ContextMenu" Value="{StaticResource NavContextMenu}"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background"
+                                            Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                            </Style.Triggers>
                         </Style>
                     </TreeView.ItemContainerStyle>
                 </TreeView>

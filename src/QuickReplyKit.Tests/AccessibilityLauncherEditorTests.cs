@@ -26,18 +26,11 @@ public class AccessibilityLauncherEditorTests
     }
 
     [Fact]
-    public void SelectedNav_UsesSystemColorBarAndNonColorTextCue()
+    public void SelectedNav_UsesSystemColorBackgroundAndNonColorTextCue()
     {
         var launcher = Load("src/QuickReplyKit/Views/LauncherWindow.xaml");
         var template = launcher.Descendants().Single(e => e.Name.LocalName == "HierarchicalDataTemplate");
-        var trigger = template.Descendants().Single(e => e.Name.LocalName == "DataTrigger" &&
-            (string?)e.Attribute("Binding") == "{Binding IsSelected}" && (string?)e.Attribute("Value") == "True");
-
-        Assert.Contains(trigger.Elements(), e => (string?)e.Attribute("TargetName") == "SelectionBar" &&
-            (string?)e.Attribute("Property") == "Background" &&
-            (string?)e.Attribute("Value") == "{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}");
-        Assert.Contains(trigger.Elements(), e => (string?)e.Attribute("TargetName") == "NavTitle" &&
-            (string?)e.Attribute("Property") == "FontWeight" && (string?)e.Attribute("Value") == "SemiBold");
+        Assert.DoesNotContain(template.Descendants(), e => (string?)e.Attribute(X + "Name") == "SelectionBar");
 
         var icon = template.Descendants().Single(e => e.Name.LocalName == "TextBlock" &&
             (string?)e.Attribute("Text") == "{Binding Icon}");
@@ -48,6 +41,14 @@ public class AccessibilityLauncherEditorTests
         Assert.Contains(style.Descendants(), e => e.Name.LocalName == "Setter" &&
             (string?)e.Attribute("Property") == "IsSelected" &&
             (string?)e.Attribute("Value") == "{Binding IsSelected, Mode=TwoWay}");
+        var trigger = style.Descendants().Single(e => e.Name.LocalName == "Trigger" &&
+            (string?)e.Attribute("Property") == "IsSelected" && (string?)e.Attribute("Value") == "True");
+        Assert.Contains(trigger.Elements(), e => (string?)e.Attribute("Property") == "Background" &&
+            (string?)e.Attribute("Value") == "{DynamicResource {x:Static SystemColors.HighlightBrushKey}}");
+        Assert.Contains(trigger.Elements(), e => (string?)e.Attribute("Property") == "Foreground" &&
+            (string?)e.Attribute("Value") == "{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}");
+        Assert.Contains(trigger.Elements(), e => (string?)e.Attribute("Property") == "FontWeight" &&
+            (string?)e.Attribute("Value") == "SemiBold");
     }
 
     [Fact]

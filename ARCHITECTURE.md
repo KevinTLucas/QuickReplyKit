@@ -116,8 +116,8 @@ view-models, interop, and app wiring.
   `RegisterHotKey` (default **Ctrl+Alt+D**, configurable). Launcher **hides** (not closes) on Esc/focus-loss/insert.
 - Compact, resizable, keyboard-first launcher (3 panes: nav / results / preview; nav auto-collapses when narrow).
   Preview actions wrap at compact widths; icon targets keep stable usable dimensions without boxed pointer chrome.
-  The active nav item retains native TreeView selection and adds a system-color edge marker plus semibold label,
-  so scope remains clear without relying on color alone.
+  The active nav item uses the native system Highlight/HighlightText background and foreground plus a semibold label,
+  so scope remains clear in High Contrast and without relying on color alone.
   Window size/position + monitor remembered and always re-opened on-screen (`WindowPlacement.EnsureVisible`).
 - The icon-only **⇄** toolbar menu exposes response import and full-library export; its tooltip and automation name
   state the complete purpose. Exporting one response
@@ -125,7 +125,8 @@ view-models, interop, and app wiring.
   duplicating actions across menus.
 - Search ANDs whitespace tokens across name, response tags, app, category, and body. A selected category supplies the
   candidate set before ranking, limited to that folder subtree; Favorites and Recent likewise search only their own
-  collections, while All Responses is global. The removable category chip preserves the query when cleared. Typo
+  collections, while All Responses is global. The removable category chip shows the selected folder's leaf title,
+  retains the complete category path internally, and preserves the query when cleared. Typo
   fallback uses bounded per-word edit distance within the active candidate set, with subsequence matching only for
   short abbreviations; literal body matches keep their snippets and long tokens never join across words.
 - **Startup is non-blocking:** the window shows immediately in a "Loading library…" state; the initial scan runs
