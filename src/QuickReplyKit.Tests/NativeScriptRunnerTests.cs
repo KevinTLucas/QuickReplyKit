@@ -157,14 +157,34 @@ public class NativeScriptRunnerTests
     [Fact]
     public async Task EvaluateAsync_ConcurrencyIsCappedAtTwo()
     {
-        var timer = System.Diagnostics.Stopwatch.StartNew();
+        using var temp = new TempDir();
+        string root = temp.Of("runtime");
+        Directory.CreateDirectory(root);
+        string source =
+            "$ready = Join-Path $env:QRK_LIBRARY_ROOT ($PID.ToString() + '.ready'); " +
+            "[IO.File]::WriteAllText($ready, 'ready'); " +
+            "$release = Join-Path $env:QRK_LIBRARY_ROOT 'release'; " +
+            "while (-not (Test-Path -LiteralPath $release)) { Start-Sleep -Milliseconds 50 }; " +
+            "[Console]::Out.Write('ok')";
         var tasks = Enumerable.Range(0, 4).Select(_ => NativeScriptRunner.EvaluateAsync(
-            "Start-Sleep -Milliseconds 650; [Console]::Out.Write('ok')", Now)).ToArray();
+            source, Now, root, CancellationToken.None, PowerShell, TimeSpan.FromSeconds(10))).ToArray();
 
-        var results = await Task.WhenAll(tasks);
+        ScriptEvaluationResult[] results;
+        try
+        {
+            Assert.True(SpinWait.SpinUntil(() => Directory.GetFiles(root, "*.ready").Length == 2,
+                TimeSpan.FromSeconds(4)), "Two runtime slots did not become active.");
+            await Task.Delay(300);
+            Assert.Equal(2, Directory.GetFiles(root, "*.ready").Length);
+        }
+        finally
+        {
+            File.WriteAllText(Path.Combine(root, "release"), "go");
+            results = await Task.WhenAll(tasks);
+        }
 
         Assert.All(results, result => Assert.True(result.Success, result.Error));
-        Assert.True(timer.Elapsed >= TimeSpan.FromMilliseconds(1050), timer.Elapsed.ToString());
+        Assert.Equal(4, Directory.GetFiles(root, "*.ready").Length);
     }
 
     [Fact]
