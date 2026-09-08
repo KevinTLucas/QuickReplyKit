@@ -132,6 +132,7 @@ public class AsyncScriptIntegrationTests
             vm.RequestScriptError += errors.Add;
             vm.RequestHide += () => hidden++;
             await vm.PreviewCompletion;
+            Assert.Empty(errors); // preview shows its inline marker but never interrupts with a dialog
 
             await vm.TriggerDefaultInsertAsync();
             await vm.TriggerPlainInsertAsync();
@@ -255,6 +256,41 @@ public class AsyncScriptIntegrationTests
     }
 
     [Fact]
+    public void NativePreviewCache_InvalidatesOnSelectionAndLibraryRefresh()
+    {
+        Sta(async () =>
+        {
+            using var temp = new TempDir();
+            const string counter = "$p=Join-Path $env:QRK_LIBRARY_ROOT '__FILE__.txt'; " +
+                "$n=if(Test-Path -LiteralPath $p){[int][IO.File]::ReadAllText($p)}else{0}; " +
+                "$n++; [IO.File]::WriteAllText($p,$n); [Console]::Out.Write($n)";
+            var trust = SaveTrustedScript(temp, "A", counter.Replace("__FILE__", "a"));
+            SaveTrustedScript(temp, "B", counter.Replace("__FILE__", "b"), trust);
+            TestFiles.WriteResponse(temp.Of("lib", "A response.json"), html: "<p>{{script:A}}</p>");
+            TestFiles.WriteResponse(temp.Of("lib", "B response.json"), html: "<p>{{script:B}}</p>");
+            using var library = Service(temp, trust);
+            var insert = new FakeInsert();
+            var vm = new LauncherViewModel(library, insert, new AppConfig(), () => Now);
+            await vm.PreviewCompletion;
+            Assert.Equal("1", File.ReadAllText(temp.Of("lib", "a.txt")));
+
+            vm.SelectedResult = vm.Results.Single(row => row.Name == "B response");
+            await vm.PreviewCompletion;
+            vm.SelectedResult = vm.Results.Single(row => row.Name == "A response");
+            await vm.PreviewCompletion;
+            Assert.Equal("2", File.ReadAllText(temp.Of("lib", "a.txt")));
+
+            library.Reload();
+            vm.OnLibraryUpdated();
+            await vm.PreviewCompletion;
+            await vm.TriggerDefaultInsertAsync();
+
+            Assert.Equal("3", File.ReadAllText(temp.Of("lib", "a.txt")));
+            Assert.Equal("<p>3</p>", Assert.Single(insert.Calls).Item.Html);
+        });
+    }
+
+    [Fact]
     public async Task LibraryAsyncResolve_CancellationReachesRunnerAndKillsProcess()
     {
         using var temp = new TempDir();
@@ -294,6 +330,7 @@ public class AsyncScriptIntegrationTests
             Assert.Empty(insert.Calls);
             Assert.NotNull(error);
             Assert.DoesNotContain("customer-secret", error, StringComparison.Ordinal);
+            Assert.Empty(library.Recent());
         });
     }
 
