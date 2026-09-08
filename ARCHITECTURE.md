@@ -82,6 +82,9 @@ view-models, interop, and app wiring.
   additively via inline styles/simple tags; **older files still load**). Converters in `Core/Text`:
   `HtmlToFlowDocument` (render/edit), `FlowDocumentToHtml` (serialize), `HtmlText.ToPlainText` (plain), and
   `CfHtml` (CF_HTML clipboard payload with a byte-exact StartHTML/EndHTML/StartFragment/EndFragment header).
+  The editor parser copies supported formatting onto text runs, and the serializer resolves formatting at each run.
+  This deliberately normalizes WPF's two representations (loaded wrapper elements versus toolbar-set dependency
+  properties), so Save/reopen preserves both newly applied formatting and formatting removed from loaded responses.
 - **New from Clipboard** routes CF_HTML through `ClipboardHtml.Sanitize`: active, hidden, and non-content blocks are
   removed, then the existing parser/serializer normalizes the remainder to the stored subset. Hyperlinks are limited
   to `http`, `https`, and `mailto`; plain clipboard text is HTML-encoded before editing.
