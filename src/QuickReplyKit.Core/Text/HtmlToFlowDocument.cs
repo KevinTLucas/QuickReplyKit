@@ -9,10 +9,10 @@ using System.Windows.Navigation;
 namespace QuickReplyKit.Core.Text;
 
 /// <summary>
-/// Renders the stored rich-text HTML subset (p, br, b/strong, i/em, u, ul/ol/li, a) into a
-/// read-only WPF <see cref="FlowDocument"/> for preview. Bounded subset only, so a small
-/// stack machine is enough — no HTML library. Malformed input never throws (best-effort:
-/// keep whatever built). Hyperlinks open in the default browser on click.
+/// Renders the stored rich-text HTML subset (paragraphs, line breaks, emphasis, strike, lists,
+/// links, color, highlight, size, and alignment) into a WPF <see cref="FlowDocument"/> for preview
+/// or editing. The bounded subset needs only a small stack machine. Malformed input never throws;
+/// valid content parsed before the error is retained.
 /// </summary>
 public static class HtmlToFlowDocument
 {
