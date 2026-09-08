@@ -213,3 +213,7 @@ logs, backups, and Trash live under `%APPDATA%\QuickReplyKit`; the backup folder
 When the optional `DefaultLibrary`
 folder is distributed beside the executable, its examples seed an empty library on first run; a
 single-exe distribution starts with an empty library instead.
+
+## License
+
+QuickReplyKit is available under the [MIT License](LICENSE).
