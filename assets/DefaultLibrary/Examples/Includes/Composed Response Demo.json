@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "app": "QuickReplyKit",
+  "tags": [
+    "example",
+    "include"
+  ],
+  "html": "{{Shared Welcome}}<p>This middle section belongs only to the composed response.</p>{{Shared Closing}}",
+  "favorite": false
+}

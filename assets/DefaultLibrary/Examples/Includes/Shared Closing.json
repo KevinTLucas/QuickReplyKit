@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "app": "QuickReplyKit",
+  "tags": [
+    "example",
+    "include"
+  ],
+  "html": "<p>Please let us know if you need anything else.</p><p>Best,<br>Support Team</p>",
+  "favorite": false
+}

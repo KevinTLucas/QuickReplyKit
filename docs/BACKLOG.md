@@ -11,12 +11,14 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B30 - Sample dynamic variables and scripts
 
-- **Severity / status:** P3 · Requested · Queued last
+- **Severity / status:** P3 · QA
 - **Acceptance:** after every higher-priority item is complete, add a small set of clearly named, safe examples that
   demonstrate built-in variables, response includes, the restricted expression language, and explicitly trusted
   PowerShell. Include the requested randomized greeting example with ten greetings and an added “Happy Friday” line
   on Fridays. Examples must be optional seed content, contain no user-specific paths or data, explain the trust model,
   and remain easy to delete or copy into a real library.
+- **Current branch:** implemented on `examples/dynamic-scripts`; Release build is clean and 765/765 tests pass.
+  Independent QA and merge/publish remain.
 
 ## Deferred Ideas
 

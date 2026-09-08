@@ -42,7 +42,7 @@ src/
     App.xaml(.cs)            startup, single-instance, tray, hotkey, async initial scan; SelfTest.cs (--selftest-* gates)
   QuickReplyKit.Tests/       xUnit over Core, view-models, app services, and Win32 interop
 tools/                       shoot.ps1 (launch+screenshot+kill), capture-window.ps1, make-icon.ps1
-assets/DefaultLibrary/       example responses, seeded into an empty library on first run
+assets/DefaultLibrary/       optional, independently removable seed responses and script examples
 ```
 Rule: **non-UI logic lives in `QuickReplyKit.Core` and is unit-tested.** The WPF project holds views,
 view-models, interop, and app wiring.
@@ -110,6 +110,10 @@ view-models, interop, and app wiring.
 - Preview, launcher paste/plain/copy, edit-before-insert, and instant hotkeys use cancellable asynchronous template
   resolution. New preview work cancels stale work; insert actions suppress duplicate concurrent activation. The old
   restricted path remains compatible and fast, while a slow native child never blocks the WPF dispatcher.
+- `assets/DefaultLibrary/Examples` demonstrates every built-in token, named response includes, `qrk-expr-1`, and
+  `powershell-1` without coupling normal support examples to the demos. Portable definitions contain no approval
+  state. In particular, the full-trust sample remains inert until the user reviews its exact source and creates a
+  local source-bound trust record in the Script Manager.
 
 ## Paste engine (the core value) — `Interop/*` + `Services/InsertService`
 - A `ForegroundMonitor` (WinEvent `EVENT_SYSTEM_FOREGROUND`, `WINEVENT_SKIPOWNPROCESS`) continuously records the
