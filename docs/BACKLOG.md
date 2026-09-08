@@ -11,7 +11,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B21 - Explicitly trusted native scripts
 
-- **Severity / status:** P1 · Requested · Next
+- **Severity / status:** P1 · In progress
 - **Problem:** `qrk-expr-1` intentionally cannot read files or perform the internal data-processing workflows now
   requested by users.
 - **Acceptance:** add an explicitly identified native script type that can access local files, parse data, and return
@@ -22,7 +22,7 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B25 - Reorganize backup and Trash settings
 
-- **Severity / status:** P2 · Requested · Queued
+- **Severity / status:** P2 · QA
 - **Acceptance:** remove the Backup Folder Reset button and its unused handler. Place Backup/Restore Library and Trash
   controls directly beneath the Backup Folder settings, preserving validation, keyboard access, compact resizing, and
   both themes.
@@ -50,6 +50,15 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 - **Severity / status:** P2 · Requested · Queued
 - **Acceptance:** rename the response context-menu action currently shown as “Edit & insert…” to “Edit Response Text…”
   (or equally clear wording) without changing its transient compose-and-insert behavior.
+
+### B30 - Sample dynamic variables and scripts
+
+- **Severity / status:** P3 · Requested · Queued last
+- **Acceptance:** after every higher-priority item is complete, add a small set of clearly named, safe examples that
+  demonstrate built-in variables, response includes, the restricted expression language, and explicitly trusted
+  PowerShell. Include the requested randomized greeting example with ten greetings and an added “Happy Friday” line
+  on Fridays. Examples must be optional seed content, contain no user-specific paths or data, explain the trust model,
+  and remain easy to delete or copy into a real library.
 
 ## Deferred Ideas
 
