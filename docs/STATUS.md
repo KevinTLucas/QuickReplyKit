@@ -8,7 +8,7 @@
 - **Last audited:** 2026-09-07
 - **Current product merge:** `d1f39a0` (B24 hotkey-manager combination-capture removal);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B24 are complete. B21 is in progress; B25 is in QA; B26-B30 remain queued.
+- **Current product baseline:** B01-B20 and B22-B24 are complete. B21 is in progress; B25-B26 are in QA; B27-B30 remain queued.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **729 passed** after B24 independent hotkey-manager QA; two obsolete data rows for the removed controls were deleted.
 - **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `d1f39a0` at 69,920,656 bytes (SHA-256
@@ -90,7 +90,8 @@
 ## Remaining Work
 
 B21 and B25-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 is in implementation, B25 is awaiting its final
-visual QA gate, B26-B29 are isolated and queued, and B30 is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
+visual QA gate, B26 passes 729/729 branch tests and awaits independent QA, B27-B29 are isolated and queued, and B30
+is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
 
 **Known confirmed regressions/defects:** none after B20.

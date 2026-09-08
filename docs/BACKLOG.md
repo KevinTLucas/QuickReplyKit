@@ -29,9 +29,11 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ### B26 - Short scoped-search label
 
-- **Severity / status:** P2 · Requested · Queued
+- **Severity / status:** P2 · QA
 - **Acceptance:** the active scoped-search chip shows only the selected folder's display name, not the full hierarchy;
   search behavior and the full underlying category path remain unchanged.
+- **Implemented on:** `ui/scoped-search-label`; Release build is clean and the integrated branch passes 729/729 tests.
+  Independent visual/behavioral QA remains before merge.
 
 ### B27 - Background-only selected-folder state
 
