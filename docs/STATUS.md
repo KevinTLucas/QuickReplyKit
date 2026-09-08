@@ -5,15 +5,15 @@
 
 ## Audited Baseline
 
-- **Last audited:** 2026-09-07
-- **Current product merge:** `99d8efd` (B28 icon-only Import / Export trigger);
+- **Last audited:** 2026-09-08
+- **Current product merge:** `4fa69ec` (B21 explicitly trusted native scripts);
   use `git rev-parse HEAD` for the docs-inclusive tip.
-- **Current product baseline:** B01-B20 and B22-B28 are complete. B21 passed independent QA and current-main regression
-  and awaits merge; B29 passed branch QA and awaits current-main integration; B30 remains queued last.
+- **Current product baseline:** B01-B28 are complete. B29 passed branch QA and awaits current-main integration; B30
+  remains queued last.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **732 passed** on merged `main` after B28.
-- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `99d8efd` at 69,920,438 bytes (SHA-256
-  `9F1269BF074E76A1851BAC326F6AA09F888214FCCAA2454687452F57E009B319`). The prior packaged rich-clipboard gate exits 0.
+- **Tests:** **760 passed** on merged `main` after B21.
+- **Portable publish:** `publish/QuickReplyKit.exe` was rebuilt from `4fa69ec` at 69,931,950 bytes (SHA-256
+  `F6B65AFF3DFD28660CCB436A44E3A9CCB60513024E5F2D8024131BBEF8E04E98`). The prior packaged rich-clipboard gate exits 0.
   The GUI-hosted paste gate returned 1 when this automation host could not complete its foreground step; its two
   temporary Notepad processes were removed and the user's existing Notepad was not touched. Repeat all four packaged
   gates after the remaining backlog integrations. No external .NET install is needed.
@@ -25,14 +25,14 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable. The confirmed import crash is fixed and independently regression-tested. B21 native-script
-  implementation is isolated and independently QA'd but not yet shipped. See [`BACKLOG.md`](BACKLOG.md) for B21 and
-  B29-B30.
+- **State:** launchable. Restricted expressions and explicitly trusted native PowerShell are both shipped and
+  independently security/UI tested. See [`BACKLOG.md`](BACKLOG.md) for B29-B30.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B21 explicitly trusted native scripts | `4fa69ec` | 760/760; 62/62 security/integration; 14/14 runtime; Light/Dark/compact Script Manager and Import Review; UTF-8, duplicate hotkey, and layout blockers fixed | Complete |
 | B28 icon-only Import / Export trigger | `99d8efd` | 732/732; 25/25 focused; Light/Dark/compact captures; keyboard menu anchored to trigger | Complete |
 | B27 native selected-folder background | `44f9267` | 732/732; 47/47 focused; Light/Dark/compact captures; High Contrast system brushes and non-color cue verified | Complete |
 | B26 short scoped-search label | `1ffac1f` | 732/732; 47/47 focused; Light/Dark/compact captures; duplicate leaves retain full-path filtering and accessibility | Complete |
@@ -75,17 +75,19 @@
 
 - **Launcher:** compact 3-pane folder/results/preview UI; fast global or folder-scoped search with highlighting, body
   snippets, typo fallback, favorites, recent responses, invalid-file surfacing, keyboard insert, plain insert, copy
-  feedback, a visible Edit action, and a labelled Import/Export menu. Compact action buttons wrap without clipping;
+  feedback, a visible Edit action, and an icon-only Import/Export menu with explicit tooltip and automation name.
+  Compact action buttons wrap without clipping;
   pointer states are restrained while keyboard focus remains explicit.
 - **Paste:** configurable launcher hotkey (default **Ctrl+Alt+D**) plus per-response global hotkeys that paste
   rich or plain without opening the launcher. Focus returns to the prior app; clipboard content is restored;
   transient paste content is marked to stay out of Windows clipboard history.
 - **Library/editor:** live-watched folder hierarchy; create/edit/duplicate/rename/move; rich editor with standard
   color/highlight palettes, lists, links, alignment, size, strike, response-tag chips, edit-before-insert, templates,
-  safe built-in variables, response includes, and bounded trusted `{{script:Name}}` expressions. The Script Manager
-  supports create/edit/validate/trust/enable/export/delete and protects dirty drafts.
+  safe built-in variables, response includes, restricted `{{script:Name}}` expressions, and explicitly trusted
+  full-permission Windows PowerShell definitions. The Script Manager supports
+  create/edit/validate/trust/enable/export/delete and protects dirty drafts.
 - **Safety/sharing:** selectable import preview; zip/file import/export; per-conflict policies; invalid-file tolerance;
-  exact per-script source review with no bulk code acceptance; local source-bound trust; importer and Trash
+  exact per-script source/language review with no bulk code acceptance; local source-bound trust; importer and Trash
   path-traversal guards; rolling library backups with restore; app-local response and folder Trash with exact hierarchy
   restore.
 - **Desktop integration:** System/Light/Dark themes, first-run onboarding, tray, startup registration, persisted
@@ -95,24 +97,14 @@
 
 ## Remaining Work
 
-B21 and B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B21 passed independent security/UI QA and current-main
-regression with 760/760 tests; B29 passed independent wording/interaction QA and awaits current-main integration; B30 is explicitly last.
-Each implementation requires a scoped human-readable branch, independent QA, green full
+B29-B30 are active in [`BACKLOG.md`](BACKLOG.md). B29 passed independent wording/interaction QA and awaits current-main
+integration; B30 is explicitly last. Each implementation requires a scoped human-readable branch, independent QA, green full
 regression, documentation updates, `--no-ff` merge, and a portable rebuild from the resulting `main` tip.
-
-**B21 branch evidence:** `feature/native-script-runtime` builds Release with 0 warnings / 0 errors and passes
-760/760 tests after integration with current `main`. Independent QA found and fixed three root causes: redirected
-PowerShell stdin now uses UTF-8, rapid instant-hotkey presses cannot overlap, and the Script Manager uses the shared
-dark-safe ComboBox plus a compact-height scroll path. Runtime/security tests cover source/output/time/concurrency
-bounds, Unicode, generic failures, privacy-safe diagnostics, cancellation, process-tree cleanup, exact source-bound
-trust, transactional import, stale/rollback refusal, and old `qrk-expr-1` compatibility. Script Manager and Import
-Review were visually inspected in Light, Dark, and minimum-size captures; temporary capture hooks were removed before
-the final Release rebuild. It is ready to merge but not shipped yet.
 
 **Known confirmed regressions/defects:** none after B20.
 
-**Active worktrees:** isolated branches for B21 and B29 are listed by `git worktree list`; neither is merged until its
-individual QA and integrated regression pass. A stale interrupted historical hotkey worktree remains quarantined and
+**Active worktree:** B29 is listed by `git worktree list` and is not merged until its current-main integration passes.
+A stale interrupted historical hotkey worktree remains quarantined and
 is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
@@ -144,7 +136,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `C:\Users\Kevin_Lucas\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **732** green after B27. Registry tests need normal current-user registry access.
+4. Run build + tests; expect **760** green after B21. Registry tests need normal current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
    `--no-ff` merge. UI work also requires app launch, interaction-state inspection, and representative screenshots.
