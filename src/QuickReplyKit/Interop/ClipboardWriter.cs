@@ -26,12 +26,12 @@ internal static class ClipboardWriter
     [DllImport("kernel32.dll")] private static extern bool GlobalUnlock(nint hMem);
 
     /// <summary>Plain text only (+ exclusion formats).</summary>
-    public static bool WritePlain(string text) => Write(text, html: null);
+    public static bool WritePlain(string text) => Write(text, html: null, rtf: null);
 
-    /// <summary>CF_UNICODETEXT + CF_HTML (+ exclusion formats).</summary>
-    public static bool WriteRich(string text, string cfHtml) => Write(text, cfHtml);
+    /// <summary>CF_UNICODETEXT + CF_HTML (+ optional CF_RTF) (+ exclusion formats).</summary>
+    public static bool WriteRich(string text, string cfHtml, string? rtf) => Write(text, cfHtml, rtf);
 
-    private static bool Write(string text, string? html)
+    private static bool Write(string text, string? html, string? rtf)
     {
         if (!Open()) return false;
         try
@@ -40,6 +40,8 @@ internal static class ClipboardWriter
 
             if (!SetUnicode(text)) return false;
             if (html is not null && !SetBytes(RegisterClipboardFormat("HTML Format"), Encoding.UTF8.GetBytes(html + "\0")))
+                return false;
+            if (rtf is not null && !SetBytes(RegisterClipboardFormat("Rich Text Format"), Encoding.UTF8.GetBytes(rtf + "\0")))
                 return false;
 
             // History / cloud exclusion — a zero DWORD payload for each registered format.
