@@ -6,6 +6,12 @@ using QuickReplyKit.Interop;
 
 namespace QuickReplyKit.Tests;
 
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class ClipboardCollection
+{
+    public const string Name = "Clipboard";
+}
+
 /// <summary>
 /// Proves the core Phase-3 promise WITHOUT needing Win+V: after <see cref="ClipboardWriter"/>
 /// writes, open the clipboard and enumerate its formats to assert CF_UNICODETEXT (and "HTML Format"
@@ -13,6 +19,7 @@ namespace QuickReplyKit.Tests;
 /// round-trips text through the raw-Win32 write (emoji, CJK, and a very large payload) to prove the
 /// HGLOBAL copy is byte-exact and never truncates. All clipboard work runs on an STA thread.
 /// </summary>
+[Collection(ClipboardCollection.Name)]
 public class ClipboardWriterTests
 {
     private const uint CF_UNICODETEXT = 13;

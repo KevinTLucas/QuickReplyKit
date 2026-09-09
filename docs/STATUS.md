@@ -104,7 +104,7 @@
 **B35 is in progress** on `fix/word-rich-paste-fidelity`. Automated QA is green at 799 tests: RTF reload preserves
 bold, italic, underline, strike, combined formatting, all eight text colors, all six highlights, all four sizes,
 links, Unicode, line breaks, alignment, bullets, and numbering; raw clipboard tests prove RTF → HTML → Unicode order.
-Microsoft Word is unavailable on this machine, so independent QA and a real Word paste remain before merge.
+Independent QA is complete. Microsoft Word is unavailable on this machine, so a real Word paste remains before merge.
 
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 

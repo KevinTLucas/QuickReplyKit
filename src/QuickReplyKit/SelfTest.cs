@@ -105,12 +105,10 @@ internal static class SelfTest
     }
 
     /// <summary>
-    /// <c>--selftest-paste-rich</c>: prove the rich paste path puts a well-formed CF_HTML payload on the
-    /// clipboard — the formatting a rich target consumes — alongside the plain-text alternative. Runs the
-    /// real <see cref="ClipboardWriter.WriteRich"/> + <see cref="CfHtml.Build"/> the paste engine uses,
-    /// then reads the clipboard back with raw Win32 and asserts the "HTML Format" blob is byte-for-byte
-    /// <see cref="CfHtml.Build"/> (valid header offsets + our bold fragment) and CF_UNICODETEXT is the
-    /// plain text. Prints one line: <c>RICHPASTE=&lt;ok|fail&gt;</c>.
+    /// <c>--selftest-paste-rich</c>: prove the rich paste path puts RTF first, plus well-formed CF_HTML and
+    /// plain-text alternatives, on the clipboard. Runs the real <see cref="ClipboardWriter.WriteRich"/> path,
+    /// then reads each payload back with raw Win32 and verifies the expected RTF and byte-exact CF_HTML.
+    /// Prints one line: <c>RICHPASTE=&lt;ok|fail&gt;</c>.
     ///
     /// NOTE: the preferred proof — pasting into an in-process RICHEDIT50W and reading the bold run back —
     /// is not achievable here: Msftedit has no HTML importer (EM_PASTESPECIAL of "HTML Format" pastes

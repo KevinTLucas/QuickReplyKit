@@ -14,6 +14,7 @@ namespace QuickReplyKit.Tests;
 /// trigger when a background automation host is correctly denied foreground access.
 /// All bodies run on an STA thread because they touch WPF <see cref="Clipboard"/>.
 /// </summary>
+[Collection(ClipboardCollection.Name)]
 public class InsertServiceTests
 {
     private static void Sta(Action test)
