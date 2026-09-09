@@ -7,7 +7,7 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-09
-- **Current product merge:** `0188861`; B35's Word-compatible RTF-first paste path is merged and independently QA'd.
+- **Current product merge:** `0188861`; this is the rejected first B35 RTF implementation, not the pending correction.
 - **Current product baseline:** B01-B34 and B36-B39 are complete on `main`. B35 remains open after real Microsoft Word
   rejected the first RTF release: only list numbering/bullets survived; strike, size, color, highlight, alignment,
   bold, and italic did not. Word-originated formatting could also render in the editor but be lost when saved.
@@ -24,7 +24,7 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** `main` remains launchable and green. Active branch `fix/word-formatting-compatibility` fixes the two
-  reproduced root causes, has 805 focused/full automated tests expected after its latest additions, and still requires
+  reproduced root causes, has 806 focused/full automated tests after its latest additions, and still requires
   independent QA plus a newly published executable and repeat real-Word acceptance before merge. The older
   `qa/word-rich-paste` executable is rejected and must not be used for final acceptance.
 

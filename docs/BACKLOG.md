@@ -14,9 +14,10 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   appear in the editor but disappear after Save. Root causes are Word's current default **Merge Formatting** paste mode
   and the editor serializer not inheriting formatting stored on RTF paragraphs/list items. Branch
   `fix/word-formatting-compatibility` now requests Word's **Keep Source Formatting** paste operation, preserves block
-  formatting during Save, and prefers RTF for New from Clipboard. Automated regression is green; publish and repeat
-  real-Word acceptance before merge. Copy followed by a manual Word paste remains controlled by Word's own paste
-  setting and is not the QuickReplyKit Paste command.
+  formatting during Save, and prefers RTF for New from Clipboard. Automated regression covers every exposed editor
+  format and palette value through JSON storage and outgoing RTF; publish and repeat real-Word acceptance before
+  merge. Copy followed by a manual Word paste remains controlled by Word's own paste setting and is not the
+  QuickReplyKit Paste command.
 
 ## Deferred Ideas
 
