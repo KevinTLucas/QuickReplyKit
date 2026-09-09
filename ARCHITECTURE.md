@@ -205,7 +205,8 @@ B35 remains isolated for manual Microsoft Word acceptance and is not part of `ma
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
-  `-ui`, `-foreground`). The Notepad gates open one empty temporary document in a new window and close it normally;
+  `-ui`, `-foreground`). Target-based gates launch an owned child QuickReplyKit process with a native edit control,
+  then close that exact process; they never discover or modify user Notepad windows.
   they use native Ctrl+V when foreground activation succeeds and a test-only `WM_PASTE` sender when Windows correctly
   denies background automation foreground input, while preserving the real clipboard and command paths. UI changes
   also use isolated app launches, repository screenshot helpers, and direct visual

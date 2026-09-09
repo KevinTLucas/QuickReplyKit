@@ -38,6 +38,12 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Hidden E2E gates: run a self-test and exit before touching tray/single-instance.
+        string? selfTestTarget = ArgValue(e.Args, "--selftest-target");
+        if (!string.IsNullOrEmpty(selfTestTarget))
+        {
+            Shutdown(SelfTest.RunTarget(selfTestTarget));
+            return;
+        }
         if (e.Args.Any(a => a.Equals("--selftest-paste", StringComparison.OrdinalIgnoreCase)))
         {
             Shutdown(SelfTest.Run());
@@ -58,7 +64,6 @@ public partial class App : Application
             Shutdown(SelfTest.RunUiPaste());
             return;
         }
-
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool isFirst);
         _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
 

@@ -11,14 +11,13 @@
 - **Current product baseline:** B01-B34 and B36-B38 are complete on `main`; B39 is next, while B35 remains isolated
   for Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **791 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
+- **Tests:** **791 passed** on merged `main`; **793** on B39; **791** on the older-base
+  `feature/word-style-word-fidelity` branch.
 - **Portable publish:** `release/QuickReplyKit.exe` reflects `31179f7` (69,928,356 bytes; SHA-256
   `934F2BFDC4143EAEBA6C8B654A079FB9E2E9CB118E7C60EAB6CABD9BAA928354`). The portable build is self-contained; no
   external .NET or Visual C++ installation is needed.
-- **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
-  This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
-  returned 1 (`PASTE=fail CLIPBOARD_RESTORED=ok`, `UIPASTE=fail`). Interactive QA and earlier foreground-capable rounds
-  pass all four gates. No QuickReplyKit process remained and pre-existing user Notepad windows were not touched.
+- **Windows self-tests:** all four B39 branch gates pass five consecutive Release rounds. The pre/post user Notepad
+  PID set was identical and no `--selftest-target` child process remained.
 - **Git:** `origin` is `https://github.com/KevinTLucas/QuickReplyKit.git`; its initial MIT-license commit was
   preserved when the local history was connected. Completed feature branches listed below are ancestors of `main`.
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
@@ -103,10 +102,9 @@
 
 ## Remaining Work
 
-**B39 is confirmed** from the B38 regression run: foreground-limited paste self-tests can leave test-created Notepad
-windows when startup completes after their temporary file is deleted. The six windows created during that run were
-identified by process/start time and removed without touching the pre-existing QuickReplyKit instance. Fix B39 on a
-separate branch immediately after B38.
+**B39 is in progress** on `fix/selftest-target-cleanup`: target-based self-tests now launch an exact child
+QuickReplyKit process hosting a native edit control instead of Notepad. All four gates pass three consecutive rounds
+with no child processes left behind; independent QA remains before merge.
 
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
@@ -131,10 +129,9 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
   **Automatic (theme default)** text-color option restores inherited text color.
 - `--selftest-paste-rich` proves byte-correct CF_HTML on the clipboard; Win11 RichEdit does not import HTML, so it
   is not an independent rich-render target.
-- The Notepad-driven self-tests use real Ctrl+V when Windows grants the test process foreground access. When an
-  automation host is correctly denied foreground input, they use a test-only `WM_PASTE` trigger while retaining the
-  real clipboard snapshot/write/restore and launcher-command paths. Each run opens one empty temporary document,
-  undoes the paste, and closes that exact window normally.
+- Target-based self-tests use real Ctrl+V when Windows grants the test process foreground access. When an automation
+  host is correctly denied foreground input, they use a test-only `WM_PASTE` trigger while retaining the real
+  clipboard snapshot/write/restore and launcher-command paths. Each run owns and closes one exact child process.
 - Before broad rollout, manually confirm a real Ctrl+Alt+D paste into Outlook/Teams/browser/CRM and verify the
   transient response does not appear in the Win+V history flyout.
 - Script trust protects against unreviewed portable definitions, accidental source changes, and malformed files.
