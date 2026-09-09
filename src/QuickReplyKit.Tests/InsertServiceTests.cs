@@ -70,6 +70,9 @@ public class InsertServiceTests
         Assert.Equal("copy me", Clipboard.GetText());
         Assert.True(Clipboard.ContainsData(DataFormats.Html));
         Assert.True(Clipboard.ContainsData(DataFormats.Rtf));
+        string[] formats = Clipboard.GetDataObject()!.GetFormats(autoConvert: false);
+        Assert.True(Array.IndexOf(formats, DataFormats.Rtf) < Array.IndexOf(formats, DataFormats.Html));
+        Assert.True(Array.IndexOf(formats, DataFormats.Html) < Array.IndexOf(formats, DataFormats.UnicodeText));
         Clipboard.Clear();
     });
 }
