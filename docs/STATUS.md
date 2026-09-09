@@ -103,8 +103,9 @@
 ## Remaining Work
 
 **B39 is in progress** on `fix/selftest-target-cleanup`: target-based self-tests now launch an exact child
-QuickReplyKit process hosting a native edit control instead of Notepad. All four gates pass three consecutive rounds
-with no child processes left behind; independent QA remains before merge.
+QuickReplyKit process hosting a native edit control instead of Notepad. Independent QA passed all four gates for five
+consecutive rounds with no child processes left behind and no change to the Notepad PID set; the branch is ready to
+merge.
 
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
