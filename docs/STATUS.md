@@ -7,31 +7,30 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-09
-- **Current product merge:** `0188861`; this is the rejected first B35 RTF implementation, not the pending correction.
-- **Current product baseline:** B01-B34 and B36-B39 are complete on `main`. B35 remains open after real Microsoft Word
-  rejected the first RTF release: only list numbering/bullets survived; strike, size, color, highlight, alignment,
-  bold, and italic did not. Word-originated formatting could also render in the editor but be lost when saved.
+- **Current product merge:** `713a906`; B01-B39 are complete and merged on `main`.
+- **Current product baseline:** Microsoft Word formatting compatibility is accepted. QuickReplyKit explicitly requests
+  Word's Keep Source Formatting behavior for rich Paste, preserves Word/RTF block-inherited formatting through editor
+  Save, and prefers RTF for New from Clipboard.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **799 passed** on merged `main`.
-- **Portable publish:** `release/QuickReplyKit.exe` reflects `0188861` (69,928,099 bytes; SHA-256
-  `71CB139C865B8CAC78AFBEA4641A319038576808CE00B01926829F7B74234B84`). The portable build is self-contained; no
+- **Tests:** **806 passed** on merged `main`.
+- **Portable publish:** `release/QuickReplyKit.exe` reflects `713a906` (69,929,560 bytes; SHA-256
+  `309C9402B0F99BD3D29946EF006EDE34796DD02FC30E15E47DC9DB1150BA6CA7`). The portable build is self-contained; no
   external .NET or Visual C++ installation is needed.
-- **Windows self-tests:** all four gates passed five independent-QA rounds plus three packaged-release rounds. The
-  pre/post user Notepad PID set was identical and no `--selftest-target` child process remained.
+- **Windows self-tests:** all four gates pass against both the integrated Release build and canonical packaged release:
+  `PASTE=ok CLIPBOARD_RESTORED=ok`, `RICHPASTE=ok`, `UIPASTE=ok`, and `FOREGROUND_TRACK=ok`.
 - **Git:** `origin` is `https://github.com/KevinTLucas/QuickReplyKit.git`; its initial MIT-license commit was
   preserved when the local history was connected. Completed feature branches listed below are ancestors of `main`.
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** `main` remains launchable and green. Active branch `fix/word-formatting-compatibility` fixes the two
-  reproduced root causes and has 806 focused/full automated tests. Independent re-QA passed; the new executable is
-  published on `qa/word-formatting-retest` and requires repeat real-Word acceptance before merge. The older
-  `qa/word-rich-paste` executable is rejected and must not be used for final acceptance.
+- **State:** feature-complete, launchable, green, independently QA'd, and accepted in real Microsoft Word. No active
+  backlog work remains. The completed Word feature/QA branches are deleted after this release is pushed.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B35 Microsoft Word rich-format fidelity | `713a906` | 806/806; every exposed format/palette through JSON + RTF; four packaged self-tests; independent re-QA; real-Word acceptance passed | Complete |
 | B39 deterministic self-test target/cleanup | `41ab682` | 793/793; independent ownership/failure-path QA; all four gates x8 total; Notepad PID set unchanged; zero child-process leaks | Complete |
 | B38 remove full-trust PowerShell scripts | `31179f7` | 791/791; independent security/correctness/ponytail review; native runtime, async plumbing, UI, examples and docs removed; restricted expressions and exact-source import review retained | Complete |
 | B36 rich editor formatting persistence | `0ae7786` | 811/811; 57/57 focused; two independent exact-tip reviews; every exposed editor format, apply/remove, JSON reload, mixed selections, list/link edge cases | Complete |
@@ -105,22 +104,8 @@
 
 ## Remaining Work
 
-**B35 failed real-Word acceptance and is being corrected off `main`.** The prior `0188861`/`qa/word-rich-paste`
-executable must not be retested or treated as accepted. Branch `fix/word-formatting-compatibility` preserves inherited
-Word/RTF formatting through editor Save, prefers RTF for New from Clipboard, and asks Word to paste with Keep Source
-Formatting rather than Word 2405+'s default Merge Formatting. Its 806-test suite covers every exposed format and
-palette value through JSON storage and outgoing RTF. Independent re-QA passed. The fresh executable, deterministic
-fixture, and checklist are on GitHub branch `qa/word-formatting-retest` at `2670be0`; executable SHA-256 is
-`919DB5A44A029128A36B3A3DB92521B8BADF024FC1585F0AAD9E0DC277778CBD`. Microsoft Word acceptance remains the final
-merge gate.
-
-**Known confirmed regression:** the current `main`/tracked release loses most rich formatting in Microsoft Word and
-can lose Word-originated inherited formatting after editor Save. Use the corrective branch only for the next test.
-
-**Active branches:** `fix/word-formatting-compatibility` owns B35. `qa/word-formatting-retest` at `2670be0` contains
-the independently QA'd external acceptance executable and checklist and is not a merge branch. The rejected
-`qa/word-rich-paste`, superseded
-`feature/word-style-word-fidelity`, and stale interrupted `feature/hotkeys` branches must not be merged.
+No active backlog items or known confirmed regressions remain. `feature/hotkeys` is a stale local-only interrupted
+worktree retained solely to avoid discarding unreviewed filesystem state; it is not active and must not be merged.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -149,7 +134,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **799** green on `main`. Registry tests need normal
+4. Run build + tests; expect **806** green on `main`. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
