@@ -127,8 +127,10 @@ Windows applications. QuickReplyKit snapshots common formats, restores focus, wr
 paste, and restores the snapshot. If the saved destination window no longer exists, QuickReplyKit falls back to an
 ordinary plain-text Copy so the response is not lost. Focus/clipboard restoration remains best-effort when another
 program blocks automation, Windows denies foreground activation, or a clipboard format cannot be detached safely.
-For rich paste and Copy, QuickReplyKit offers Word-compatible RTF first, then HTML, then Unicode text so applications
-that understand formatting can choose the richest representation.
+For rich paste and Copy, QuickReplyKit offers RTF first, then HTML, then Unicode text so applications that understand
+formatting can choose the richest representation. When the captured target is Microsoft Word, the **Paste** command
+explicitly requests Word's **Keep Source Formatting** behavior; current Word versions otherwise default ordinary
+cross-application Ctrl+V to Merge Formatting and may remove size, color, highlight, or other direct formatting.
 
 ![QuickReplyKit launcher in Dark mode](docs/images/launcher-dark.png)
 
@@ -136,8 +138,9 @@ The launcher, editor, and management windows follow the System, Light, or Dark a
 
 ## Create and organize responses
 
-Use **+** for a blank response or the clipboard button to start from copied content. Clipboard HTML is reduced to the
-supported format; active content, hidden blocks, embedded objects, and unsafe links are removed.
+Use **+** for a blank response or the clipboard button to start from copied content. New from Clipboard prefers RTF
+(including formatting copied from Word), then falls back to sanitized HTML or encoded plain text. HTML active content,
+hidden blocks, embedded objects, and unsafe links are removed.
 
 Right-click a response for every response-level command:
 
@@ -200,7 +203,7 @@ The focused editor supports the formatting normally needed in support communicat
 Choose a response name, optional app, tags, and destination category. The Category field accepts an existing folder
 from the dropdown or a new nested path such as `Clever Apps/IXL/Licensing`; missing folders are created on Save.
 
-**New from clipboard** prefers cleaned rich text when available and falls back to encoded plain text. **Edit Response
+**New from clipboard** prefers RTF when available, then cleaned HTML, and falls back to encoded plain text. **Edit Response
 Text…** uses the same editor in transient compose mode: library metadata is hidden and the bottom actions become
 Insert / Insert plain instead of Save.
 
@@ -432,9 +435,11 @@ the support report.
 
 ### Formatting changes after paste
 
-- Word-compatible RTF carries the editor's bold, italic, underline, strike, colors, highlights, sizes, links,
-  alignment, and lists. The destination can still apply its own fonts, hyperlink theme, list indentation, or supported
-  subset. Use Paste plain when rich text is unsupported.
+- The QuickReplyKit **Paste** command asks Microsoft Word to keep source formatting for the editor's bold, italic,
+  underline, strike, colors, highlights, sizes, links, alignment, and lists. Other destinations can still apply their
+  own supported subset, fonts, hyperlink theme, or list indentation. Use Paste plain when rich text is unsupported.
+- **Copy** followed by a manual Ctrl+V is controlled by Word's paste setting. Choose Word's Keep Source Formatting
+  paste option (or make it the default for pasting from other programs) when using that separate workflow.
 - Highlight colors are absolute. Highlighted text with Automatic color can have lower contrast between light/dark
   editors; choose an explicit text color when needed.
 

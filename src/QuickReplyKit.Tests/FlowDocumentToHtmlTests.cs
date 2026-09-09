@@ -1,3 +1,4 @@
+using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -571,6 +572,103 @@ public class FlowDocumentToHtmlTests
             Assert.Equal(expectedTags, items.Select(item => (string?)item.Attribute("Tag")));
             Assert.All(items, item => Assert.Equal(handler, (string?)item.Attribute("Click")));
         }
+    }
+
+    [Fact]
+    public void WordStyleBlockFormatting_SaveAndReload()
+    {
+        Sta(() =>
+        {
+            const string rtf = @"{\rtf1\ansi{\colortbl;\red220\green38\blue38;\red254\green240\blue138;}" +
+                @"\pard\qc\b\i\strike\cf1\highlight2\fs36 Word formatted\par}";
+            var document = new FlowDocument();
+            using var stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(rtf));
+            new TextRange(document.ContentStart, document.ContentEnd).Load(stream, DataFormats.Rtf);
+
+            string html = FlowDocumentToHtml.Convert(document);
+            Assert.Contains("text-align:center", html);
+            Assert.Contains("<b>", html);
+            Assert.Contains("<i>", html);
+            Assert.Contains("<s>", html);
+            Assert.Contains("color:#DC2626", html);
+            Assert.Contains("background-color:#FEF08A", html);
+            Assert.Contains("font-size:24px", html);
+
+            var restored = HtmlToFlowDocument.Convert(html);
+            var run = Runs(restored).Single(r => r.Text.Contains("Word formatted"));
+            Assert.Equal(FontWeights.Bold, run.FontWeight);
+            Assert.Equal(FontStyles.Italic, run.FontStyle);
+            Assert.Contains(run.TextDecorations,
+                decoration => decoration.Location == TextDecorationLocation.Strikethrough);
+            Assert.Equal(24, run.FontSize, precision: 3);
+            Assert.Equal(TextAlignment.Center, restored.Blocks.OfType<Paragraph>().Single().TextAlignment);
+
+            using var temp = new TempDir();
+            ResponseFile.Save(new ResponseItem { Name = "Word formatted", Html = html }, temp.Path);
+            var loaded = ResponseFile.Load(temp.Of("Word formatted.json"), temp.Path);
+            using var outgoing = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(HtmlToRtf.Convert(loaded.Html)));
+            var wordRoundTrip = new FlowDocument();
+            new TextRange(wordRoundTrip.ContentStart, wordRoundTrip.ContentEnd).Load(outgoing, DataFormats.Rtf);
+            string finalHtml = FlowDocumentToHtml.Convert(wordRoundTrip);
+            Assert.Contains("text-align:center", finalHtml);
+            Assert.Contains("<s>", finalHtml);
+            Assert.Contains("color:#DC2626", finalHtml);
+            Assert.Contains("background-color:#FEF08A", finalHtml);
+            Assert.Contains("font-size:24px", finalHtml);
+        });
+    }
+
+    [Fact]
+    public void EveryExposedEditorFormat_SurvivesJsonAndRtf()
+    {
+        Sta(() =>
+        {
+            string[] textColors = ["#111111", "#6B7280", "#DC2626", "#EA580C", "#16A34A", "#0891B2", "#2563EB", "#7C3AED"];
+            string[] highlights = ["#FEF08A", "#BBF7D0", "#BFDBFE", "#FBCFE8", "#FED7AA", "#E9D5FF"];
+            string html = "<p><b>Bold</b> <i>Italic</i> <u>Underline</u> <s>Strike</s> " +
+                "<b><i><u><s>Mixed</s></u></i></b></p>" +
+                "<p>Normal <span style=\"font-size:11px\">Small</span> " +
+                "<span style=\"font-size:18px\">Large</span> <span style=\"font-size:24px\">Heading</span></p>" +
+                "<p>" + string.Concat(textColors.Select((color, i) =>
+                    $"<span style=\"color:{color}\">Color{i}</span> ")) + "</p>" +
+                "<p>" + string.Concat(highlights.Select((color, i) =>
+                    $"<span style=\"background-color:{color}\">Highlight{i}</span> ")) + "</p>" +
+                "<p>Left</p><p style=\"text-align:center\">Center</p>" +
+                "<p style=\"text-align:right\">Right</p>" +
+                "<ul><li><b>Bullet</b></li></ul><ol><li><i>Number</i></li></ol>" +
+                "<p><a href=\"https://example.com/help\">Link</a><br>Next line</p>";
+
+            using var temp = new TempDir();
+            ResponseFile.Save(new ResponseItem { Name = "All formats", Html = html }, temp.Path);
+            string stored = ResponseFile.Load(temp.Of("All formats.json"), temp.Path).Html;
+            string rtf = HtmlToRtf.Convert(stored);
+            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(rtf));
+            var document = new FlowDocument();
+            new TextRange(document.ContentStart, document.ContentEnd).Load(stream, DataFormats.Rtf);
+            string restored = FlowDocumentToHtml.Convert(document);
+
+            Assert.Contains("<b>Bold</b>", restored);
+            Assert.Contains("<i>Italic</i>", restored);
+            Assert.Contains("<u>Underline</u>", restored);
+            Assert.Contains("<s>Strike</s>", restored);
+            Assert.Contains("<u><s>Mixed</s></u>", restored);
+            Assert.InRange(Runs(document).Single(run => run.Text == "Small").FontSize, 10.66, 11.34);
+            Assert.Equal(14, Runs(document).Single(run => run.Text.StartsWith("Normal")).FontSize, precision: 3);
+            Assert.Equal(18, Runs(document).Single(run => run.Text == "Large").FontSize, precision: 3);
+            Assert.Equal(24, Runs(document).Single(run => run.Text == "Heading").FontSize, precision: 3);
+            // Normal size, Automatic text color, and None highlight serialize without a style wrapper.
+            Assert.Contains("<p>Normal ", restored);
+            foreach (string color in textColors) Assert.Contains($"color:{color}", restored);
+            foreach (string color in highlights) Assert.Contains($"background-color:{color}", restored);
+            Assert.Contains("<p>Left</p>", restored);
+            Assert.Contains("text-align:center", restored);
+            Assert.Contains("text-align:right", restored);
+            Assert.Contains("<ul><li><b>Bullet</b></li></ul>", restored);
+            Assert.Contains("<ol><li><i>Number</i></li></ol>", restored);
+            Assert.Contains(document.Blocks.OfType<Paragraph>().SelectMany(paragraph => paragraph.Inlines)
+                .OfType<Hyperlink>(), link => link.NavigateUri?.AbsoluteUri == "https://example.com/help");
+            Assert.Contains("<br>Next line", restored);
+        });
     }
 
     private static IEnumerable<Run> Runs(FlowDocument document)

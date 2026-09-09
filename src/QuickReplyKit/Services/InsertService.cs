@@ -18,18 +18,22 @@ public sealed class InsertService : IInsertService
 {
     private readonly ForegroundTargetTracker _tracker;
     private readonly Func<bool> _sendPaste;
+    private readonly Func<nint, bool> _pasteWordRich;
 
     /// <summary>Time to let the target consume Ctrl+V before we put the user's clipboard back.</summary>
     private const int PasteConsumeMs = 120;
 
     private bool _busy;   // guards against a double-insert during the ~300 ms sequence
 
-    public InsertService(ForegroundTargetTracker tracker) : this(tracker, InputSender.SendCtrlV) { }
+    public InsertService(ForegroundTargetTracker tracker) :
+        this(tracker, InputSender.SendCtrlV, WordPaste.TryPasteKeepingSource) { }
 
-    internal InsertService(ForegroundTargetTracker tracker, Func<bool> sendPaste)
+    internal InsertService(ForegroundTargetTracker tracker, Func<bool> sendPaste,
+        Func<nint, bool>? pasteWordRich = null)
     {
         _tracker = tracker;
         _sendPaste = sendPaste;
+        _pasteWordRich = pasteWordRich ?? WordPaste.TryPasteKeepingSource;
     }
 
     public void InsertRich(ResponseItem item) => Insert(item, rich: true);
@@ -111,8 +115,9 @@ public sealed class InsertService : IInsertService
                 return;
             }
 
-            bool sent = _sendPaste();
-            Diag.Verbose("InsertService", "Paste", $"input send={sent}");
+            bool wordPaste = rich && _pasteWordRich(target);
+            bool sent = wordPaste || _sendPaste();
+            Diag.Verbose("InsertService", "Paste", $"input send={sent} wordKeepSource={wordPaste}");
             Thread.Sleep(PasteConsumeMs);
 
             bool restored = ClipboardBackup.Restore(snapshot);

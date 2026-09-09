@@ -6,9 +6,11 @@
 
 ## Audited Baseline
 
-- **Last audited:** 2026-09-08
-- **Current product merge:** `0188861`; B35's Word-compatible RTF-first paste path is merged and independently QA'd.
-- **Current product baseline:** B01-B34 and B36-B39 are complete on `main`; only B35's real-Word acceptance remains.
+- **Last audited:** 2026-09-09
+- **Current product merge:** `0188861`; this is the rejected first B35 RTF implementation, not the pending correction.
+- **Current product baseline:** B01-B34 and B36-B39 are complete on `main`. B35 remains open after real Microsoft Word
+  rejected the first RTF release: only list numbering/bullets survived; strike, size, color, highlight, alignment,
+  bold, and italic did not. Word-originated formatting could also render in the editor but be lost when saved.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **799 passed** on merged `main`.
 - **Portable publish:** `release/QuickReplyKit.exe` reflects `0188861` (69,928,099 bytes; SHA-256
@@ -21,8 +23,10 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. Full-trust operating-system scripts are removed, self-tests own their exact child
-  targets, and RTF-first rich paste is merged. Confirm B35 once in Microsoft Word to close the backlog.
+- **State:** `main` remains launchable and green. Active branch `fix/word-formatting-compatibility` fixes the two
+  reproduced root causes and has 806 focused/full automated tests. Independent re-QA passed; the new executable is
+  published on `qa/word-formatting-retest` and requires repeat real-Word acceptance before merge. The older
+  `qa/word-rich-paste` executable is rejected and must not be used for final acceptance.
 
 ## Merged And QA'd
 
@@ -101,22 +105,22 @@
 
 ## Remaining Work
 
-**B35 is in user acceptance on `main`.** Automated QA is green at 799 tests: RTF reload preserves
-bold, italic, underline, strike, combined formatting, all eight text colors, all six highlights, all four sizes,
-links, Unicode, line breaks, alignment, bullets, and numbering; raw clipboard tests prove RTF → HTML → Unicode order.
-Independent QA is complete. Microsoft Word is unavailable on this machine, so a real Word paste remains before the
-item can be closed.
+**B35 failed real-Word acceptance and is being corrected off `main`.** The prior `0188861`/`qa/word-rich-paste`
+executable must not be retested or treated as accepted. Branch `fix/word-formatting-compatibility` preserves inherited
+Word/RTF formatting through editor Save, prefers RTF for New from Clipboard, and asks Word to paste with Keep Source
+Formatting rather than Word 2405+'s default Merge Formatting. Its 806-test suite covers every exposed format and
+palette value through JSON storage and outgoing RTF. Independent re-QA passed. The fresh executable, deterministic
+fixture, and checklist are on GitHub branch `qa/word-formatting-retest` at `2670be0`; executable SHA-256 is
+`919DB5A44A029128A36B3A3DB92521B8BADF024FC1585F0AAD9E0DC277778CBD`. Microsoft Word acceptance remains the final
+merge gate.
 
-Word acceptance build: `release/QuickReplyKit.exe` from `0188861`. The identical tracked executable, a complete
-formatting fixture, and its checklist are published on GitHub branch `qa/word-rich-paste` at `e14e162` for testing on
-a computer with Word. Follow `WORD-QA.md` on that branch.
+**Known confirmed regression:** the current `main`/tracked release loses most rich formatting in Microsoft Word and
+can lose Word-originated inherited formatting after editor Save. Use the corrective branch only for the next test.
 
-**Known confirmed regressions/defects:** none in automated coverage. Real-Word behavior is awaiting B35 confirmation.
-
-**Active branches:** `qa/word-rich-paste` is a QA-only branch at `e14e162` containing tested `main` commit `f0144de`,
-the unchanged release executable, and the Word fixture/checklist; it contains no unmerged implementation. The superseded older-base
-`feature/word-style-word-fidelity` branch must not be merged.
-A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active branches:** `fix/word-formatting-compatibility` owns B35. `qa/word-formatting-retest` at `2670be0` contains
+the independently QA'd external acceptance executable and checklist and is not a merge branch. The rejected
+`qa/word-rich-paste`, superseded
+`feature/word-style-word-fidelity`, and stale interrupted `feature/hotkeys` branches must not be merged.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 

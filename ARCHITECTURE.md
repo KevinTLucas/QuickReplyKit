@@ -82,12 +82,13 @@ view-models, interop, and app wiring.
   additively via inline styles/simple tags; **older files still load**). Converters in `Core/Text`:
   `HtmlToFlowDocument` (render/edit), `FlowDocumentToHtml` (serialize), `HtmlText.ToPlainText` (plain), and
   `CfHtml` (CF_HTML clipboard payload with a byte-exact StartHTML/EndHTML/StartFragment/EndFragment header).
-  The editor parser copies supported formatting onto text runs, and the serializer resolves formatting at each run.
-  This deliberately normalizes WPF's two representations (loaded wrapper elements versus toolbar-set dependency
-  properties), so Save/reopen preserves both newly applied formatting and formatting removed from loaded responses.
-- **New from Clipboard** routes CF_HTML through `ClipboardHtml.Sanitize`: active, hidden, and non-content blocks are
-  removed, then the existing parser/serializer normalizes the remainder to the stored subset. Hyperlinks are limited
-  to `http`, `https`, and `mailto`; plain clipboard text is HTML-encoded before editing.
+  The editor parser copies supported formatting onto text runs. The serializer carries locally-set formatting from
+  WPF paragraphs, lists, and list items into their runs before applying inline overrides. This normalizes both toolbar
+  formatting and Word-originated RTF, whose inherited formatting often lives on a block rather than on each run.
+- **New from Clipboard** prefers RTF and normalizes it through WPF's native RTF reader plus the shared serializer.
+  When RTF is unavailable, CF_HTML routes through `ClipboardHtml.Sanitize`: active, hidden, and non-content blocks are
+  removed before normalization. Hyperlinks are limited to `http`, `https`, and `mailto`; plain clipboard text is
+  HTML-encoded before editing.
 - **Templates** (`Core/Templates/TemplateEngine`): content may contain `{{…}}` tokens resolved at insert/preview/copy:
   built-in variables (`{{greeting}}`, `{{date}}`, `{{time}}`, `{{day}}`, `{{date:<fmt>}}`) and **includes**
   (`{{Response Name}}` splices another response's resolved HTML). Cycle detection, a fan-out expansion budget, and
@@ -119,9 +120,13 @@ view-models, interop, and app wiring.
 - On insert: snapshot the clipboard (`ClipboardBackup`) → restore foreground to the target (`ForegroundWindow`,
   with the AttachThreadInput focus-restore trick) → write the response with **history exclusion** via raw Win32
   (`ClipboardWriter`: `Rich Text Format` → `HTML Format` → `CF_UNICODETEXT`, plus `ExcludeClipboardContentFromMonitorProcessing`,
-  `CanIncludeInClipboardHistory=0`, `CanUploadToCloudClipboard=0`) → `SendInput` Ctrl+V (`InputSender`) → after a
-  short delay, restore the snapshot. Plain paste = text only (+ exclusion + restore). **Copy** = a normal clipboard
-  set (user-intended; no exclusion/restore). Templates are resolved before building the payload.
+  `CanIncludeInClipboardHistory=0`, `CanUploadToCloudClipboard=0`) → paste → after a short delay, restore the snapshot.
+  Microsoft Word 2405+ defaults cross-application Ctrl+V to Merge Formatting, which intentionally discards direct
+  size/color and related source formatting. For a captured `WINWORD` target, `WordPaste` therefore invokes Word's own
+  `Selection.PasteAndFormat(wdFormatOriginalFormatting)` through the installed Word COM automation surface; failure
+  safely falls back to `SendInput` Ctrl+V. Other targets always use `InputSender`. Plain paste = text only (+ exclusion
+  + restore). **Copy** = a normal clipboard set (user-intended; no exclusion/restore), so a later manual paste follows
+  the destination application's own paste policy. Templates are resolved before building the payload.
 - No mouse/keyboard hooks — only `RegisterHotKey` — so other apps' right-click menus are never affected.
 
 ## Windows/UI behaviour
@@ -201,7 +206,8 @@ view-models, interop, and app wiring.
 
 The implemented product paths above are merged and tested through B34 plus B36-B39. [`docs/STATUS.md`](docs/STATUS.md)
 records the exact audited baseline, and [`docs/BACKLOG.md`](docs/BACKLOG.md) contains unfinished requested work only.
-B35's RTF-first implementation is on `main`; only real-Microsoft-Word acceptance remains external.
+B35's first RTF release is on `main`, but real-Word acceptance rejected it. The corrective branch and remaining gate
+are recorded in STATUS/BACKLOG; do not close B35 without a repeat test in Microsoft Word.
 
 ## Validation
 - `dotnet build` clean + `dotnet test` green; the paste engine has E2E self-tests (`--selftest-paste`, `-rich`,
