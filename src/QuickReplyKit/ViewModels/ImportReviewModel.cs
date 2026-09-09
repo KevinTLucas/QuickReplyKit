@@ -1,5 +1,4 @@
 using QuickReplyKit.Core.ImportExport;
-using QuickReplyKit.Core.Scripts;
 
 namespace QuickReplyKit.ViewModels;
 
@@ -34,25 +33,18 @@ internal sealed class ImportReviewRow : ViewModelBase
     public ImportClassification Classification => Entry.Classification;
     public ImportItemKind Kind => Entry.Kind;
     public bool IsScript => Kind == ImportItemKind.Script;
-    public bool IsNativeScript => IsScript &&
-        string.Equals(Entry.ScriptLanguage, ScriptDefinitionFile.NativeLanguage, StringComparison.Ordinal);
-    public bool IsRestrictedScript => IsScript &&
-        string.Equals(Entry.ScriptLanguage, ScriptDefinitionFile.Language, StringComparison.Ordinal);
+    private bool IsValidScript => IsScript && CodeSource is not null &&
+        Classification is not (ImportClassification.Invalid or ImportClassification.Unsafe);
     public string KindLabel => IsScript ? "Script" : "Response";
     public string? CodeSource => Entry.CodeSource;
-    public string? ScriptLanguage => Entry.ScriptLanguage;
-    public string LanguageLabel => IsNativeScript
-        ? "Full-trust Windows PowerShell · powershell-1"
-        : IsRestrictedScript ? "Restricted QuickReplyKit expression · qrk-expr-1"
+    public string LanguageLabel => IsValidScript
+        ? "Restricted QuickReplyKit expression · qrk-expr-1"
         : IsScript ? "Invalid script definition" : "";
-    public string ScriptWarning => IsNativeScript
-        ? "Full-trust Windows PowerShell runs as your signed-in Windows user. It can read, change, or delete files; access the network, registry, environment, and credentials; and start processes. Only accept code you have reviewed and trust."
-        : IsRestrictedScript
-            ? "Restricted QuickReplyKit expression is limited to built-in text and date functions. It cannot access files, the network, registry, environment, credentials, or start processes."
-            : IsScript ? "This script definition is invalid and cannot be accepted." : "";
-    public string SourceAutomationName => IsNativeScript
-        ? "Exact full-trust Windows PowerShell source"
-        : IsRestrictedScript ? "Exact restricted QuickReplyKit expression source"
+    public string ScriptWarning => IsValidScript
+        ? "Restricted QuickReplyKit expressions can use only built-in text and date functions. They cannot access files, the network, registry, environment, credentials, or processes."
+        : IsScript ? "This script definition is invalid and cannot be accepted." : "";
+    public string SourceAutomationName => IsValidScript
+        ? "Exact restricted QuickReplyKit expression source"
         : "Invalid script source";
     public string DestinationPath => Entry.DestinationPath;
     public string Status => Classification switch
@@ -72,9 +64,7 @@ internal sealed class ImportReviewRow : ViewModelBase
         _ => "",
     };
     public string SelectionName => IsScript
-        ? IsNativeScript
-            ? $"Accept full-trust Windows PowerShell script {DestinationPath} after reviewing its exact source"
-            : $"Accept restricted QuickReplyKit expression {DestinationPath} after reviewing its exact source"
+        ? $"Accept restricted QuickReplyKit expression {DestinationPath} after reviewing its exact source"
         : $"Select {DestinationPath}";
     public string ConflictActionName => $"Conflict action for {DestinationPath}";
     public bool CanSelect { get; }

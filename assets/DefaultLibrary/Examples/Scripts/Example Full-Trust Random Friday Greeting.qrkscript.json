@@ -1,7 +1,0 @@
-{
-  "id": "example-full-trust-random-friday-greeting",
-  "name": "Example Full-Trust Random Friday Greeting",
-  "language": "powershell-1",
-  "enabled": true,
-  "expression": "$now = [DateTimeOffset]::Parse($env:QRK_NOW, [Globalization.CultureInfo]::InvariantCulture)\n$greetings = @(\n    'Hello!',\n    'Hi there!',\n    'Welcome!',\n    'Greetings!',\n    'Good to see you!',\n    'Thanks for reaching out!',\n    'Hope you are doing well!',\n    'Thanks for contacting us!',\n    'It is great to hear from you!',\n    'I hope your day is going well!'\n)\n$lines = @($greetings | Get-Random)\nif ($now.DayOfWeek -eq [DayOfWeek]::Friday) {\n    $lines += 'Happy Friday!'\n}\n$lines -join [Environment]::NewLine"
-}

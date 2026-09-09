@@ -28,7 +28,7 @@ src/
     Diagnostics/             rolling Logger + process-wide Diag facade
     Text/                    HtmlToFlowDocument, FlowDocumentToHtml, HtmlText (plain), CfHtml, ClipboardHtml
     Templates/               TemplateEngine (built-ins + response includes + bounded script tokens)
-    Scripts/                 strict definitions, restricted expression interpreter, native runner, catalog, trust ledger
+    Scripts/                 strict definitions, restricted expression interpreter, catalog, trust ledger
     ImportExport/            LibraryPorter (export/import), LibraryBackup (rolling snapshots + restore)
   QuickReplyKit/             WPF app
     Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ScriptManager, ImportPreview,
@@ -67,8 +67,8 @@ view-models, interop, and app wiring.
   theme, remember-window, verbose logging, Trash retention, onboarding flag, and **per-response instant-paste
   hotkeys** keyed by library-relative path). **Recent** is `%APPDATA%\QuickReplyKit\recent.json`; Favorites remain
   in response files so they travel when shared.
-- Script definitions use the strict portable `*.qrkscript.json` schema beside responses in the library; `language` is
-  either restricted `qrk-expr-1` or full-trust `powershell-1`. The scanner
+- Script definitions use the strict portable `*.qrkscript.json` schema beside responses in the library; `language`
+  must be `qrk-expr-1`. The scanner
   excludes them from responses/search/favorites/recent. Local approval fingerprints live only in
   `%APPDATA%\QuickReplyKit\script-trust.json`, cover the exact language and source, and never travel with a definition
   or export.
@@ -99,33 +99,18 @@ view-models, interop, and app wiring.
   arguments, literals, output, aggregate calls (64), and resolved content (250,000 chars) are bounded. Substitution
   occurs only in HTML text nodes, never tags or attributes. Invalid, disabled, ambiguous, missing, changed, or untrusted
   scripts fail closed with visible markers. All render paths use one captured clock.
-- **Native scripts** use the same token form with a `powershell-1` definition. `NativeScriptRunner` starts the absolute
-  system `WindowsPowerShell\v1.0\powershell.exe` path, never a PATH-resolved executable, with `-NoLogo -NoProfile
-  -NonInteractive` and a fixed source-free bootstrap. The complete UTF-8 source is parsed from standard input so
-  multiline and Unicode scripts work without exposing reversible source in process command-line telemetry. Stdout is
-  HTML-encoded and line breaks become `<br>` before substitution. Runs are out of process with a 4,096-character
-  source limit, 8,192-character output limit, 5-second deadline, caller cancellation, process-tree termination,
-  bounded in-memory stderr classification, and a two-run concurrency cap. The child
-  receives only `QRK_LIBRARY_ROOT` and `QRK_NOW` as QuickReplyKit-specific environment values. Runtime failures expose
-  stable markers and privacy-safe diagnostics, not script source or raw stderr. These controls bound failure and UI
-  impact; they are not a sandbox. Approved PowerShell inherits QuickReplyKit's Windows account and privilege level,
-  including that user's filesystem, network, registry, environment, credential, and process access.
 - `ScriptTrustLedger` stores only local ID/source fingerprints using bounded strict JSON, atomic writes, and a named
-  mutex with reload-before-mutate semantics. Language or source changes revoke trust. The Script Manager defaults new
-  definitions to the restricted language, binds Trust to the exact language/source displayed to the user, requires an
-  additional confirmation before trusting native code, and protects unsaved drafts with Save/Discard/Cancel.
-- Preview, launcher paste/plain/copy, edit-before-insert, and instant hotkeys use cancellable asynchronous template
-  resolution. `TemplateResolutionResult` preserves safe script failures separately from preview HTML. Insert/copy
+  mutex with reload-before-mutate semantics. Language or source changes revoke trust. The Script Manager creates only
+  restricted definitions, binds Trust to the exact source displayed to the user, and protects unsaved drafts with
+  Save/Discard/Cancel.
+- Preview, launcher paste/plain/copy, edit-before-insert, and instant hotkeys use the same synchronous bounded
+  resolver. `TemplateResolutionResult` preserves safe script failures separately from preview HTML. Insert/copy
   actions stop before the clipboard, Recent update, or launcher hide when any script fails; launcher actions raise a
-  themed dialog and instant hotkeys raise a tray notification. New preview work cancels stale work, and the selected
-  response's completed preview result is reused by an immediate action so random values match and PowerShell does not
-  run twice. Insert actions suppress duplicate concurrent activation. The restricted path remains compatible and fast,
-  while a slow native child never blocks the WPF dispatcher.
-- `assets/DefaultLibrary/Examples` demonstrates every built-in token, named response includes, `qrk-expr-1`, and
-  `powershell-1` without coupling normal support examples to the demos. Portable definitions contain no approval
-  state. Full-trust examples cover a random Friday greeting, next business day, business-hours status, professional
-  closing, and case-note timestamp; they remain inert until the user reviews each exact source and creates a local
-  source-bound trust record in the Script Manager (and enables definitions shipped disabled).
+  themed dialog and instant hotkeys raise a tray notification. Resolution is bounded and has no operating-system or
+  network access, so it does not require worker processes, cancellation, or preview-result caching.
+- `assets/DefaultLibrary/Examples` demonstrates every built-in token, named response includes, and `qrk-expr-1`
+  without coupling normal support examples to the demos. Portable definitions contain no approval state and remain
+  inert until the user reviews each exact source and creates a local source-bound trust record in Script Manager.
 
 ## Paste engine (the core value) — `Interop/*` + `Services/InsertService`
 - A `ForegroundMonitor` (WinEvent `EVENT_SYSTEM_FOREGROUND`, `WINEVENT_SKIPOWNPROCESS`) continuously records the
@@ -179,9 +164,8 @@ view-models, interop, and app wiring.
   source/destination fingerprints. Execution rechecks those fingerprints, reports stale entries without writing them,
   and atomically replaces individual files. Valid siblings continue when another entry is invalid, unsafe, stale, or
   fails. A required rolling backup is created after the user accepts the plan and before any write.
-- Portable script definitions participate in import/export but trust never does. Script rows identify restricted versus
-  full-trust code, show exact source, begin unchecked, and cannot be selected by Select all. Native rows also display
-  an explicit signed-in-user capability warning. Each exact plan entry needs a separate user acceptance;
+- Portable restricted script definitions participate in import/export but trust never does. Script rows show exact
+  source, begin unchecked, and cannot be selected by Select all. Each exact plan entry needs a separate user acceptance;
   Core execution independently rejects unaccepted code. An accepted script is trusted only after its destination is
   written, reloaded, and byte-verified. Stale, unsafe, invalid, or failed writes remain untrusted.
 - `LibraryBackup` writes a versioned ZIP containing `library/`, `config.json` when present, and a manifest. Retention

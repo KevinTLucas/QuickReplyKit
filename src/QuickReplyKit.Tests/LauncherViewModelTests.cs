@@ -39,6 +39,13 @@ public class LauncherViewModelTests
         public void Copy(ResponseItem item) => Calls.Add(("copy", item));
     }
 
+    private sealed class ThrowingInsertService : IInsertService
+    {
+        public void InsertRich(ResponseItem item) => throw new InvalidOperationException("insert failed");
+        public void InsertPlain(ResponseItem item) => throw new InvalidOperationException("insert failed");
+        public void Copy(ResponseItem item) => throw new InvalidOperationException("copy failed");
+    }
+
     private static LibraryService NewService(TempDir dir, bool watch = false) =>
         new(dir.Of("lib"), seedSourceDir: null, recentPath: dir.Of("recent.json"), watch: watch);
 
@@ -957,7 +964,7 @@ public class LauncherViewModelTests
     }
 
     [Fact]
-    public void ResolveComposed_ExpandsGreetingAndIncludes_ForThePrefill()
+    public void TryResolveComposed_ExpandsGreetingAndIncludes_ForThePrefill()
     {
         Sta(() =>
         {
@@ -969,13 +976,35 @@ public class LauncherViewModelTests
             var vm = new LauncherViewModel(svc, new FakeInsertService(), new AppConfig(), MorningClock);
 
             var item = svc.Snapshot.AllResponses.Single(r => r.Name == "Greeter");
-            string prefill = vm.ResolveComposed(item);
+            string prefill = Assert.IsType<string>(vm.TryResolveComposed(item));
 
             Assert.Contains("Good morning", prefill);              // greeting filled for the editor
             Assert.Contains("the welcome text", prefill);          // include expanded
             Assert.DoesNotContain("{{", prefill);
             // The stored item is untouched.
             Assert.Equal("<p>{{greeting}}, see {{Welcome}}</p>", item.Html);
+        });
+    }
+
+    [Fact]
+    public void InsertFailure_IsContainedWithoutHideOrRecentUpdate()
+    {
+        Sta(() =>
+        {
+            using var dir = new TempDir();
+            TestFiles.WriteResponse(dir.Of("lib", "A.json"));
+            using var svc = NewService(dir);
+            var vm = new LauncherViewModel(svc, new ThrowingInsertService(), new AppConfig());
+            bool hidden = false;
+            vm.RequestHide += () => hidden = true;
+
+            vm.TriggerDefaultInsert();
+            vm.TriggerPlainInsert();
+            vm.CopyCommand.Execute(null);
+            vm.InsertComposed("<p>x</p>", plain: false);
+
+            Assert.False(hidden);
+            Assert.Empty(svc.Recent());
         });
     }
 

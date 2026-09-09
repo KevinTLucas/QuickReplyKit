@@ -139,8 +139,7 @@ The app also calls standard Windows components already present on supported Wind
 - `user32.dll`, `kernel32.dll`, and `gdi32.dll` for windows, input, and graphics;
 - `dwmapi.dll` for title-bar theme integration;
 - `shell32.dll` and `ole32.dll` for Explorer, clipboard, and shell services;
-- Windows DirectX/DirectWrite components used by WPF;
-- inbox Windows PowerShell only when a user explicitly trusts and invokes a `powershell-1` definition.
+- Windows DirectX/DirectWrite components used by WPF.
 
 There are no third-party redistributable DLLs. Single-file native components extract to a per-user temporary location
 when the application starts. Trimming remains disabled because WPF is not trim-safe.

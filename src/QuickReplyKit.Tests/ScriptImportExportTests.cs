@@ -30,22 +30,7 @@ public class ScriptImportExportTests
         Assert.Equal([ImportItemKind.Response, ImportItemKind.Script, ImportItemKind.Script],
             plan.Entries.Select(entry => entry.Kind));
         Assert.Equal("concat(\"Hi \", upper(\"team\"))", plan.Entries[1].CodeSource);
-        Assert.Equal(ScriptDefinitionFile.Language, plan.Entries[1].ScriptLanguage);
         Assert.Equal(ImportClassification.Invalid, plan.Entries[2].Classification);
-    }
-
-    [Fact]
-    public void ImportPlan_PreservesNativeLanguageAndExactSource()
-    {
-        using var t = new TempDir();
-        string source = t.Of("Native.qrkscript.json");
-        const string code = "$day = (Get-Date).DayOfWeek; Write-Output $day";
-        File.WriteAllText(source, Script("native", "Native", code, ScriptDefinitionFile.NativeLanguage));
-
-        var entry = Assert.Single(LibraryPorter.PlanImport(t.Of("lib"), source, "").Entries);
-
-        Assert.Equal(ScriptDefinitionFile.NativeLanguage, entry.ScriptLanguage);
-        Assert.Equal(code, entry.CodeSource);
     }
 
     [Fact]
@@ -71,26 +56,30 @@ public class ScriptImportExportTests
     }
 
     [Fact]
-    public void Review_DistinguishesNativeRiskFromRestrictedSandbox_WithoutBulkAcceptance()
+    public void PowerShellDefinition_IsInvalidUnselectableAndCannotBeImportedOrTrusted()
     {
         using var t = new TempDir();
-        string source = t.Of("scripts.zip");
-        MakeZip(source,
-            ("Restricted.qrkscript.json", Script("restricted", "Restricted", "\"hello\"")),
-            ("Native.qrkscript.json", Script("native", "Native", "Write-Output 'hello'",
-                ScriptDefinitionFile.NativeLanguage)));
-        var model = new ImportReviewModel(LibraryPorter.PlanImport(t.Of("lib"), source, ""));
-        var restricted = Assert.Single(model.Rows, row => row.ScriptLanguage == ScriptDefinitionFile.Language);
-        var native = Assert.Single(model.Rows, row => row.IsNativeScript);
+        string source = t.Of("Native.qrkscript.json");
+        File.WriteAllText(source,
+            "{\"id\":\"native\",\"name\":\"Native\",\"language\":\"powershell-1\",\"enabled\":true,\"expression\":\"Write-Output 'x'\"}");
+        var plan = LibraryPorter.PlanImport(t.Of("lib"), source, "");
+        var entry = Assert.Single(plan.Entries);
+        var model = new ImportReviewModel(plan);
+        var row = Assert.Single(model.Rows);
+        using var ledgerDir = new TempDir();
+        var ledger = OpenLedger(ledgerDir.Of("trust.json"));
 
-        Assert.Contains("limited to built-in", restricted.ScriptWarning, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("signed-in Windows user", native.ScriptWarning, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("delete files", native.ScriptWarning, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("credentials", native.ScriptWarning, StringComparison.OrdinalIgnoreCase);
-        Assert.All(model.Rows, row => Assert.False(row.IsSelected));
-        model.SelectAll();
-        Assert.All(model.Rows, row => Assert.False(row.IsSelected));
-        Assert.Empty(model.AcceptedScriptEntries);
+        Assert.Equal(ImportClassification.Invalid, entry.Classification);
+        Assert.False(row.CanSelect);
+        Assert.False(row.IsSelected);
+        var result = LibraryPorter.Import(plan,
+            new Dictionary<int, ImportAction> { [entry.Id] = ImportAction.Import },
+            new HashSet<int> { entry.Id }, ledger);
+
+        Assert.Equal(ImportOutcomeKind.Invalid, Assert.Single(result.Outcomes).Kind);
+        Assert.False(File.Exists(t.Of("lib", "Native.qrkscript.json")));
+        Assert.False(ledger.IsTrusted(new ScriptDefinition("native", "Native", "powershell-1", true,
+            "Write-Output 'x'")));
     }
 
     [Fact]
@@ -300,9 +289,8 @@ public class ScriptImportExportTests
     private static ScriptDefinition Definition(string id, string name, string expression) =>
         new(id, name, ScriptDefinitionFile.Language, true, expression);
 
-    private static string Script(string id, string name, string expression,
-        string language = ScriptDefinitionFile.Language) =>
-        JsonSerializer.Serialize(new ScriptDefinition(id, name, language, true, expression), Json);
+    private static string Script(string id, string name, string expression) =>
+        JsonSerializer.Serialize(Definition(id, name, expression), Json);
 
     private static void MakeZip(string path, params (string Name, string Content)[] entries)
     {

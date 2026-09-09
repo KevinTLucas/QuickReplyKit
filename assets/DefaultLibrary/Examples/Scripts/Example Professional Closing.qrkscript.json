@@ -1,7 +1,0 @@
-{
-  "id": "example-professional-closing",
-  "name": "Example Professional Closing",
-  "language": "powershell-1",
-  "enabled": false,
-  "expression": "$closings = @(\n    'Please let us know if you have any other questions.',\n    'I hope this helps.',\n    'We are happy to help if anything else comes up.',\n    'Please reach out if you need anything further.'\n)\n[Console]::Out.Write(($closings | Get-Random))"
-}
