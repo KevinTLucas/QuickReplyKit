@@ -6,6 +6,12 @@ using QuickReplyKit.Interop;
 
 namespace QuickReplyKit.Tests;
 
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class ClipboardCollection
+{
+    public const string Name = "Clipboard";
+}
+
 /// <summary>
 /// Proves the core Phase-3 promise WITHOUT needing Win+V: after <see cref="ClipboardWriter"/>
 /// writes, open the clipboard and enumerate its formats to assert CF_UNICODETEXT (and "HTML Format"
@@ -13,6 +19,7 @@ namespace QuickReplyKit.Tests;
 /// round-trips text through the raw-Win32 write (emoji, CJK, and a very large payload) to prove the
 /// HGLOBAL copy is byte-exact and never truncates. All clipboard work runs on an STA thread.
 /// </summary>
+[Collection(ClipboardCollection.Name)]
 public class ClipboardWriterTests
 {
     private const uint CF_UNICODETEXT = 13;
@@ -57,6 +64,14 @@ public class ClipboardWriterTests
         uint f = 0;
         while ((f = EnumClipboardFormats(f)) != 0) set.Add(f);
         return set;
+    }
+
+    private static List<uint> FormatOrder()
+    {
+        var formats = new List<uint>();
+        uint format = 0;
+        while ((format = EnumClipboardFormats(format)) != 0) formats.Add(format);
+        return formats;
     }
 
     private static byte[] ReadBytes(uint format)
@@ -179,6 +194,38 @@ public class ClipboardWriterTests
             Assert.Contains(rtfId, formats);
             var got = Encoding.UTF8.GetString(rtfBytes).TrimEnd('\0');
             Assert.Equal(rtf, got);
+        }
+        finally { Clear(); }
+    });
+
+    [Fact]
+    public void WriteRich_Offers_RtfThenHtmlBeforePlainText() => Sta(() =>
+    {
+        try
+        {
+            string rtf = @"{\rtf1\ansi\deff0{\b formatted}\par}";
+            Assert.True(ClipboardWriter.WriteRich("formatted", CfHtml.Build("<b>formatted</b>"), rtf));
+
+            var order = WithClipboard(FormatOrder);
+            int rtfIndex = order.IndexOf(RegisterClipboardFormat("Rich Text Format"));
+            int htmlIndex = order.IndexOf(RegisterClipboardFormat("HTML Format"));
+            int textIndex = order.IndexOf(CF_UNICODETEXT);
+            Assert.True(rtfIndex >= 0 && rtfIndex < htmlIndex && htmlIndex < textIndex,
+                $"Expected RTF, HTML, Unicode order; got {string.Join(", ", order)}");
+        }
+        finally { Clear(); }
+    });
+
+    [Fact]
+    public void WriteRich_DoesNotAdvertiseAnEmptyRtfPayload() => Sta(() =>
+    {
+        try
+        {
+            Assert.True(ClipboardWriter.WriteRich("fallback", CfHtml.Build("<b>fallback</b>"), ""));
+            var formats = WithClipboard(EnumFormats);
+            Assert.DoesNotContain(RegisterClipboardFormat("Rich Text Format"), formats);
+            Assert.Contains(RegisterClipboardFormat("HTML Format"), formats);
+            Assert.Contains(CF_UNICODETEXT, formats);
         }
         finally { Clear(); }
     });

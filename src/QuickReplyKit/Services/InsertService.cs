@@ -41,10 +41,11 @@ public sealed class InsertService : IInsertService
 
     private static bool TryCopy(ResponseItem item)
     {
+        string rtf = HtmlToRtf.Convert(item.Html);
         var data = new DataObject();
-        data.SetData(DataFormats.UnicodeText, item.PlainText);
+        if (!string.IsNullOrWhiteSpace(rtf)) data.SetData(DataFormats.Rtf, rtf);
         data.SetData(DataFormats.Html, CfHtml.Build(item.Html));
-        data.SetData(DataFormats.Rtf, HtmlToRtf.Convert(item.Html));
+        data.SetData(DataFormats.UnicodeText, item.PlainText);
         for (int attempt = 0; attempt < 3; attempt++)
         {
             try

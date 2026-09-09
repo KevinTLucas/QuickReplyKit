@@ -10,7 +10,7 @@
 - **Current product merge:** `41ab682`; B39's owned self-test target is merged and independently QA'd.
 - **Current product baseline:** B01-B34 and B36-B39 are complete on `main`; only B35 remains for Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **793 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
+- **Tests:** **793 passed** on merged `main`; **799** on `fix/word-rich-paste-fidelity`.
 - **Portable publish:** `release/QuickReplyKit.exe` reflects `41ab682` (69,928,315 bytes; SHA-256
   `651BDB52FFA22F72BC9D2E3F1921403425BB944AF19E785F9CA57036CC31A838`). The portable build is self-contained; no
   external .NET or Visual C++ installation is needed.
@@ -101,17 +101,20 @@
 
 ## Remaining Work
 
-**B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
-Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
-merging it.
+**B35 is in progress** on `fix/word-rich-paste-fidelity`. Automated QA is green at 799 tests: RTF reload preserves
+bold, italic, underline, strike, combined formatting, all eight text colors, all six highlights, all four sizes,
+links, Unicode, line breaks, alignment, bullets, and numbering; raw clipboard tests prove RTF → HTML → Unicode order.
+Independent QA is complete. Microsoft Word is unavailable on this machine, so a real Word paste remains before merge.
 
-Manual B35 build: `publish/word-fidelity-test/QuickReplyKit.exe` (69,933,438 bytes; SHA-256
-`FC419E4B74236B71082BA44942862610A5D5184BA3B83A06DBF779230753C209`).
+Word acceptance build: `publish/word-fidelity-qa/QuickReplyKit.exe` from `ec33b03` (69,928,105 bytes; SHA-256
+`6161BB6F0245E7F0830C888AA4389311A8957B8A34C69F58530F40F2C0D4D180`). Launch it with
+`--library "<repo>\publish\word-fidelity-qa\Word-QA-Library" --show` and paste **Word Formatting QA** into Word.
 
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
-**Active branches:** `feature/word-style-word-fidelity` owns only B35's manual acceptance. A stale interrupted
-historical hotkey worktree remains quarantined and is not an active source of changes.
+**Active branches:** `fix/word-rich-paste-fidelity` owns only B35. The superseded older-base
+`feature/word-style-word-fidelity` branch must not be merged wholesale. A stale interrupted historical hotkey worktree
+remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -140,7 +143,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **793** green on `main`. Registry tests need normal
+4. Run build + tests; expect **793** green on `main` or **799** on B35. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a

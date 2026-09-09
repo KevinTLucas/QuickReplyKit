@@ -127,6 +127,8 @@ Windows applications. QuickReplyKit snapshots common formats, restores focus, wr
 paste, and restores the snapshot. If the saved destination window no longer exists, QuickReplyKit falls back to an
 ordinary plain-text Copy so the response is not lost. Focus/clipboard restoration remains best-effort when another
 program blocks automation, Windows denies foreground activation, or a clipboard format cannot be detached safely.
+For rich paste and Copy, QuickReplyKit offers Word-compatible RTF first, then HTML, then Unicode text so applications
+that understand formatting can choose the richest representation.
 
 ![QuickReplyKit launcher in Dark mode](docs/images/launcher-dark.png)
 
@@ -430,7 +432,9 @@ the support report.
 
 ### Formatting changes after paste
 
-- The destination decides how clipboard HTML maps into its editor. Use Paste plain when rich text is unsupported.
+- Word-compatible RTF carries the editor's bold, italic, underline, strike, colors, highlights, sizes, links,
+  alignment, and lists. The destination can still apply its own fonts, hyperlink theme, list indentation, or supported
+  subset. Use Paste plain when rich text is unsupported.
 - Highlight colors are absolute. Highlighted text with Automatic color can have lower contrast between light/dark
   editors; choose an explicit text color when needed.
 

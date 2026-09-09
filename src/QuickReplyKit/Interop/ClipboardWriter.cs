@@ -38,11 +38,14 @@ internal static class ClipboardWriter
         {
             EmptyClipboard();
 
-            if (!SetUnicode(text)) return false;
+            // Offer the richest formats first so Word and similar consumers choose formatting
+            // instead of the Unicode fallback.
+            if (!string.IsNullOrWhiteSpace(rtf) &&
+                !SetBytes(RegisterClipboardFormat("Rich Text Format"), Encoding.UTF8.GetBytes(rtf + "\0")))
+                return false;
             if (html is not null && !SetBytes(RegisterClipboardFormat("HTML Format"), Encoding.UTF8.GetBytes(html + "\0")))
                 return false;
-            if (rtf is not null && !SetBytes(RegisterClipboardFormat("Rich Text Format"), Encoding.UTF8.GetBytes(rtf + "\0")))
-                return false;
+            if (!SetUnicode(text)) return false;
 
             // History / cloud exclusion — a zero DWORD payload for each registered format.
             SetExclusion("ExcludeClipboardContentFromMonitorProcessing");
