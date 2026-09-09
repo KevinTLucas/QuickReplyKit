@@ -167,17 +167,20 @@ public partial class LauncherWindow : Window
         NewFromClipboardButton.IsEnabled = false;
         try
         {
-            var (html, needsSanitizing) = ReadClipboardContent();
-            if (html.Length > ClipboardHtml.MaxInputChars)
+            var (content, format) = ReadClipboardContent();
+            if (content.Length > ClipboardHtml.MaxInputChars)
             {
                 ConfirmDialog.Info(this, "Clipboard content is too large",
                     "QuickReplyKit can import up to 250,000 characters of clipboard content.");
                 return;
             }
-            string sanitized = needsSanitizing
-                ? await Task.Run(() => ClipboardHtml.Sanitize(html))
-                : ClipboardHtml.FromPlainText(html);
-            if (html.Length > 0 && sanitized.Length == 0)
+            string sanitized = format switch
+            {
+                ClipboardContentFormat.Rtf => ClipboardHtml.FromRtf(content),
+                ClipboardContentFormat.Html => await Task.Run(() => ClipboardHtml.Sanitize(content)),
+                _ => ClipboardHtml.FromPlainText(content),
+            };
+            if (content.Length > 0 && sanitized.Length == 0)
             {
                 ConfirmDialog.Info(this, "Clipboard content wasn't imported",
                     "The clipboard content was too complex or could not be converted safely.");
@@ -194,22 +197,26 @@ public partial class LauncherWindow : Window
         // On save the file watcher refreshes the library; nothing else to do here.
     }
 
-    /// <summary>Read clipboard data on the UI thread; HTML normalization then runs in the background.</summary>
-    private static (string Content, bool IsHtml) ReadClipboardContent()
+    /// <summary>Read clipboard data on the UI thread, preferring Word's richer RTF representation.</summary>
+    private static (string Content, ClipboardContentFormat Format) ReadClipboardContent()
     {
         try
         {
+            if (Clipboard.ContainsData(DataFormats.Rtf))
+                return (Clipboard.GetData(DataFormats.Rtf) as string ?? "", ClipboardContentFormat.Rtf);
             if (Clipboard.ContainsData(DataFormats.Html))
-                return (Clipboard.GetData(DataFormats.Html) as string ?? "", true);
+                return (Clipboard.GetData(DataFormats.Html) as string ?? "", ClipboardContentFormat.Html);
             if (Clipboard.ContainsText())
-                return (Clipboard.GetText(), false);
+                return (Clipboard.GetText(), ClipboardContentFormat.Text);
         }
         catch (Exception ex)
         {
             Diag.Warn("LauncherWindow", "Action", "read clipboard failed", ex);
         }
-        return ("", false);
+        return ("", ClipboardContentFormat.Text);
     }
+
+    private enum ClipboardContentFormat { Text, Html, Rtf }
 
     // --- Results context menu -----------------------------------------------
 

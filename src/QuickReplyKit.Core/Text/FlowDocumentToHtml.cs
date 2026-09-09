@@ -27,39 +27,42 @@ public static class FlowDocumentToHtml
             var defaults = new FormatState(
                 Size: NormalFontSize,
                 Foreground: doc.Foreground as SolidColorBrush);
-            WriteBlocks(sb, doc.Blocks, defaults);
+            WriteBlocks(sb, doc.Blocks, defaults, defaults);
         }
         return sb.ToString();
     }
 
-    private static void WriteBlocks(StringBuilder sb, BlockCollection blocks, FormatState defaults)
+    private static void WriteBlocks(StringBuilder sb, BlockCollection blocks,
+        FormatState inherited, FormatState defaults)
     {
         foreach (var block in blocks)
         {
+            var state = ApplyLocal(inherited, block);
             switch (block)
             {
                 case Paragraph p:
                     string? align = AlignOf(p);
                     sb.Append(align == null ? "<p>" : $"<p style=\"text-align:{align}\">");
-                    WriteInlines(sb, p.Inlines, defaults, defaults);
+                    WriteInlines(sb, p.Inlines, state, defaults);
                     sb.Append("</p>");
                     break;
                 case List list:
-                    WriteList(sb, list, defaults);
+                    WriteList(sb, list, state, defaults);
                     break;
                 // any other block type is outside the subset: drop it
             }
         }
     }
 
-    private static void WriteList(StringBuilder sb, List list, FormatState defaults)
+    private static void WriteList(StringBuilder sb, List list,
+        FormatState inherited, FormatState defaults)
     {
         string tag = list.MarkerStyle == TextMarkerStyle.Decimal ? "ol" : "ul";
         sb.Append('<').Append(tag).Append('>');
         foreach (var li in list.ListItems)
         {
             sb.Append("<li>");
-            WriteListItem(sb, li, defaults);
+            WriteListItem(sb, li, ApplyLocal(inherited, li), defaults);
             sb.Append("</li>");
         }
         sb.Append("</").Append(tag).Append('>');
@@ -67,7 +70,8 @@ public static class FlowDocumentToHtml
 
     // Keep the compact <li>text</li> form for one unaligned paragraph. Paragraph tags are required
     // when an item has alignment or multiple paragraphs so save/reload preserves those boundaries.
-    private static void WriteListItem(StringBuilder sb, ListItem li, FormatState defaults)
+    private static void WriteListItem(StringBuilder sb, ListItem li,
+        FormatState inherited, FormatState defaults)
     {
         bool wrapParagraphs = li.Blocks.OfType<Paragraph>().Skip(1).Any() ||
             li.Blocks.OfType<Paragraph>().Any(p => AlignOf(p) != null);
@@ -76,6 +80,7 @@ public static class FlowDocumentToHtml
             switch (block)
             {
                 case Paragraph p:
+                    var state = ApplyLocal(inherited, p);
                     string? align = AlignOf(p);
                     if (wrapParagraphs)
                     {
@@ -83,11 +88,11 @@ public static class FlowDocumentToHtml
                         if (align != null) sb.Append(" style=\"text-align:").Append(align).Append('"');
                         sb.Append('>');
                     }
-                    WriteInlines(sb, p.Inlines, defaults, defaults);
+                    WriteInlines(sb, p.Inlines, state, defaults);
                     if (wrapParagraphs) sb.Append("</p>");
                     break;
                 case List nested:
-                    WriteList(sb, nested, defaults);
+                    WriteList(sb, nested, ApplyLocal(inherited, nested), defaults);
                     break;
             }
         }
@@ -141,30 +146,31 @@ public static class FlowDocumentToHtml
         }
     }
 
-    private static FormatState ApplyLocal(FormatState state, Inline inline)
+    private static FormatState ApplyLocal(FormatState state, TextElement element)
     {
-        state = inline switch
+        state = element switch
         {
             Bold => state with { Bold = true },
             Italic => state with { Italic = true },
             Underline => state with { Underline = true },
             _ => state,
         };
-        if (inline.ReadLocalValue(TextElement.FontWeightProperty) is FontWeight weight)
+        if (element.ReadLocalValue(TextElement.FontWeightProperty) is FontWeight weight)
             state = state with { Bold = weight == FontWeights.Bold };
-        if (inline.ReadLocalValue(TextElement.FontStyleProperty) is FontStyle fontStyle)
+        if (element.ReadLocalValue(TextElement.FontStyleProperty) is FontStyle fontStyle)
             state = state with { Italic = fontStyle == FontStyles.Italic };
-        if (inline.ReadLocalValue(Inline.TextDecorationsProperty) is TextDecorationCollection decorations)
+        if (element is Inline inline &&
+            inline.ReadLocalValue(Inline.TextDecorationsProperty) is TextDecorationCollection decorations)
             state = state with
             {
                 Underline = decorations.Any(d => d.Location == TextDecorationLocation.Underline),
                 Strike = decorations.Any(d => d.Location == TextDecorationLocation.Strikethrough),
             };
-        if (inline.ReadLocalValue(TextElement.ForegroundProperty) is SolidColorBrush foreground)
+        if (element.ReadLocalValue(TextElement.ForegroundProperty) is SolidColorBrush foreground)
             state = state with { Foreground = foreground };
-        if (inline.ReadLocalValue(TextElement.BackgroundProperty) is SolidColorBrush background)
+        if (element.ReadLocalValue(TextElement.BackgroundProperty) is SolidColorBrush background)
             state = state with { Background = background.Color.A == 0 ? null : background };
-        if (inline.ReadLocalValue(TextElement.FontSizeProperty) is double size)
+        if (element.ReadLocalValue(TextElement.FontSizeProperty) is double size)
             state = state with { Size = size };
         return state;
     }

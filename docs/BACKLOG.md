@@ -9,10 +9,14 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-- **B35 · P1 · QA — Microsoft Word rich-paste fidelity.** `main` now publishes RTF → HTML → Unicode, skips empty RTF,
-  and generates RTF from the same parser-backed document used by the editor. All exposed formats pass automated RTF
-  save/reload coverage and independent QA. Confirm the packaged release in real Microsoft Word; Word is not installed
-  on this machine, so this final external acceptance remains before closing the item.
+- **B35 · P1 · In progress — Microsoft Word rich-paste fidelity.** Real-Word acceptance rejected the prior build:
+  strikethrough, size, color, highlight, alignment, bold, and italic were dropped, and Word-originated formatting could
+  appear in the editor but disappear after Save. Root causes are Word's current default **Merge Formatting** paste mode
+  and the editor serializer not inheriting formatting stored on RTF paragraphs/list items. Branch
+  `fix/word-formatting-compatibility` now requests Word's **Keep Source Formatting** paste operation, preserves block
+  formatting during Save, and prefers RTF for New from Clipboard. Automated regression is green; publish and repeat
+  real-Word acceptance before merge. Copy followed by a manual Word paste remains controlled by Word's own paste
+  setting and is not the QuickReplyKit Paste command.
 
 ## Deferred Ideas
 

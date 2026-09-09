@@ -6,9 +6,11 @@
 
 ## Audited Baseline
 
-- **Last audited:** 2026-09-08
+- **Last audited:** 2026-09-09
 - **Current product merge:** `0188861`; B35's Word-compatible RTF-first paste path is merged and independently QA'd.
-- **Current product baseline:** B01-B34 and B36-B39 are complete on `main`; only B35's real-Word acceptance remains.
+- **Current product baseline:** B01-B34 and B36-B39 are complete on `main`. B35 remains open after real Microsoft Word
+  rejected the first RTF release: only list numbering/bullets survived; strike, size, color, highlight, alignment,
+  bold, and italic did not. Word-originated formatting could also render in the editor but be lost when saved.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
 - **Tests:** **799 passed** on merged `main`.
 - **Portable publish:** `release/QuickReplyKit.exe` reflects `0188861` (69,928,099 bytes; SHA-256
@@ -21,8 +23,10 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. Full-trust operating-system scripts are removed, self-tests own their exact child
-  targets, and RTF-first rich paste is merged. Confirm B35 once in Microsoft Word to close the backlog.
+- **State:** `main` remains launchable and green. Active branch `fix/word-formatting-compatibility` fixes the two
+  reproduced root causes, has 805 focused/full automated tests expected after its latest additions, and still requires
+  independent QA plus a newly published executable and repeat real-Word acceptance before merge. The older
+  `qa/word-rich-paste` executable is rejected and must not be used for final acceptance.
 
 ## Merged And QA'd
 

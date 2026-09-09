@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
 using QuickReplyKit.Core.Model;
 using QuickReplyKit.Interop;
 using QuickReplyKit.Services;
@@ -75,5 +76,62 @@ public class InsertServiceTests
         Assert.True(Array.IndexOf(formats, DataFormats.Rtf) < Array.IndexOf(formats, DataFormats.Html));
         Assert.True(Array.IndexOf(formats, DataFormats.Html) < Array.IndexOf(formats, DataFormats.UnicodeText));
         Clipboard.Clear();
+    });
+
+    [Fact]
+    public void InsertRich_UsesTargetSpecificKeepSourcePasteBeforeGenericInput() => Sta(() =>
+    {
+        using var target = TestWindow();
+        bool keepSourceCalled = false;
+        bool genericCalled = false;
+        Clipboard.SetText("original clipboard");
+        var svc = new InsertService(new ForegroundTargetTracker { Target = target.Handle },
+            () => { genericCalled = true; return true; },
+            hwnd => { keepSourceCalled = hwnd == target.Handle; return true; });
+
+        svc.InsertRich(Item("<p><b>formatted</b></p>"));
+
+        Assert.True(keepSourceCalled);
+        Assert.False(genericCalled);
+        Assert.Equal("original clipboard", Clipboard.GetText());
+        Clipboard.Clear();
+    });
+
+    [Fact]
+    public void InsertRich_FallsBackToGenericInputWhenKeepSourceIsUnavailable() => Sta(() =>
+    {
+        using var target = TestWindow();
+        bool genericCalled = false;
+        var svc = new InsertService(new ForegroundTargetTracker { Target = target.Handle },
+            () => { genericCalled = true; return true; }, _ => false);
+
+        svc.InsertRich(Item("<p>formatted</p>"));
+
+        Assert.True(genericCalled);
+        Clipboard.Clear();
+    });
+
+    [Fact]
+    public void InsertPlain_NeverUsesTargetSpecificRichPaste() => Sta(() =>
+    {
+        using var target = TestWindow();
+        bool keepSourceCalled = false;
+        bool genericCalled = false;
+        var svc = new InsertService(new ForegroundTargetTracker { Target = target.Handle },
+            () => { genericCalled = true; return true; },
+            _ => { keepSourceCalled = true; return true; });
+
+        svc.InsertPlain(Item("<p>plain</p>"));
+
+        Assert.False(keepSourceCalled);
+        Assert.True(genericCalled);
+        Clipboard.Clear();
+    });
+
+    private static HwndSource TestWindow() => new(new HwndSourceParameters("QuickReplyKit.InsertServiceTests")
+    {
+        Width = 1,
+        Height = 1,
+        WindowStyle = unchecked((int)0x80000000),
     });
 }

@@ -1,7 +1,10 @@
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Documents;
 
 namespace QuickReplyKit.Core.Text;
 
@@ -69,6 +72,21 @@ public static class ClipboardHtml
             var hidden = HiddenSelectors(html);
             string visible = VisibleMarkup(html, hidden.Classes, hidden.Ids);
             return FlowDocumentToHtml.Convert(HtmlToFlowDocument.Convert(visible));
+        }
+        catch { return ""; }
+    }
+
+    /// <summary>Normalize clipboard RTF through WPF's native RTF reader, preserving the richer
+    /// formatting Word places on the clipboard before narrowing it to the stored HTML subset.</summary>
+    public static string FromRtf(string? rtf)
+    {
+        if (string.IsNullOrEmpty(rtf) || rtf.Length > MaxInputChars) return "";
+        try
+        {
+            var document = new FlowDocument();
+            using var stream = new MemoryStream(Encoding.Latin1.GetBytes(rtf));
+            new TextRange(document.ContentStart, document.ContentEnd).Load(stream, DataFormats.Rtf);
+            return FlowDocumentToHtml.Convert(document);
         }
         catch { return ""; }
     }

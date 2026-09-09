@@ -1,3 +1,4 @@
+using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -571,6 +572,50 @@ public class FlowDocumentToHtmlTests
             Assert.Equal(expectedTags, items.Select(item => (string?)item.Attribute("Tag")));
             Assert.All(items, item => Assert.Equal(handler, (string?)item.Attribute("Click")));
         }
+    }
+
+    [Fact]
+    public void WordStyleBlockFormatting_SaveAndReload()
+    {
+        Sta(() =>
+        {
+            const string rtf = @"{\rtf1\ansi{\colortbl;\red220\green38\blue38;\red254\green240\blue138;}" +
+                @"\pard\qc\b\i\strike\cf1\highlight2\fs36 Word formatted\par}";
+            var document = new FlowDocument();
+            using var stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(rtf));
+            new TextRange(document.ContentStart, document.ContentEnd).Load(stream, DataFormats.Rtf);
+
+            string html = FlowDocumentToHtml.Convert(document);
+            Assert.Contains("text-align:center", html);
+            Assert.Contains("<b>", html);
+            Assert.Contains("<i>", html);
+            Assert.Contains("<s>", html);
+            Assert.Contains("color:#DC2626", html);
+            Assert.Contains("background-color:#FEF08A", html);
+            Assert.Contains("font-size:24px", html);
+
+            var restored = HtmlToFlowDocument.Convert(html);
+            var run = Runs(restored).Single(r => r.Text.Contains("Word formatted"));
+            Assert.Equal(FontWeights.Bold, run.FontWeight);
+            Assert.Equal(FontStyles.Italic, run.FontStyle);
+            Assert.Contains(run.TextDecorations,
+                decoration => decoration.Location == TextDecorationLocation.Strikethrough);
+            Assert.Equal(24, run.FontSize, precision: 3);
+            Assert.Equal(TextAlignment.Center, restored.Blocks.OfType<Paragraph>().Single().TextAlignment);
+
+            using var temp = new TempDir();
+            ResponseFile.Save(new ResponseItem { Name = "Word formatted", Html = html }, temp.Path);
+            var loaded = ResponseFile.Load(temp.Of("Word formatted.json"), temp.Path);
+            using var outgoing = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(HtmlToRtf.Convert(loaded.Html)));
+            var wordRoundTrip = new FlowDocument();
+            new TextRange(wordRoundTrip.ContentStart, wordRoundTrip.ContentEnd).Load(outgoing, DataFormats.Rtf);
+            string finalHtml = FlowDocumentToHtml.Convert(wordRoundTrip);
+            Assert.Contains("text-align:center", finalHtml);
+            Assert.Contains("<s>", finalHtml);
+            Assert.Contains("color:#DC2626", finalHtml);
+            Assert.Contains("background-color:#FEF08A", finalHtml);
+            Assert.Contains("font-size:24px", finalHtml);
+        });
     }
 
     private static IEnumerable<Run> Runs(FlowDocument document)

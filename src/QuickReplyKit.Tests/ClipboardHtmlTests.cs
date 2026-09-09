@@ -1,12 +1,11 @@
 using QuickReplyKit.Core.Text;
 using System.Text;
+using System.Threading;
 
 namespace QuickReplyKit.Tests;
 
 /// <summary>
-/// Pure-string tests for <see cref="ClipboardHtml"/>: pulling the fragment out of Windows CF_HTML
-/// and wrapping plain text into the subset. The subset-narrowing itself is covered by the
-/// HtmlToFlowDocument round-trip tests, so here we only assert extraction and wrapping.
+/// Clipboard normalization tests for CF_HTML, RTF, and plain text.
 /// </summary>
 public class ClipboardHtmlTests
 {
@@ -253,6 +252,29 @@ public class ClipboardHtmlTests
     public void FromPlainText_RejectsOversizedClipboardText() =>
         Assert.Equal("", ClipboardHtml.FromPlainText(new string('x', ClipboardHtml.MaxInputChars + 1)));
 
+    [Fact]
+    public void FromRtf_PreservesWordFormatting() => Sta(() =>
+    {
+        const string rtf = @"{\rtf1\ansi\deff0{\fonttbl{\f0 Calibri;}}{\colortbl;\red192\green0\blue0;\red255\green255\blue0;}\pard\qc\b\i\strike\fs36\cf1\highlight2 Word formatted\par}";
+
+        string html = ClipboardHtml.FromRtf(rtf);
+
+        Assert.Contains("text-align:center", html);
+        Assert.Contains("<b>", html);
+        Assert.Contains("<i>", html);
+        Assert.Contains("<s>", html);
+        Assert.Contains("font-size:24px", html);
+        Assert.Contains("color:#C00000", html);
+        Assert.Contains("background-color:#FFFF00", html);
+    });
+
+    [Fact]
+    public void FromRtf_RejectsOversizedAndToleratesMalformedInput() => Sta(() =>
+    {
+        Assert.Equal("", ClipboardHtml.FromRtf(new string('x', ClipboardHtml.MaxInputChars + 1)));
+        Assert.Null(Record.Exception(() => ClipboardHtml.FromRtf(@"{\rtf1\ansi broken")));
+    });
+
     private static string WithOffsets(string before, string fragment, string after)
     {
         string header = "Version:0.9\r\nStartHTML:AAAAAAAAAA\r\nEndHTML:BBBBBBBBBB\r\n" +
@@ -266,5 +288,19 @@ public class ClipboardHtmlTests
             .Replace("BBBBBBBBBB", endHtml.ToString("D10"))
             .Replace("CCCCCCCCCC", startFragment.ToString("D10"))
             .Replace("DDDDDDDDDD", endFragment.ToString("D10")) + before + fragment + after;
+    }
+
+    private static void Sta(Action test)
+    {
+        Exception? error = null;
+        var thread = new Thread(() =>
+        {
+            try { test(); }
+            catch (Exception ex) { error = ex; }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+        if (error is not null) throw error;
     }
 }
