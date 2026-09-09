@@ -106,6 +106,10 @@ bold, italic, underline, strike, combined formatting, all eight text colors, all
 links, Unicode, line breaks, alignment, bullets, and numbering; raw clipboard tests prove RTF → HTML → Unicode order.
 Independent QA is complete. Microsoft Word is unavailable on this machine, so a real Word paste remains before merge.
 
+Word acceptance build: `publish/word-fidelity-qa/QuickReplyKit.exe` from `ec33b03` (69,928,105 bytes; SHA-256
+`6161BB6F0245E7F0830C888AA4389311A8957B8A34C69F58530F40F2C0D4D180`). Launch it with
+`--library "<repo>\publish\word-fidelity-qa\Word-QA-Library" --show` and paste **Word Formatting QA** into Word.
+
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
 **Active branches:** `fix/word-rich-paste-fidelity` owns only B35. The superseded older-base
