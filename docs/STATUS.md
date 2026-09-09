@@ -12,7 +12,7 @@
 - **Current product baseline:** B01-B34 and B36-B37 are complete on `main`; B38 removes the full-trust PowerShell
   capability on `cleanup/remove-powershell-scripts`, while B35 remains isolated for Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **825 passed** on merged `main`; **789** on B38; **791** on the older-base
+- **Tests:** **825 passed** on merged `main`; **791** on B38; **791** on the older-base
   `feature/word-style-word-fidelity` branch.
 - **Portable publish:** `release/QuickReplyKit.exe` still reflects `17470ce` and must be rebuilt after B38 merges.
   Do not distribute it until that rebuild. The portable build is self-contained; no external .NET or Visual C++

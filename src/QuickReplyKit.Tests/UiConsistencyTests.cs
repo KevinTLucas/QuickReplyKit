@@ -178,7 +178,7 @@ public class UiConsistencyTests
     }
 
     [Fact]
-    public void Settings_ScriptDescriptionIncludesBothTrustModels()
+    public void Settings_ScriptDescriptionDescribesRestrictedExpressions()
     {
         var button = Load("SettingsWindow.xaml").Descendants().Single(e =>
             (string?)e.Attribute("Click") == "ManageScripts_Click");
