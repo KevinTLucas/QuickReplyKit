@@ -24,8 +24,8 @@
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
 - **State:** `main` remains launchable and green. Active branch `fix/word-formatting-compatibility` fixes the two
-  reproduced root causes, has 806 focused/full automated tests after its latest additions, and still requires
-  independent QA plus a newly published executable and repeat real-Word acceptance before merge. The older
+  reproduced root causes and has 806 focused/full automated tests. Independent re-QA passed; the new executable is
+  published on `qa/word-formatting-retest` and requires repeat real-Word acceptance before merge. The older
   `qa/word-rich-paste` executable is rejected and must not be used for final acceptance.
 
 ## Merged And QA'd
@@ -109,14 +109,17 @@
 executable must not be retested or treated as accepted. Branch `fix/word-formatting-compatibility` preserves inherited
 Word/RTF formatting through editor Save, prefers RTF for New from Clipboard, and asks Word to paste with Keep Source
 Formatting rather than Word 2405+'s default Merge Formatting. Its 806-test suite covers every exposed format and
-palette value through JSON storage and outgoing RTF. A fresh QA executable and checklist will be published only after
-independent re-QA; Microsoft Word acceptance on that new executable remains the final merge gate.
+palette value through JSON storage and outgoing RTF. Independent re-QA passed. The fresh executable, deterministic
+fixture, and checklist are on GitHub branch `qa/word-formatting-retest` at `2670be0`; executable SHA-256 is
+`919DB5A44A029128A36B3A3DB92521B8BADF024FC1585F0AAD9E0DC277778CBD`. Microsoft Word acceptance remains the final
+merge gate.
 
 **Known confirmed regression:** the current `main`/tracked release loses most rich formatting in Microsoft Word and
 can lose Word-originated inherited formatting after editor Save. Use the corrective branch only for the next test.
 
-**Active branches:** `fix/word-formatting-compatibility` owns B35. `qa/word-formatting-retest` is reserved for the new
-external acceptance executable after independent re-QA. The rejected `qa/word-rich-paste`, superseded
+**Active branches:** `fix/word-formatting-compatibility` owns B35. `qa/word-formatting-retest` at `2670be0` contains
+the independently QA'd external acceptance executable and checklist and is not a merge branch. The rejected
+`qa/word-rich-paste`, superseded
 `feature/word-style-word-fidelity`, and stale interrupted `feature/hotkeys` branches must not be merged.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
