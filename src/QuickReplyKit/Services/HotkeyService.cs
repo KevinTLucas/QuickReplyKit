@@ -97,26 +97,33 @@ public sealed class HotkeyService : IDisposable
 
     internal void InstantPaste(string relativePath, bool plain)
     {
-        // Re-resolve against the live snapshot: the library may have changed since registration.
-        var item = _library.FindByRelativePath(relativePath);
-        if (item is null)
+        try
         {
-            Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
-            return;
-        }
+            // Re-resolve against the live snapshot: the library may have changed since registration.
+            var item = _library.FindByRelativePath(relativePath);
+            if (item is null)
+            {
+                Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
+                return;
+            }
 
-        Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
-        var resolution = _library.ResolveTemplateDetailed(item.Html, _now());
-        if (!resolution.Success)
-        {
-            Diag.Warn("HotkeyService", "Script", "instant-paste blocked by script failure");
-            ScriptFailed?.Invoke(resolution.ErrorText);
-            return;
+            Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
+            var resolution = _library.ResolveTemplateDetailed(item.Html, _now());
+            if (!resolution.Success)
+            {
+                Diag.Warn("HotkeyService", "Script", "instant-paste blocked by script failure");
+                ScriptFailed?.Invoke(resolution.ErrorText);
+                return;
+            }
+            var resolved = new ResponseItem { Html = resolution.Html };
+            if (plain) _insert.InsertPlain(resolved);
+            else _insert.InsertRich(resolved);
+            _library.MarkUsed(item);
         }
-        var resolved = new ResponseItem { Html = resolution.Html };
-        if (plain) _insert.InsertPlain(resolved);
-        else _insert.InsertRich(resolved);
-        _library.MarkUsed(item);
+        catch (Exception ex)
+        {
+            Diag.Warn("HotkeyService", "Hotkey", "instant-paste failed safely", ex);
+        }
     }
 
     public void Dispose() => _registrar.Dispose();

@@ -46,9 +46,9 @@ public sealed class LauncherViewModel : ViewModelBase
         _now = now ?? (static () => DateTimeOffset.Now);
         _loading = library.IsLoading;   // deferred initial scan still running → show "Loading…"
 
-        PasteCommand = new RelayCommand(_ => DefaultInsert(), _ => HasValidSelection);
-        PastePlainCommand = new RelayCommand(_ => PlainInsert(), _ => HasValidSelection);
-        CopyCommand = new RelayCommand(_ => CopySelected(), _ => HasValidSelection);
+        PasteCommand = new RelayCommand(_ => TriggerDefaultInsert(), _ => HasValidSelection);
+        PastePlainCommand = new RelayCommand(_ => TriggerPlainInsert(), _ => HasValidSelection);
+        CopyCommand = new RelayCommand(_ => RunAction(CopySelected), _ => HasValidSelection);
 
         // Copy keeps the launcher open, so it needs its own confirmation; this auto-clears it.
         _copiedHintTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
@@ -199,8 +199,8 @@ public sealed class LauncherViewModel : ViewModelBase
         SelectedResult = Results[idx];
     }
 
-    public void TriggerDefaultInsert() => DefaultInsert();
-    public void TriggerPlainInsert() => PlainInsert();
+    public void TriggerDefaultInsert() => RunAction(DefaultInsert);
+    public void TriggerPlainInsert() => RunAction(PlainInsert);
 
     // --- Live update from the watcher (already marshalled to the Dispatcher) --
 
@@ -385,8 +385,6 @@ public sealed class LauncherViewModel : ViewModelBase
     /// Resolve an item's stored HTML for the "Edit &amp; insert" editor: greeting/date filled and
     /// includes expanded, so the user edits the actual message rather than the template.
     /// </summary>
-    public string ResolveComposed(ResponseItem item) => Resolve(item.Html);
-
     public string? TryResolveComposed(ResponseItem item)
     {
         var resolution = _library.ResolveTemplateDetailed(item.Html, _now());
@@ -398,7 +396,9 @@ public sealed class LauncherViewModel : ViewModelBase
     /// remaining <c>{{…}}</c> tokens for safety (idempotent when token-free), then runs the real
     /// insert pipeline into the captured target window and hides the launcher. Touches no file.
     /// </summary>
-    public void InsertComposed(string html, bool plain)
+    public void InsertComposed(string html, bool plain) => RunAction(() => InsertComposedCore(html, plain));
+
+    private void InsertComposedCore(string html, bool plain)
     {
         var resolution = _library.ResolveTemplateDetailed(html, _now());
         if (!Accept(resolution)) return;
@@ -424,9 +424,6 @@ public sealed class LauncherViewModel : ViewModelBase
 
     private ResponseItem? ValidSelectedItem() =>
         _selectedResult?.IsValid == true ? _selectedResult.Item : null;
-
-    /// <summary>Resolve <c>{{…}}</c> tokens in the stored HTML against the current library and clock.</summary>
-    private string Resolve(string html) => _library.ResolveTemplate(html, _now());
 
     /// <summary>
     /// A copy of <paramref name="item"/> with its template tokens resolved into HTML — never mutating
@@ -462,6 +459,12 @@ public sealed class LauncherViewModel : ViewModelBase
         Diag.Warn("LauncherViewModel", "Script", "response action blocked by script failure");
         RequestScriptError?.Invoke(resolution.ErrorText);
         return false;
+    }
+
+    private static void RunAction(Action action)
+    {
+        try { action(); }
+        catch (Exception ex) { Diag.Warn("LauncherViewModel", "Action", "action failed safely", ex); }
     }
 
     private void BuildNav()

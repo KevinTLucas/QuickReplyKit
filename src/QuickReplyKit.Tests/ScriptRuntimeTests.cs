@@ -213,6 +213,13 @@ public class ScriptRuntimeTests
         });
     }
 
+    private sealed class ThrowingInsert : IInsertService
+    {
+        public void InsertRich(ResponseItem item) => throw new InvalidOperationException("insert failed");
+        public void InsertPlain(ResponseItem item) => throw new InvalidOperationException("insert failed");
+        public void Copy(ResponseItem item) => throw new InvalidOperationException("copy failed");
+    }
+
     [Fact]
     public void LauncherActions_BlockUntrustedRestrictedScript()
     {
@@ -264,6 +271,23 @@ public class ScriptRuntimeTests
 
             Assert.Empty(insert.Calls);
             Assert.Contains("untrusted", error, StringComparison.OrdinalIgnoreCase);
+            Assert.Empty(library.Recent());
+        });
+    }
+
+    [Fact]
+    public void InstantHotkey_InsertFailureIsContainedWithoutRecentUpdate()
+    {
+        RunSta(() =>
+        {
+            using var temp = new TempDir();
+            TestFiles.WriteResponse(temp.Of("lib", "Response.json"), html: "<p>x</p>");
+            using var library = new LibraryService(temp.Of("lib"), recentPath: temp.Of("recent.json"),
+                watch: false, scriptTrust: Ledger(temp));
+            using var hotkeys = new HotkeyService(new AppConfig(), library, new ThrowingInsert(), () => Morning);
+
+            hotkeys.InstantPaste("Response.json", plain: false);
+
             Assert.Empty(library.Recent());
         });
     }

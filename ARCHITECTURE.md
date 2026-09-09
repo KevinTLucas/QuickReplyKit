@@ -28,7 +28,7 @@ src/
     Diagnostics/             rolling Logger + process-wide Diag facade
     Text/                    HtmlToFlowDocument, FlowDocumentToHtml, HtmlText (plain), CfHtml, ClipboardHtml
     Templates/               TemplateEngine (built-ins + response includes + bounded script tokens)
-    Scripts/                 strict definitions, restricted expression interpreter, native runner, catalog, trust ledger
+    Scripts/                 strict definitions, restricted expression interpreter, catalog, trust ledger
     ImportExport/            LibraryPorter (export/import), LibraryBackup (rolling snapshots + restore)
   QuickReplyKit/             WPF app
     Views/                   Launcher, Editor, Settings, AssignHotkey, HotkeyManager, ScriptManager, ImportPreview,

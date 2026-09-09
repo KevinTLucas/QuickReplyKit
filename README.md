@@ -236,7 +236,7 @@ launcher. Keep response names unique across the library for predictable includes
 
 ### Restricted expressions
 
-`{{script:Name}}` calls an enabled, locally trusted script definition. The recommended `qrk-expr-1` language is a
+`{{script:Name}}` calls an enabled, locally trusted script definition. The `qrk-expr-1` language is a
 small expression evaluator for bounded text/date logic. It supports literals, clock values, comparisons, Boolean
 operators, and pure functions such as `if`, `concat`, `upper`, `lower`, `date`, and `time`.
 

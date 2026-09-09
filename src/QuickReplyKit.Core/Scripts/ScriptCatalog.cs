@@ -76,7 +76,11 @@ public sealed class ScriptCatalog
         if (entry.Definition is null) return Fail("invalid", name);
         if (!entry.Definition.Enabled) return Fail("disabled", name);
         if (!_trust.IsTrusted(entry.Definition)) return Fail("untrusted", name);
-        return ScriptExpression.Evaluate(entry.Definition.Expression, now);
+        var result = ScriptExpression.Evaluate(entry.Definition.Expression, now);
+        return result.Success ? result : result with
+        {
+            Error = $"Script '{entry.Definition.Name}': {result.Error}",
+        };
     }
 
     private static ScriptEvaluationResult Fail(string state, string name) =>
