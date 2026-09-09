@@ -653,9 +653,11 @@ public class FlowDocumentToHtmlTests
             Assert.Contains("<s>Strike</s>", restored);
             Assert.Contains("<u><s>Mixed</s></u>", restored);
             Assert.InRange(Runs(document).Single(run => run.Text == "Small").FontSize, 10.66, 11.34);
+            Assert.Equal(14, Runs(document).Single(run => run.Text.StartsWith("Normal")).FontSize, precision: 3);
             Assert.Equal(18, Runs(document).Single(run => run.Text == "Large").FontSize, precision: 3);
             Assert.Equal(24, Runs(document).Single(run => run.Text == "Heading").FontSize, precision: 3);
-            Assert.Contains("Normal", restored);
+            // Normal size, Automatic text color, and None highlight serialize without a style wrapper.
+            Assert.Contains("<p>Normal ", restored);
             foreach (string color in textColors) Assert.Contains($"color:{color}", restored);
             foreach (string color in highlights) Assert.Contains($"background-color:{color}", restored);
             Assert.Contains("<p>Left</p>", restored);
