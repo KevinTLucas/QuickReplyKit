@@ -7,29 +7,28 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `31179f7`; B38's restricted-only cleanup is merged and independently QA'd.
-- **Current product baseline:** B01-B34 and B36-B38 are complete on `main`; B39 is next, while B35 remains isolated
-  for Word QA.
+- **Current product merge:** `41ab682`; B39's owned self-test target is merged and independently QA'd.
+- **Current product baseline:** B01-B34 and B36-B39 are complete on `main`; only B35 remains for Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **791 passed** on merged `main`; **793** on B39; **791** on the older-base
-  `feature/word-style-word-fidelity` branch.
-- **Portable publish:** `release/QuickReplyKit.exe` reflects `31179f7` (69,928,356 bytes; SHA-256
-  `934F2BFDC4143EAEBA6C8B654A079FB9E2E9CB118E7C60EAB6CABD9BAA928354`). The portable build is self-contained; no
+- **Tests:** **793 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
+- **Portable publish:** `release/QuickReplyKit.exe` reflects `41ab682` (69,928,315 bytes; SHA-256
+  `651BDB52FFA22F72BC9D2E3F1921403425BB944AF19E785F9CA57036CC31A838`). The portable build is self-contained; no
   external .NET or Visual C++ installation is needed.
-- **Windows self-tests:** all four B39 branch gates pass five consecutive Release rounds. The pre/post user Notepad
-  PID set was identical and no `--selftest-target` child process remained.
+- **Windows self-tests:** all four gates passed five independent-QA rounds plus three packaged-release rounds. The
+  pre/post user Notepad PID set was identical and no `--selftest-target` child process remained.
 - **Git:** `origin` is `https://github.com/KevinTLucas/QuickReplyKit.git`; its initial MIT-license commit was
   preserved when the local history was connected. Completed feature branches listed below are ancestors of `main`.
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. Full-trust operating-system scripts are removed; safe built-in variables, response
-  includes, and restricted expressions remain. Fix B39 next, then finish B35's Microsoft Word paste acceptance.
+- **State:** launchable and green. Full-trust operating-system scripts are removed and self-tests own their exact
+  child targets. Finish B35's Microsoft Word paste acceptance next.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B39 deterministic self-test target/cleanup | `41ab682` | 793/793; independent ownership/failure-path QA; all four gates x8 total; Notepad PID set unchanged; zero child-process leaks | Complete |
 | B38 remove full-trust PowerShell scripts | `31179f7` | 791/791; independent security/correctness/ponytail review; native runtime, async plumbing, UI, examples and docs removed; restricted expressions and exact-source import review retained | Complete |
 | B36 rich editor formatting persistence | `0ae7786` | 811/811; 57/57 focused; two independent exact-tip reviews; every exposed editor format, apply/remove, JSON reload, mixed selections, list/link edge cases | Complete |
 | B34 parser-backed Word RTF conversion | `b1749ff` | 788/788; RTF round-trip covers bold, italic, color and font size | Complete |
@@ -102,11 +101,6 @@
 
 ## Remaining Work
 
-**B39 is in progress** on `fix/selftest-target-cleanup`: target-based self-tests now launch an exact child
-QuickReplyKit process hosting a native edit control instead of Notepad. Independent QA passed all four gates for five
-consecutive rounds with no child processes left behind and no change to the Notepad PID set; the branch is ready to
-merge.
-
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
 merging it.
@@ -146,7 +140,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **791** green on `main` or B35's older base. Registry tests need normal
+4. Run build + tests; expect **793** green on `main`. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
