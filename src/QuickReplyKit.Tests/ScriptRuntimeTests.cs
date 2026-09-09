@@ -213,6 +213,61 @@ public class ScriptRuntimeTests
         });
     }
 
+    [Fact]
+    public void LauncherActions_BlockUntrustedRestrictedScript()
+    {
+        RunSta(() =>
+        {
+            using var temp = new TempDir();
+            WriteScript(temp, "Needs Review", "\"must not paste\"");
+            TestFiles.WriteResponse(temp.Of("lib", "Response.json"),
+                html: "<p>{{script:Needs Review}}</p>");
+            using var library = new LibraryService(temp.Of("lib"), recentPath: temp.Of("recent.json"),
+                watch: false, scriptTrust: Ledger(temp));
+            var insert = new FakeInsert();
+            var vm = new LauncherViewModel(library, insert, new AppConfig(), () => Morning);
+            var errors = new List<string>();
+            bool hidden = false;
+            vm.RequestScriptError += errors.Add;
+            vm.RequestHide += () => hidden = true;
+
+            vm.TriggerDefaultInsert();
+            vm.TriggerPlainInsert();
+            vm.CopyCommand.Execute(null);
+            vm.InsertComposed("<p>{{script:Needs Review}}</p>", plain: false);
+
+            Assert.Empty(insert.Calls);
+            Assert.Equal(4, errors.Count);
+            Assert.All(errors, error => Assert.Contains("untrusted", error, StringComparison.OrdinalIgnoreCase));
+            Assert.False(hidden);
+            Assert.Empty(library.Recent());
+        });
+    }
+
+    [Fact]
+    public void InstantHotkey_UntrustedRestrictedScriptRaisesFailureWithoutPasting()
+    {
+        RunSta(() =>
+        {
+            using var temp = new TempDir();
+            WriteScript(temp, "Needs Review", "\"must not paste\"");
+            TestFiles.WriteResponse(temp.Of("lib", "Response.json"),
+                html: "<p>{{script:Needs Review}}</p>");
+            using var library = new LibraryService(temp.Of("lib"), recentPath: temp.Of("recent.json"),
+                watch: false, scriptTrust: Ledger(temp));
+            var insert = new FakeInsert();
+            using var hotkeys = new HotkeyService(new AppConfig(), library, insert, () => Morning);
+            string? error = null;
+            hotkeys.ScriptFailed += value => error = value;
+
+            hotkeys.InstantPaste("Response.json", plain: false);
+
+            Assert.Empty(insert.Calls);
+            Assert.Contains("untrusted", error, StringComparison.OrdinalIgnoreCase);
+            Assert.Empty(library.Recent());
+        });
+    }
+
     private static void RunSta(Action action)
     {
         Exception? failure = null;

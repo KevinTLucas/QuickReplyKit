@@ -1,6 +1,6 @@
 using System.Globalization;
-using QuickReplyKit.Core.Templates;
 using QuickReplyKit.Core.Scripts;
+using QuickReplyKit.Core.Templates;
 
 namespace QuickReplyKit.Tests;
 
@@ -85,14 +85,14 @@ public class TemplateEngineTests
     }
 
     [Fact]
-    public void ResolveDetailed_PreservesScriptFailureForTheCallingWorkflow()
+    public void ResolveDetailed_PreservesRestrictedScriptFailureForCallingWorkflow()
     {
         var result = TemplateEngine.ResolveDetailed("<p>{{script:Denied}}</p>", None, Morning,
-            (_, _) => ScriptEvaluationResult.Fail("process-failed", "PowerShell was denied access."));
+            (_, _) => ScriptEvaluationResult.Fail("evaluation-failed", "Expression evaluation was denied."));
 
         Assert.False(result.Success);
-        Assert.Equal("<p>[script error: process-failed]</p>", result.Html);
-        Assert.Equal("- PowerShell was denied access.", result.ErrorText);
+        Assert.Equal("<p>[script error: evaluation-failed]</p>", result.Html);
+        Assert.Equal("- Expression evaluation was denied.", result.ErrorText);
     }
 
     // ---- includes ----

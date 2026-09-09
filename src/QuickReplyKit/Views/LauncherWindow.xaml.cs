@@ -257,14 +257,14 @@ public partial class LauncherWindow : Window
             EditorWindow.OpenEdit(this, _vm.LibraryRoot, _vm.CategoryPaths(), item, _vm.ScriptNames());
     }
 
-    private async void MenuEditInsert_Click(object sender, RoutedEventArgs e)
+    private void MenuEditInsert_Click(object sender, RoutedEventArgs e)
     {
         // Open the editor on the resolved message; on Insert the edited text is pasted, not saved.
         if (_openingCompose || _vm.SelectedItem is not { IsValid: true } item) return;
         _openingCompose = true;
         try
         {
-            string? html = await _vm.TryResolveComposedAsync(item);
+            string? html = _vm.TryResolveComposed(item);
             if (html is not null && IsVisible)
                 EditorWindow.OpenCompose(this, html, _vm.InsertComposed, _vm.ScriptNames());
         }

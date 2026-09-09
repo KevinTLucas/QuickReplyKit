@@ -243,33 +243,14 @@ operators, and pure functions such as `if`, `concat`, `upper`, `lower`, `date`, 
 It cannot access files, processes, the network, environment variables, registry, clipboard, UI, reflection, or
 native code. Invalid, missing, disabled, changed, ambiguous, or untrusted definitions fail closed with a marker.
 
-### Full-trust Windows PowerShell
-
-> **Full-trust PowerShell is not sandboxed.** A trusted `powershell-1` definition runs as the same Windows account
-> and privilege level as QuickReplyKit
-> and can read, change, or delete files; access the network, registry, environment, credentials, and processes; and
-> start programs. Review every line and trust only code from a source you fully understand.
-
-Full-trust definitions require the inbox **Windows PowerShell** executable. QuickReplyKit runs approved source out of
-process, without a profile or visible console, and applies source, output, time, cancellation, and concurrency limits.
-Those limits protect app responsiveness; they do not remove the script's Windows permissions.
-
-If a response references a missing, disabled, untrusted, blocked, or failed script, QuickReplyKit does not paste or
-copy the error marker. Launcher actions show a clear error dialog; instant-paste hotkeys show a tray notification.
-PowerShell source and raw error output are never written to diagnostics logs. When a resolved preview is already on
-screen, Paste reuses that exact result, avoiding a second PowerShell startup and ensuring the pasted text matches the
-preview.
-
 Open **Settings > Scripts…** to create, validate, enable, inspect, trust, export, or delete definitions. New scripts
-default to the restricted language. Trust is local and tied to the exact language and source; editing either revokes
-trust. Trust is never stored in exported definitions.
+always use the restricted language. Trust is local and tied to the exact source; editing it revokes trust. Trust is
+never stored in exported definitions. If a restricted script is missing, disabled, untrusted, ambiguous, or fails,
+QuickReplyKit blocks paste/copy so an error marker cannot be sent to a customer. Launcher actions show an error dialog;
+instant-paste hotkeys show a tray notification.
 
-![Script Manager showing an untrusted full-trust example](docs/images/scripts-dark.png)
-
-The optional Examples folder demonstrates built-ins, includes, a restricted expression, and a clearly labeled
-PowerShell greeting that randomly chooses from ten phrases and adds a separate Friday line. Additional inert examples
-show a next-business-day date, business-hours status, random professional closing, and case-note timestamp. Full-trust
-examples remain disabled or untrusted until each exact source is reviewed and explicitly approved.
+The optional Examples folder demonstrates built-ins, includes, and a restricted expression. Definitions remain
+untrusted until their exact source is reviewed and explicitly approved.
 
 ## Instant per-response hotkeys
 
@@ -306,12 +287,10 @@ classifies each entry as **New**, **Changed**, **Duplicate**, **Identical**, **I
 - Source and destination fingerprints are rechecked; an entry changed after preview is reported **Stale** instead of
   being overwritten.
 
-Script definitions always require separate review. Their language and exact source are shown, every row starts
-unchecked, and each item must be accepted individually. **Select all safe never accepts code.** There is no Yes to
-all for code-bearing items. Full-trust PowerShell displays an additional Windows-permission warning. Accepted code is
-trusted only after the exact destination is successfully written, reloaded, and byte-verified.
-
-![Import review showing a full-trust PowerShell definition and its warning](docs/images/import-review-dark.png)
+Script definitions always require separate review. Their restricted language and exact source are shown, every row
+starts unchecked, and each item must be accepted individually. **Select all safe never accepts code.** There is no
+Yes to all for code-bearing items. Accepted code is trusted only after the exact destination is successfully written,
+reloaded, and byte-verified.
 
 Invalid, unsafe, stale, or failed entries do not prevent valid siblings from importing. The completion dialog reports
 imported, overwritten, kept-as-copy, skipped, invalid/unsafe, stale, and failed counts.
@@ -364,7 +343,7 @@ Defaults are **Ctrl+Alt+D**, **Rich text**, **System** appearance, **Remember wi
 |---|---|
 | **Global hotkey** | Change the launcher shortcut. Invalid or occupied combinations are reported safely. |
 | **Keyboard shortcuts…** | Review launcher/instant-paste registrations and conflicts. |
-| **Scripts…** | Manage restricted-expression and full-trust PowerShell definitions. |
+| **Scripts…** | Manage restricted-expression definitions and local source trust. |
 | **Response library folder** | Change or open the watched library location. |
 | **Backup folder** | Change or open the rolling-snapshot location. |
 | **Back up / Restore Library…** | Create and restore snapshots. |
@@ -400,8 +379,7 @@ clipboard/customer data. Review files under your organization's support/privacy 
 ## Storage and privacy
 
 QuickReplyKit requires no account and sends no library data to a QuickReplyKit service. Normal operation is local.
-Full-trust PowerShell can access external resources with the signed-in user's permissions, which is why exact-source
-local trust is mandatory.
+Restricted expressions cannot access files, processes, the network, environment, registry, clipboard, or UI.
 
 | Data | Default location | Travels with copied responses? |
 |---|---|---|
@@ -442,7 +420,6 @@ the support report.
 
 - Check Keyboard Shortcuts for **Duplicate**, **In use by another app**, or **not found**.
 - Confirm the response remains at the same library-relative path, then reassign if needed.
-- A slow full-trust script may return a timeout marker instead of pasting.
 
 ### Paste goes to the wrong place or does not insert
 
@@ -471,8 +448,7 @@ the support report.
 ### A script shows a marker instead of text
 
 - In Scripts, check that the definition is valid, enabled, unique, and trusted for its exact source.
-- Editing source/language revokes trust by design. Never bypass review for unfamiliar code.
-- Full-trust scripts also require inbox Windows PowerShell to be available.
+- Editing source revokes trust by design. Never bypass review for unfamiliar code.
 
 ### The EXE will not start on another computer
 

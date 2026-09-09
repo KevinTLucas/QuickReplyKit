@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using QuickReplyKit.Core.Library;
 using QuickReplyKit.Core.Scripts;
 using QuickReplyKit.Core.Storage;
@@ -18,7 +17,7 @@ public class DefaultLibraryExamplesTests
         var examples = LibraryScanner.Scan(Path.Combine(Root, "Examples")).AllResponses;
         var now = new DateTimeOffset(2026, 9, 7, 9, 30, 0, TimeSpan.Zero);
 
-        Assert.Equal(7, examples.Count);
+        Assert.Equal(5, examples.Count);
         Assert.All(examples, response => Assert.True(response.IsValid, response.Error));
         string html = Assert.Single(examples, x => x.Name == "Built-in Variables Demo").Html;
         foreach (string token in new[] { "{{greeting}}", "{{date}}", "{{time}}", "{{day}}", "{{date:yyyy-MM-dd}}" })
@@ -53,7 +52,7 @@ public class DefaultLibraryExamplesTests
     {
         string scripts = Path.Combine(Root, "Examples", "Scripts");
         string[] paths = Directory.GetFiles(scripts, "*" + ScriptDefinitionFile.Extension);
-        Assert.Equal(6, paths.Length);
+        Assert.Single(paths);
 
         var definitions = paths.Select(path =>
         {
@@ -66,8 +65,7 @@ public class DefaultLibraryExamplesTests
             return Assert.IsType<ScriptDefinition>(result.Value);
         }).ToArray();
 
-        Assert.Contains(definitions, x => x.Language == ScriptDefinitionFile.Language);
-        Assert.Contains(definitions, x => x.Language == ScriptDefinitionFile.NativeLanguage);
+        Assert.All(definitions, x => Assert.Equal(ScriptDefinitionFile.Language, x.Language));
         foreach (var definition in definitions)
         {
             string responsePath = Directory.GetFiles(scripts, "*.json")
@@ -78,64 +76,17 @@ public class DefaultLibraryExamplesTests
     }
 
     [Fact]
-    public void ScriptExamples_HaveDeterministicRestrictedOutput_AndBoundedNativeScenario()
+    public void RestrictedScriptExample_HasDeterministicOutput()
     {
         string scripts = Path.Combine(Root, "Examples", "Scripts");
         var restricted = Assert.IsType<ScriptDefinition>(ScriptDefinitionFile.Load(
             Path.Combine(scripts, "Example Restricted Greeting" + ScriptDefinitionFile.Extension)).Value);
-        var native = Assert.IsType<ScriptDefinition>(ScriptDefinitionFile.Load(
-            Path.Combine(scripts, "Example Full-Trust Random Friday Greeting" + ScriptDefinitionFile.Extension)).Value);
         Assert.Equal(("Example Restricted Greeting", ScriptDefinitionFile.Language),
             (restricted.Name, restricted.Language));
-        Assert.Equal(("Example Full-Trust Random Friday Greeting", ScriptDefinitionFile.NativeLanguage),
-            (native.Name, native.Language));
 
         var output = ScriptExpression.Evaluate(restricted.Expression,
             new DateTimeOffset(2026, 9, 7, 9, 30, 0, TimeSpan.Zero));
         Assert.True(output.Success, output.Error);
         Assert.Equal("Good morning - 2026-09-07", output.Output);
-
-        string choices = Regex.Match(native.Expression,
-            @"\$greetings\s*=\s*@\((.*?)\)\s*\$lines", RegexOptions.Singleline).Groups[1].Value;
-        string[] greetings = Regex.Matches(choices, @"'([^']+)'" ).Select(x => x.Groups[1].Value).ToArray();
-        Assert.Equal(10, greetings.Length);
-        Assert.Equal(10, greetings.Distinct(StringComparer.Ordinal).Count());
-        Assert.Contains("$env:QRK_NOW", native.Expression, StringComparison.Ordinal);
-        Assert.Contains("[DayOfWeek]::Friday", native.Expression, StringComparison.Ordinal);
-        Assert.Contains("$lines += 'Happy Friday!'", native.Expression, StringComparison.Ordinal);
-        Assert.Contains("[Environment]::NewLine", native.Expression, StringComparison.Ordinal);
-        Assert.DoesNotMatch(@"[A-Za-z]:\\", native.Expression);
-        Assert.DoesNotContain("USERPROFILE", native.Expression, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("$HOME", native.Expression, StringComparison.OrdinalIgnoreCase);
-        Assert.InRange(native.Expression.Length, 1, NativeScriptRunner.MaxSourceChars);
-    }
-
-    [Fact]
-    public async Task AdditionalPowerShellExamples_AreInertPortableAndExecutableAfterApproval()
-    {
-        string scripts = Path.Combine(Root, "Examples", "Scripts");
-        string[] names =
-        [
-            "Example Next Business Day",
-            "Example Business Hours Status",
-            "Example Professional Closing",
-            "Example Case Note Timestamp",
-        ];
-        var now = new DateTimeOffset(2026, 9, 11, 18, 30, 0, TimeSpan.FromHours(-5));
-
-        foreach (string name in names)
-        {
-            var definition = Assert.IsType<ScriptDefinition>(ScriptDefinitionFile.Load(
-                Path.Combine(scripts, name + ScriptDefinitionFile.Extension)).Value);
-            Assert.False(definition.Enabled);
-            Assert.Equal(ScriptDefinitionFile.NativeLanguage, definition.Language);
-            Assert.InRange(definition.Expression.Length, 1, NativeScriptRunner.MaxSourceChars);
-            Assert.DoesNotMatch(@"(?i)(invoke-webrequest|invoke-restmethod|start-process|new-object\s+net\.|get-content|set-content|\[io\.file\]|registry::)",
-                definition.Expression);
-
-            var result = await NativeScriptRunner.EvaluateAsync(definition.Expression, now);
-            Assert.True(result.Success, $"{name}: {result.Error}");
-            Assert.False(string.IsNullOrWhiteSpace(result.Output));
-        }
     }
 }

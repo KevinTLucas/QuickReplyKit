@@ -117,7 +117,6 @@ public static class LibraryPorter
             }
 
             string? codeSource = null;
-            string? scriptLanguage = null;
             string? validationError;
             if (candidate.Kind == ImportItemKind.Script)
             {
@@ -126,7 +125,6 @@ public static class LibraryPorter
                     var parsed = ScriptDefinitionFile.Parse(Utf8.GetString(candidate.Content));
                     validationError = parsed.Success ? null : parsed.Error ?? parsed.Marker;
                     codeSource = parsed.Value?.Expression;
-                    scriptLanguage = parsed.Value?.Language;
                 }
                 catch (DecoderFallbackException)
                 {
@@ -178,7 +176,7 @@ public static class LibraryPorter
             }
 
             entries.Add(new ImportPlanEntry(id, candidate.Kind, candidate.Path, relative, classification, action,
-                match, null, codeSource, candidate.Content, full, destinationHash, keepBoth, scriptLanguage));
+                match, null, codeSource, candidate.Content, full, destinationHash, keepBoth));
         }
 
         return new ImportPlan(root, source, sourceHash, entries);

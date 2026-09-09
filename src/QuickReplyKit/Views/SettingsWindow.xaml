@@ -64,7 +64,7 @@
         <Button Content="Scripts…" HorizontalAlignment="Left" Margin="0,8,0,0"
                 Style="{StaticResource ActionButton}" Click="ManageScripts_Click"
                 AutomationProperties.Name="Manage template scripts"
-                ToolTip="Create, review, validate, trust, and export restricted or full-trust template scripts."/>
+                ToolTip="Create, review, validate, trust, and export restricted template expressions."/>
 
         <!-- Library path -->
         <TextBlock Text="Response library folder" Style="{StaticResource SectionLabel}"/>

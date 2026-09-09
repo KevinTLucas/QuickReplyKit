@@ -48,5 +48,7 @@ public class LauncherImportExportTests
             && (string?)element.Attribute("Text") == "{Binding CodeSource, Mode=OneWay}");
 
         Assert.Equal("{Binding CodeSource, Mode=OneWay}", (string?)source.Attribute("Text"));
+        Assert.Equal("{Binding SourceAutomationName}",
+            (string?)source.Attribute("AutomationProperties.Name"));
     }
 }

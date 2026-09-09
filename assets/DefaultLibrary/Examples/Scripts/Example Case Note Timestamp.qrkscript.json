@@ -1,7 +1,0 @@
-{
-  "id": "example-case-note-timestamp",
-  "name": "Example Case Note Timestamp",
-  "language": "powershell-1",
-  "enabled": false,
-  "expression": "$now = [DateTimeOffset]::Parse($env:QRK_NOW, [Globalization.CultureInfo]::InvariantCulture)\n[Console]::Out.Write($now.ToString('yyyy-MM-dd HH:mm zzz'))"
-}

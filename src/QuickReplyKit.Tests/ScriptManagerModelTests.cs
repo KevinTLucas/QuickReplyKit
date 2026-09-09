@@ -32,42 +32,6 @@ public class ScriptManagerModelTests
     }
 
     [Fact]
-    public void Save_NativeLanguageRoundTrips_AndExistingLanguageIsPreservedByCompatibleApi()
-    {
-        using var temp = new TempDir();
-        var model = new ScriptManagerModel(temp.Of("library"), OpenTrust(temp.Of("trust.json")), () => { });
-        model.Reload();
-
-        var created = model.Save(null, "Native", "Write-Output 'hello'", true,
-            ScriptDefinitionFile.NativeLanguage, trustAfterSave: false);
-        Assert.True(created.Success, created.Error);
-        var savedAgain = model.Save(created.Item, "Native", "Write-Output 'updated'", true,
-            trustAfterSave: false);
-
-        Assert.True(savedAgain.Success, savedAgain.Error);
-        Assert.Equal(ScriptDefinitionFile.NativeLanguage, savedAgain.Item!.Definition!.Language);
-        Assert.Equal(ScriptDefinitionFile.NativeLanguage,
-            ScriptDefinitionFile.Load(savedAgain.Item.FullPath).Value!.Language);
-    }
-
-    [Fact]
-    public void Save_ChangingLanguageRevokesTrustEvenWhenSourceIsUnchanged()
-    {
-        using var temp = new TempDir();
-        var trust = OpenTrust(temp.Of("trust.json"));
-        var model = new ScriptManagerModel(temp.Of("library"), trust, () => { });
-        model.Reload();
-        var created = model.Save(null, "Literal", "\"hello\"", true, trustAfterSave: true).Item!;
-
-        var changed = model.Save(created, "Literal", "\"hello\"", true,
-            ScriptDefinitionFile.NativeLanguage, trustAfterSave: false);
-
-        Assert.True(changed.Success, changed.Error);
-        Assert.False(changed.Item!.IsTrusted);
-        Assert.False(trust.IsTrusted(changed.Item.Definition));
-    }
-
-    [Fact]
     public void Save_RejectsInvalidAndDuplicateNames_WithoutReplacingFiles()
     {
         using var temp = new TempDir();
@@ -174,51 +138,6 @@ public class ScriptManagerModelTests
         Assert.Contains("private void Window_PreviewKeyDown", code, StringComparison.Ordinal);
         Assert.Contains("Closing=\"Window_Closing\"", xaml, StringComparison.Ordinal);
         Assert.Contains("PreviewKeyDown=\"Window_PreviewKeyDown\"", xaml, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void NativeTrustConfirmation_CancelStopsTrust_RestrictedDoesNotPrompt()
-    {
-        int prompts = 0;
-
-        Assert.False(Views.ScriptManagerWindow.ConfirmTrust(ScriptDefinitionFile.NativeLanguage,
-            () => { prompts++; return false; }));
-        Assert.True(Views.ScriptManagerWindow.ConfirmTrust(ScriptDefinitionFile.Language,
-            () => { prompts++; return false; }));
-        Assert.Equal(1, prompts);
-    }
-
-    [Fact]
-    public void ManagerUi_OffersBothLanguagesAndKeepsFullTrustWarningVisible()
-    {
-        string xaml = File.ReadAllText(TestFiles.RepoAsset(
-            "src/QuickReplyKit/Views/ScriptManagerWindow.xaml"));
-        string code = File.ReadAllText(TestFiles.RepoAsset(
-            "src/QuickReplyKit/Views/ScriptManagerWindow.xaml.cs"));
-
-        Assert.Contains("Tag=\"qrk-expr-1\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Tag=\"powershell-1\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("x:Name=\"NativeWarning\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("signed-in Windows user", xaml, StringComparison.Ordinal);
-        Assert.Contains("ConfirmTrust(SelectedLanguage", code, StringComparison.Ordinal);
-        Assert.Contains("ConfirmTrust(reviewed.Language", code, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ManagerUi_UsesThemedLanguageComboAndScrollsAtCompactHeight()
-    {
-        string xaml = File.ReadAllText(TestFiles.RepoAsset(
-            "src/QuickReplyKit/Views/ScriptManagerWindow.xaml"));
-        var document = System.Xml.Linq.XDocument.Parse(xaml);
-        System.Xml.Linq.XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-        System.Xml.Linq.XNamespace names = "http://schemas.microsoft.com/winfx/2006/xaml";
-        var language = document.Descendants(x + "ComboBox").Single(element =>
-            (string?)element.Attribute(names + "Name") == "LanguageBox");
-
-        Assert.Null(language.Attribute("Style"));
-        Assert.Contains(document.Descendants(x + "ScrollViewer"), element =>
-            (string?)element.Attribute("VerticalScrollBarVisibility") == "Auto" &&
-            element.Descendants(x + "ComboBox").Contains(language));
     }
 
     [Fact]

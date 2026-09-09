@@ -23,17 +23,13 @@ public sealed class HotkeyService : IDisposable
     private readonly LibraryService _library;
     private readonly IInsertService _insert;
     private readonly Func<DateTimeOffset> _now;
-    private readonly CancellationTokenSource _stop = new();
-    private bool _disposed;
-    private int _pasteRunning;
 
     private string _launcherGesture;
     private List<Entry> _entries = new();
 
     /// <summary>Raised on the UI thread when the launcher hotkey is pressed.</summary>
     public event Action? LauncherPressed;
-
-    /// <summary>Raised when an instant-paste is blocked by a response script failure.</summary>
+    /// <summary>Raised when an instant paste is blocked by a restricted script failure.</summary>
     public event Action<string>? ScriptFailed;
 
     public HotkeyService(AppConfig config, LibraryService library, IInsertService insert, Func<DateTimeOffset>? now = null)
@@ -101,55 +97,27 @@ public sealed class HotkeyService : IDisposable
 
     internal void InstantPaste(string relativePath, bool plain)
     {
-        if (_disposed || Interlocked.CompareExchange(ref _pasteRunning, 1, 0) != 0) return;
-        PendingPaste = InstantPasteAsync(relativePath, plain);
-    }
-
-    internal Task PendingPaste { get; private set; } = Task.CompletedTask;
-
-    internal async Task InstantPasteAsync(string relativePath, bool plain)
-    {
-        try
+        // Re-resolve against the live snapshot: the library may have changed since registration.
+        var item = _library.FindByRelativePath(relativePath);
+        if (item is null)
         {
-            if (_disposed) return;
-            // Re-resolve against the live snapshot: the library may have changed since registration.
-            var item = _library.FindByRelativePath(relativePath);
-            if (item is null)
-            {
-                Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
-                return;
-            }
-
-            Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
-            var resolution = _library.HasTrustedNativeScripts
-                ? await _library.ResolveTemplateDetailedAsync(item.Html, _now(), _stop.Token)
-                : _library.ResolveTemplateDetailed(item.Html, _now());
-            if (_disposed || _stop.IsCancellationRequested) return;
-            if (!resolution.Success)
-            {
-                Diag.Warn("HotkeyService", "Script", "instant-paste blocked by script failure");
-                ScriptFailed?.Invoke(resolution.ErrorText);
-                return;
-            }
-            var resolved = new ResponseItem { Html = resolution.Html };
-            if (plain) _insert.InsertPlain(resolved);
-            else _insert.InsertRich(resolved);
-            _library.MarkUsed(item);
+            Diag.Warn("HotkeyService", "Hotkey", "instant-paste target unavailable");
+            return;
         }
-        catch (OperationCanceledException) when (_stop.IsCancellationRequested) { }
-        catch (Exception ex)
+
+        Diag.Verbose("HotkeyService", "Hotkey", $"instant-paste invoked mode={(plain ? "plain" : "rich")}");
+        var resolution = _library.ResolveTemplateDetailed(item.Html, _now());
+        if (!resolution.Success)
         {
-            Diag.Warn("HotkeyService", "Hotkey", "instant-paste failed safely", ex);
+            Diag.Warn("HotkeyService", "Script", "instant-paste blocked by script failure");
+            ScriptFailed?.Invoke(resolution.ErrorText);
+            return;
         }
-        finally { Interlocked.Exchange(ref _pasteRunning, 0); }
+        var resolved = new ResponseItem { Html = resolution.Html };
+        if (plain) _insert.InsertPlain(resolved);
+        else _insert.InsertRich(resolved);
+        _library.MarkUsed(item);
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _stop.Cancel();
-        _registrar.Dispose();
-        _stop.Dispose();
-    }
+    public void Dispose() => _registrar.Dispose();
 }

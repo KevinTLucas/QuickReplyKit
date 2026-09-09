@@ -1,7 +1,0 @@
-{
-  "id": "example-next-business-day",
-  "name": "Example Next Business Day",
-  "language": "powershell-1",
-  "enabled": false,
-  "expression": "$now = [DateTimeOffset]::Parse($env:QRK_NOW, [Globalization.CultureInfo]::InvariantCulture)\n$day = $now.Date.AddDays(1)\nwhile ($day.DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {\n    $day = $day.AddDays(1)\n}\n[Console]::Out.Write($day.ToString('dddd, MMMM d'))"
-}

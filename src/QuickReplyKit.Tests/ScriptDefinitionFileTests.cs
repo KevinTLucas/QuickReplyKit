@@ -32,6 +32,7 @@ public class ScriptDefinitionFileTests
     [InlineData("{}")]
     [InlineData("{\"id\":1,\"name\":\"n\",\"language\":\"qrk-expr-1\",\"enabled\":true,\"expression\":\"true\"}")]
     [InlineData("{\"id\":\"i\",\"name\":\"n\",\"language\":\"csharp\",\"enabled\":true,\"expression\":\"true\"}")]
+    [InlineData("{\"id\":\"i\",\"name\":\"n\",\"language\":\"powershell-1\",\"enabled\":true,\"expression\":\"Write-Output 'x'\"}")]
     [InlineData("{\"id\":\"i\",\"name\":\"n\",\"language\":\"qrk-expr-1\",\"enabled\":true,\"expression\":\"true\",\"trusted\":true}")]
     [InlineData("{not json")]
     public void Parse_MalformedWrongLanguageOrTrustField_FailsClosed(string json)

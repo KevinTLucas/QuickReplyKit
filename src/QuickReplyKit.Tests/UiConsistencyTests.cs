@@ -183,7 +183,7 @@ public class UiConsistencyTests
         var button = Load("SettingsWindow.xaml").Descendants().Single(e =>
             (string?)e.Attribute("Click") == "ManageScripts_Click");
         Assert.Equal("Manage template scripts", (string?)button.Attribute("AutomationProperties.Name"));
-        Assert.Contains("restricted or full-trust", (string?)button.Attribute("ToolTip"),
+        Assert.Contains("restricted template expressions", (string?)button.Attribute("ToolTip"),
             StringComparison.OrdinalIgnoreCase);
     }
 

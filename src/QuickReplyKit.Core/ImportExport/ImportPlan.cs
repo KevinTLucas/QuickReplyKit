@@ -14,7 +14,7 @@ public sealed class ImportPlanEntry
     internal ImportPlanEntry(int id, ImportItemKind kind, string sourcePath, string destinationPath,
         ImportClassification classification, ImportAction defaultAction, string? matchingExistingPath,
         string? message, string? codeSource, byte[] content, string? destinationFullPath, byte[]? destinationHash,
-        string? keepBothFullPath, string? scriptLanguage = null)
+        string? keepBothFullPath)
     {
         Id = id;
         Kind = kind;
@@ -25,7 +25,6 @@ public sealed class ImportPlanEntry
         MatchingExistingPath = matchingExistingPath;
         Message = message;
         CodeSource = codeSource;
-        ScriptLanguage = scriptLanguage;
         Content = content;
         DestinationFullPath = destinationFullPath;
         DestinationHash = destinationHash;
@@ -41,7 +40,6 @@ public sealed class ImportPlanEntry
     public string? MatchingExistingPath { get; }
     public string? Message { get; }
     public string? CodeSource { get; }
-    public string? ScriptLanguage { get; }
 
     internal byte[] Content { get; }
     internal string? DestinationFullPath { get; }

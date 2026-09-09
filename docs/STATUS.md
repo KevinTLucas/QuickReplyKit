@@ -7,13 +7,16 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `17470ce` (B37 PowerShell dynamic-variable execution and failure UX).
-- **Current product baseline:** B01-B34 and B36-B37 are complete on `main`; B35 remains isolated for manual Word QA.
+- **Current product merge:** `17470ce`; B38's restricted-only cleanup is green on
+  `cleanup/remove-powershell-scripts` and awaiting independent QA.
+- **Current product baseline:** B01-B34 and B36-B37 are complete on `main`; B38 removes the full-trust PowerShell
+  capability on `cleanup/remove-powershell-scripts`, while B35 remains isolated for Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **825 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
-- **Portable publish:** `release/QuickReplyKit.exe` was built from product merge `17470ce` at 69,941,774 bytes (SHA-256
-  `9AED7AF2230AEAA1113353514E1B6C27700DB7263A0DBB12C5F64429CE41C7FE`). It is self-contained; no external .NET or
-  Visual C++ installation is needed.
+- **Tests:** **825 passed** on merged `main`; **789** on B38; **791** on the older-base
+  `feature/word-style-word-fidelity` branch.
+- **Portable publish:** `release/QuickReplyKit.exe` still reflects `17470ce` and must be rebuilt after B38 merges.
+  Do not distribute it until that rebuild. The portable build is self-contained; no external .NET or Visual C++
+  installation is needed.
 - **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
   This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
   returned 1 (`PASTE=fail CLIPBOARD_RESTORED=ok`, `UIPASTE=fail`). Interactive QA and earlier foreground-capable rounds
@@ -23,21 +26,20 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. PowerShell multiline/Unicode execution, visible failure handling, and preview-result
-  reuse are shipped. Only B35's manual Microsoft Word paste acceptance remains isolated from `main`.
+- **State:** launchable and green. B38 removes the unrestricted operating-system script capability while preserving
+  safe built-in variables, response includes, and restricted expressions. B35's Microsoft Word paste acceptance
+  remains isolated from `main` until that cleanup merges.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
-| B37 PowerShell execution and failure UX | `17470ce` | 825/825 Release x4 plus two independent exact-tip reviews; cancellation 20/20 and re-QA 20/20; multiline/Unicode shipped example; SID/elevation inheritance; source-free command line; safe blocked/error classes; no failed paste/copy/hide/Recent; preview reuse/invalidation; four inert examples | Complete |
 | B36 rich editor formatting persistence | `0ae7786` | 811/811; 57/57 focused; two independent exact-tip reviews; every exposed editor format, apply/remove, JSON reload, mixed selections, list/link edge cases | Complete |
 | B34 parser-backed Word RTF conversion | `b1749ff` | 788/788; RTF round-trip covers bold, italic, color and font size | Complete |
 | B32 end-user GitHub guide | `1f9839b` | 785/785; 11 privacy-checked images; links/HTML/Markdown/labels/paths/security wording independently verified | Complete |
 | B31 whole-app UI consistency | `08de27d` | 785/785; 20/20 focused; Light/Dark/compact captures; real automation peers, live-DPI sizing, themed menus, keyboard and layout checks | Complete |
-| B30 optional dynamic-variable/script examples | `fc3a5a5` | 765/765; Light/Dark/compact launcher and Script Manager; trust/security/content review; native example remains untrusted | Complete |
+| B30 restricted dynamic-variable example | `fc3a5a5` | Restricted expression and response example retained; unrestricted examples removed by B38 | Complete |
 | B29 response edit label | `8a3de68` | 761/761; 4/4 focused; Light/Dark/compact context-menu and compose captures; handler and transient behavior unchanged | Complete |
-| B21 explicitly trusted native scripts | `4fa69ec` | 760/760; 62/62 security/integration; 14/14 runtime; Light/Dark/compact Script Manager and Import Review; UTF-8, duplicate hotkey, and layout blockers fixed | Complete |
 | B28 icon-only Import / Export trigger | `99d8efd` | 732/732; 25/25 focused; Light/Dark/compact captures; keyboard menu anchored to trigger | Complete |
 | B27 native selected-folder background | `44f9267` | 732/732; 47/47 focused; Light/Dark/compact captures; High Contrast system brushes and non-color cue verified | Complete |
 | B26 short scoped-search label | `1ffac1f` | 732/732; 47/47 focused; Light/Dark/compact captures; duplicate leaves retain full-path filtering and accessibility | Complete |
@@ -89,10 +91,8 @@
   remain best-effort across privilege, application, and clipboard-format boundaries.
 - **Library/editor:** live-watched folder hierarchy; create/edit/duplicate/rename/move; rich editor with standard
   color/highlight palettes, lists, links, alignment, size, strike, response-tag chips, edit-before-insert, templates,
-  safe built-in variables, response includes, restricted `{{script:Name}}` expressions, and explicitly trusted
-  full-permission Windows PowerShell definitions. Multiline/Unicode PowerShell runs as QuickReplyKit's Windows account
-  and privilege level; failures stop before paste/copy and show a dialog or tray notice, while fresh preview results
-  are reused for immediate insertion. The Script Manager supports
+  safe built-in variables, response includes, and restricted `{{script:Name}}` expressions. Script failures stop
+  before paste/copy and show a dialog or tray notice. The Script Manager supports
   create/edit/validate/trust/enable/export/delete and protects dirty drafts.
 - **Safety/sharing:** selectable import preview; zip/file import/export; per-conflict policies; invalid-file tolerance;
   exact per-script source/language review with no bulk code acceptance; local source-bound trust; importer and Trash
@@ -105,6 +105,14 @@
 
 ## Remaining Work
 
+**B39 is confirmed** from the B38 regression run: foreground-limited paste self-tests can leave test-created Notepad
+windows when startup completes after their temporary file is deleted. The six windows created during that run were
+identified by process/start time and removed without touching the pre-existing QuickReplyKit instance. Fix B39 on a
+separate branch immediately after B38.
+
+**B38 is in progress** on `cleanup/remove-powershell-scripts`. It removes `powershell-1` execution and every directly
+dependent native-script surface; the sandboxed `qrk-expr-1` language remains supported.
+
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
 merging it.
@@ -114,8 +122,9 @@ Manual B35 build: `publish/word-fidelity-test/QuickReplyKit.exe` (69,933,438 byt
 
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
-**Active branch:** `feature/word-style-word-fidelity` owns only B35's manual acceptance. A stale interrupted historical
-hotkey worktree remains quarantined and is not an active source of changes.
+**Active branches:** `cleanup/remove-powershell-scripts` owns only B38; `feature/word-style-word-fidelity` owns only
+B35's manual acceptance. A stale interrupted historical hotkey worktree remains quarantined and is not an active
+source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -134,9 +143,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
   undoes the paste, and closes that exact window normally.
 - Before broad rollout, manually confirm a real Ctrl+Alt+D paste into Outlook/Teams/browser/CRM and verify the
   transient response does not appear in the Win+V history flyout.
-- Script trust protects against unreviewed portable definitions, accidental source changes, malformed files, and
-  concurrent app workflows. A malicious process already running as the same Windows user can modify the local trust
-  ledger and is outside this application-level security boundary.
+- Script trust protects against unreviewed portable definitions, accidental source changes, and malformed files.
 - The portable executable is unsigned, so SmartScreen may prompt. Code signing is a distribution concern, not an
   application defect.
 
