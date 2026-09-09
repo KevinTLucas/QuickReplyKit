@@ -9,10 +9,10 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
 
 ## Active Work
 
-- **B35 · P1 · QA — Microsoft Word rich-paste fidelity.** Current `main` can let Word select plain text before
-  RTF, which drops inline formatting. `fix/word-rich-paste-fidelity` publishes RTF → HTML → Unicode, skips empty RTF,
-  and generates RTF from the same parser-backed document used by the editor. All exposed formats pass automated
-  RTF save/reload coverage and independent QA; a real Microsoft Word paste remains because Word is not installed here.
+- **B35 · P1 · QA — Microsoft Word rich-paste fidelity.** `main` now publishes RTF → HTML → Unicode, skips empty RTF,
+  and generates RTF from the same parser-backed document used by the editor. All exposed formats pass automated RTF
+  save/reload coverage and independent QA. Confirm the packaged release in real Microsoft Word; Word is not installed
+  on this machine, so this final external acceptance remains before closing the item.
 
 ## Deferred Ideas
 
