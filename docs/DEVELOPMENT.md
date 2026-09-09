@@ -66,8 +66,8 @@ QuickReplyKit.exe --selftest-foreground
 - `--selftest-paste-ui`: launcher view-model command through the real insert service.
 - `--selftest-foreground`: foreground target monitoring.
 
-The Notepad-based gates create one isolated temporary document, undo the paste, and close that exact window normally.
-Run them sequentially. Never close or alter an unrelated user Notepad window.
+The target-based gates launch one owned child QuickReplyKit process with a native edit control and close that exact
+process. Run them sequentially because they share the Windows clipboard; they never open or inspect Notepad.
 
 QA display switches used by repository screenshot tools include `--show`, `--library <path>`, `--size WxH`,
 `--theme Light|Dark|System`, `--show-editor`, `--show-about`, `--show-backup`, `--show-onboarding`, `--show-trash`, and
