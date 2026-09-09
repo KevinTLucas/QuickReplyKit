@@ -13,10 +13,6 @@ may still have a Confirmed remaining gap; its merge is noted in the item.
   self-tests can time out and delete their temporary file before Windows 11 Notepad finishes opening it, leaving one
   or more “Not a valid file name” windows. Make ownership/startup deterministic and guarantee cleanup of the exact
   test-created window without touching user Notepad sessions.
-- **B38 · P1 · In progress — remove full-trust PowerShell scripts.** Delete the `powershell-1` runtime, native-script
-  trust and execution UI, PowerShell examples, tests, and documentation. Preserve built-in variables, response
-  includes, and the sandboxed `qrk-expr-1` expression language. Deep-clean PowerShell-only async/error/cache plumbing
-  so no dormant native execution path remains.
 - **B35 · P1 · QA — Microsoft Word rich-paste fidelity.** Current `main` can let Word select the plain-text clipboard
   representation before RTF, which drops inline formatting. `feature/word-style-word-fidelity` publishes RTF → HTML
   → Unicode, skips empty RTF, and uses the editor's normal 14-unit size. Automated QA is green; a manual paste into

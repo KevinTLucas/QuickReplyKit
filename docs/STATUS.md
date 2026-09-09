@@ -7,16 +7,14 @@
 ## Audited Baseline
 
 - **Last audited:** 2026-09-08
-- **Current product merge:** `17470ce`; B38's restricted-only cleanup is green on
-  `cleanup/remove-powershell-scripts` and awaiting independent QA.
-- **Current product baseline:** B01-B34 and B36-B37 are complete on `main`; B38 removes the full-trust PowerShell
-  capability on `cleanup/remove-powershell-scripts`, while B35 remains isolated for Word QA.
+- **Current product merge:** `31179f7`; B38's restricted-only cleanup is merged and independently QA'd.
+- **Current product baseline:** B01-B34 and B36-B38 are complete on `main`; B39 is next, while B35 remains isolated
+  for Word QA.
 - **Build:** clean, 0 warnings / 0 errors (`dotnet build QuickReplyKit.slnx -c Release -p:NuGetAudit=false`).
-- **Tests:** **825 passed** on merged `main`; **791** on B38; **791** on the older-base
-  `feature/word-style-word-fidelity` branch.
-- **Portable publish:** `release/QuickReplyKit.exe` still reflects `17470ce` and must be rebuilt after B38 merges.
-  Do not distribute it until that rebuild. The portable build is self-contained; no external .NET or Visual C++
-  installation is needed.
+- **Tests:** **791 passed** on merged `main`; **791** on the older-base `feature/word-style-word-fidelity` branch.
+- **Portable publish:** `release/QuickReplyKit.exe` reflects `31179f7` (69,928,356 bytes; SHA-256
+  `934F2BFDC4143EAEBA6C8B654A079FB9E2E9CB118E7C60EAB6CABD9BAA928354`). The portable build is self-contained; no
+  external .NET or Visual C++ installation is needed.
 - **Windows self-tests:** the final packaged `--selftest-paste-rich` and `--selftest-foreground` gates returned 0.
   This automation host denied the foreground transition needed by `--selftest-paste` and `--selftest-paste-ui`, which
   returned 1 (`PASTE=fail CLIPBOARD_RESTORED=ok`, `UIPASTE=fail`). Interactive QA and earlier foreground-capable rounds
@@ -26,14 +24,14 @@
   Root `AGENTS.md` and `CLAUDE.md` files are local-only and ignored by Git. Unmerged work is isolated in the
   human-readable branches listed under Active worktrees. Fully merged historical branch labels were pruned; only
   the dirty, interrupted `feature/hotkeys` worktree remains quarantined to avoid discarding unreviewed local state.
-- **State:** launchable and green. B38 removes the unrestricted operating-system script capability while preserving
-  safe built-in variables, response includes, and restricted expressions. B35's Microsoft Word paste acceptance
-  remains isolated from `main` until that cleanup merges.
+- **State:** launchable and green. Full-trust operating-system scripts are removed; safe built-in variables, response
+  includes, and restricted expressions remain. Fix B39 next, then finish B35's Microsoft Word paste acceptance.
 
 ## Merged And QA'd
 
 | Backlog item | Merge | Verification recorded in merge history | State |
 |---|---:|---|---|
+| B38 remove full-trust PowerShell scripts | `31179f7` | 791/791; independent security/correctness/ponytail review; native runtime, async plumbing, UI, examples and docs removed; restricted expressions and exact-source import review retained | Complete |
 | B36 rich editor formatting persistence | `0ae7786` | 811/811; 57/57 focused; two independent exact-tip reviews; every exposed editor format, apply/remove, JSON reload, mixed selections, list/link edge cases | Complete |
 | B34 parser-backed Word RTF conversion | `b1749ff` | 788/788; RTF round-trip covers bold, italic, color and font size | Complete |
 | B32 end-user GitHub guide | `1f9839b` | 785/785; 11 privacy-checked images; links/HTML/Markdown/labels/paths/security wording independently verified | Complete |
@@ -110,9 +108,6 @@ windows when startup completes after their temporary file is deleted. The six wi
 identified by process/start time and removed without touching the pre-existing QuickReplyKit instance. Fix B39 on a
 separate branch immediately after B38.
 
-**B38 is in progress** on `cleanup/remove-powershell-scripts`. It removes `powershell-1` execution and every directly
-dependent native-script surface; the sandboxed `qrk-expr-1` language remains supported.
-
 **B35 remains in manual acceptance** on `feature/word-style-word-fidelity`. Automated QA is green at 791 tests, but
 Microsoft Word is unavailable on this machine. Test its acceptance executable from the path recorded below before
 merging it.
@@ -122,9 +117,8 @@ Manual B35 build: `publish/word-fidelity-test/QuickReplyKit.exe` (69,933,438 byt
 
 **Known confirmed regressions/defects:** Word may choose the plain clipboard representation before rich formats (B35).
 
-**Active branches:** `cleanup/remove-powershell-scripts` owns only B38; `feature/word-style-word-fidelity` owns only
-B35's manual acceptance. A stale interrupted historical hotkey worktree remains quarantined and is not an active
-source of changes.
+**Active branches:** `feature/word-style-word-fidelity` owns only B35's manual acceptance. A stale interrupted
+historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
 
@@ -154,7 +148,7 @@ work. Branch names must stay human-readable and must not contain AI/vendor names
 2. Start from `main`; confirm `git status --short --branch` is clean. All old feature branches are merged.
 3. Put `C:\Program Files\dotnet` on `PATH`. In an offline sandbox, point `NUGET_PACKAGES` at
    `$env:USERPROFILE\.nuget\packages` and restore with `-p:NuGetAudit=false`.
-4. Run build + tests; expect **825** green on `main` or **791** on B35's older base. Registry tests need normal
+4. Run build + tests; expect **791** green on `main` or B35's older base. Registry tests need normal
    current-user registry access.
 5. If [`BACKLOG.md`](BACKLOG.md) gains a requested item, take its first active entry on a new branch. Use ponytail, then separate-agent QA,
    headless UI/state tests and static XAML review, appropriate non-disruptive self-tests, a no-regression run, and a
