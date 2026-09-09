@@ -107,12 +107,16 @@ links, Unicode, line breaks, alignment, bullets, and numbering; raw clipboard te
 Independent QA is complete. Microsoft Word is unavailable on this machine, so a real Word paste remains before the
 item can be closed.
 
-Word acceptance build: `release/QuickReplyKit.exe` from `0188861`. Launch it normally and paste a formatted response
-into Word; the ignored `publish/word-fidelity-qa/Word-QA-Library` contains **Word Formatting QA** for a complete matrix.
+Word acceptance build: `release/QuickReplyKit.exe` from `0188861`. The identical tracked executable is published on
+GitHub branch `qa/word-rich-paste` at `f0144de` for testing on a computer with Word. Launch it normally and paste a
+formatted response into Word; the ignored local `publish/word-fidelity-qa/Word-QA-Library` contains **Word Formatting
+QA** for a complete matrix.
 
 **Known confirmed regressions/defects:** none in automated coverage. Real-Word behavior is awaiting B35 confirmation.
 
-**Active branches:** none. The superseded older-base `feature/word-style-word-fidelity` branch must not be merged.
+**Active branches:** `qa/word-rich-paste` is a distribution-only pointer to tested `main` commit `f0144de` for external
+Word acceptance; it contains no unmerged implementation. The superseded older-base
+`feature/word-style-word-fidelity` branch must not be merged.
 A stale interrupted historical hotkey worktree remains quarantined and is not an active source of changes.
 Each branch's `main...branch` diff is scoped to its named bug; inherited commits in `git log branch` are not branch-owned
 work. Branch names must stay human-readable and must not contain AI/vendor names, IDs, or generated session labels.
